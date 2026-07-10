@@ -67,7 +67,7 @@ export default function ChatInput({
   };
 
   return (
-    <div className="flex-shrink-0 bg-white border-t border-cale-divider px-3 pt-2 pb-2">
+    <div className="flex-shrink-0 bg-cale-card border-t border-cale-divider px-3 pt-2 pb-2">
       {/* Sticker tray */}
       {trayOpen && (
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-1">
@@ -228,8 +228,7 @@ export default function ChatInput({
           <button
             onClick={submit}
             disabled={!text.trim() && images.length === 0}
-            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40"
-            style={{ background: "#D4849F", color: "#fff" }}
+            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 bg-cale-accent text-white"
             aria-label="发送"
           >
             <Send size={17} strokeWidth={2} />

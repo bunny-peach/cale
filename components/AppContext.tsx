@@ -170,6 +170,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     save(KEYS.settings, s);
   }, []);
 
+  // Apply the active UI theme to <html data-theme>. Dark mode follows the
+  // system automatically via CSS prefers-color-scheme, so nothing else needed.
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.theme = settings.theme;
+    }
+  }, [settings.theme]);
+
   // Persist collections whenever they change (after hydration)
   useEffect(() => {
     if (hydrated) save(KEYS.conversations, conversations);

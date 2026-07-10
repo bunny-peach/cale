@@ -20,7 +20,7 @@ export default function TabBar({
 }) {
   return (
     <nav
-      className="flex-shrink-0 bg-white border-t border-cale-divider"
+      className="flex-shrink-0 bg-cale-card border-t border-cale-divider"
       style={{ paddingBottom: "var(--safe-bottom)" }}
     >
       <div className="flex">
@@ -30,8 +30,9 @@ export default function TabBar({
             <button
               key={key}
               onClick={() => onChange(key)}
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-2 active:opacity-60 transition-opacity"
-              style={{ color: on ? "#D4849F" : "#8E8E93" }}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 active:opacity-60 transition-opacity ${
+                on ? "text-cale-accent" : "text-cale-textLight"
+              }`}
             >
               <Icon size={22} strokeWidth={on ? 2.2 : 1.8} />
               <span className="text-[11px] leading-none tracking-wide">

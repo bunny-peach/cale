@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Heart, RotateCcw } from "lucide-react";
 import { Message } from "@/lib/types";
+import { useApp } from "@/components/AppContext";
 import Markdown from "@/components/Markdown";
 import ThinkingBlock from "./ThinkingBlock";
 
@@ -21,6 +22,8 @@ export default function MessageBubble({
   onQuote?: (m: Message) => void;
   onRegenerate?: (m: Message) => void;
 }) {
+  const { settings } = useApp();
+  const claude = settings.theme === "claude";
   const isUser = message.role === "user";
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTap = useRef(0);
@@ -28,6 +31,19 @@ export default function MessageBubble({
   const startY = useRef(0);
   const [dragX, setDragX] = useState(0);
   const moved = useRef(false);
+
+  // Double-tap "like" heart burst animation
+  const [burst, setBurst] = useState(false);
+  const prevLiked = useRef(message.liked);
+  useEffect(() => {
+    if (message.liked && !prevLiked.current) {
+      setBurst(true);
+      const t = setTimeout(() => setBurst(false), 900);
+      prevLiked.current = message.liked;
+      return () => clearTimeout(t);
+    }
+    prevLiked.current = message.liked;
+  }, [message.liked]);
 
   const clearPress = () => {
     if (pressTimer.current) clearTimeout(pressTimer.current);
@@ -71,16 +87,27 @@ export default function MessageBubble({
     }
   };
 
+  // Claude theme: no bubbles — messages sit directly on the canvas, wider and
+  // with slightly larger, "readable" type. User messages keep a subtle rounded
+  // card so turn-taking stays clear.
+  const bubbleClass = claude
+    ? isUser
+      ? "bg-cale-userBubble rounded-[16px] px-4 py-2.5 text-[15.5px]"
+      : "px-0.5 py-1 text-[15.5px] leading-[1.7]"
+    : `${isUser ? "bg-cale-userBubble" : "bg-cale-card"} px-3.5 py-2.5 text-[15px]`;
+
   return (
     <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
       {!isUser && message.thinking && (
-        <div className="max-w-[85%]">
+        <div className={claude ? "w-full" : "max-w-[85%]"}>
           <ThinkingBlock thinking={message.thinking} streaming={streaming} />
         </div>
       )}
 
       <div
-        className="relative max-w-[85%]"
+        className={`relative ${
+          claude && !isUser ? "w-full max-w-full" : "max-w-[85%]"
+        }`}
         style={{
           transform: dragX ? `translateX(${dragX}px)` : undefined,
           transition: dragX ? "none" : "transform 0.2s",
@@ -100,7 +127,10 @@ export default function MessageBubble({
             className={`text-[12px] mb-1 px-2.5 py-1 rounded-lg text-cale-textLight ${
               isUser ? "ml-auto" : ""
             }`}
-            style={{ background: "rgba(0,0,0,0.05)", maxWidth: "100%" }}
+            style={{
+              background: "rgb(var(--cale-textDark) / 0.06)",
+              maxWidth: "100%",
+            }}
           >
             <span className="font-medium">{message.quote.author}</span>：
             {message.quote.text.slice(0, 40)}
@@ -108,29 +138,35 @@ export default function MessageBubble({
         )}
 
         <div
-          className={`relative px-3.5 py-2.5 text-[15px] select-text ${
-            isUser ? "text-cale-textDark" : "text-cale-textDark"
-          }`}
-          style={{
-            background: isUser ? "#F5E0EA" : "#FFFFFF",
-            borderRadius: 18,
-            borderBottomRightRadius: isUser ? 5 : 18,
-            borderBottomLeftRadius: isUser ? 18 : 5,
-            boxShadow: isUser ? "none" : "0 1px 2px rgba(45,45,45,0.06)",
-          }}
+          className={`relative select-text text-cale-textDark ${bubbleClass}`}
+          style={
+            claude
+              ? undefined
+              : {
+                  borderRadius: 18,
+                  borderBottomRightRadius: isUser ? 5 : 18,
+                  borderBottomLeftRadius: isUser ? 18 : 5,
+                  boxShadow: isUser
+                    ? "none"
+                    : "0 1px 2px rgb(var(--cale-textDark) / 0.06)",
+                }
+          }
         >
-          {/* Tail */}
-          <span
-            className="absolute bottom-0 w-3 h-3"
-            style={{
-              background: isUser ? "#F5E0EA" : "#FFFFFF",
-              right: isUser ? -5 : undefined,
-              left: isUser ? undefined : -5,
-              clipPath: isUser
-                ? "polygon(0 0, 0 100%, 100% 100%)"
-                : "polygon(100% 0, 100% 100%, 0 100%)",
-            }}
-          />
+          {/* Tail (bubble themes only) */}
+          {!claude && (
+            <span
+              className={`absolute bottom-0 w-3 h-3 ${
+                isUser ? "bg-cale-userBubble" : "bg-cale-card"
+              }`}
+              style={{
+                right: isUser ? -5 : undefined,
+                left: isUser ? undefined : -5,
+                clipPath: isUser
+                  ? "polygon(0 0, 0 100%, 100% 100%)"
+                  : "polygon(100% 0, 100% 100%, 0 100%)",
+              }}
+            />
+          )}
           {message.images && message.images.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-1.5">
               {message.images.map((img, i) => (
@@ -150,6 +186,17 @@ export default function MessageBubble({
             <span className="text-cale-textLight">Cale 正在思考…</span>
           ) : null}
           {streaming && message.content && <span className="cale-cursor" />}
+
+          {/* Heart burst on double-tap like */}
+          {burst && (
+            <div className="absolute left-1/2 top-1/2 pointer-events-none heart-burst z-10">
+              <Heart
+                size={40}
+                className="text-cale-accent"
+                fill="rgb(var(--cale-accent))"
+              />
+            </div>
+          )}
         </div>
 
         {/* Like heart */}
@@ -157,9 +204,13 @@ export default function MessageBubble({
           <div
             className={`absolute -bottom-2 ${
               isUser ? "left-0" : "right-0"
-            } bg-white rounded-full p-0.5 shadow`}
+            } bg-cale-card rounded-full p-0.5 shadow`}
           >
-            <Heart size={12} className="text-cale-accent" fill="#D4849F" />
+            <Heart
+              size={12}
+              className="text-cale-accent"
+              fill="rgb(var(--cale-accent))"
+            />
           </div>
         )}
       </div>

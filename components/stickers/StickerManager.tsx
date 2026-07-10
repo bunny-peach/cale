@@ -74,7 +74,7 @@ export default function StickerManager({ onBack }: { onBack: () => void }) {
         {stickers.map((s) => (
           <div
             key={s.id}
-            className="bg-white rounded-[14px] p-3 flex gap-3 items-start"
+            className="bg-cale-card rounded-[14px] p-3 flex gap-3 items-start"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

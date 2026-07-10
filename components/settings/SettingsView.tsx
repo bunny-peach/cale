@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { KEYS } from "@/lib/storage";
+import { ThemeName } from "@/lib/types";
 import ApiSettings from "./ApiSettings";
 import SystemPromptSettings from "./SystemPromptSettings";
 import MemoryManager from "./MemoryManager";
@@ -24,6 +25,22 @@ import RecommendManager from "./RecommendManager";
 type Page = "main" | "api" | "prompt" | "memory" | "wishlist" | "recommend";
 
 const ALL_KEYS = Object.values(KEYS);
+
+const THEMES: {
+  key: ThemeName;
+  label: string;
+  swatchBg: string;
+  swatchDot: string;
+}[] = [
+  { key: "pink", label: "粉色", swatchBg: "#FAF7F5", swatchDot: "#E8A0BF" },
+  {
+    key: "glass",
+    label: "液态玻璃",
+    swatchBg: "linear-gradient(160deg,#dfe7f7,#efe4f4,#e2edf8)",
+    swatchDot: "#5B8DEF",
+  },
+  { key: "claude", label: "Claude", swatchBg: "#F5F4EF", swatchDot: "#C96442" },
+];
 
 export default function SettingsView({
   goToChat,
@@ -103,7 +120,7 @@ export default function SettingsView({
   return (
     <div className="h-full flex flex-col bg-cale-bg">
       <header
-        className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center justify-center h-12"
+        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center justify-center h-12"
         style={{ paddingTop: "var(--safe-top)" }}
       >
         <div className="text-[17px] font-semibold">设置</div>
@@ -158,6 +175,52 @@ export default function SettingsView({
           />
         </Group>
 
+        <Group title="外观">
+          <div className="px-4 py-3.5 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] text-cale-textDark">主题</span>
+              <span className="text-[12px] text-cale-textLight">
+                深色模式跟随系统
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {THEMES.map((t) => {
+                const on = app.settings.theme === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    onClick={() =>
+                      app.setSettings({ ...app.settings, theme: t.key })
+                    }
+                    className={`rounded-[12px] p-2 border transition-colors ${
+                      on ? "border-cale-accent" : "border-cale-divider"
+                    }`}
+                  >
+                    <div
+                      className="h-10 rounded-[8px] mb-1.5 flex items-end p-1"
+                      style={{ background: t.swatchBg }}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ background: t.swatchDot }}
+                      />
+                    </div>
+                    <div
+                      className={`text-[12px] text-center ${
+                        on
+                          ? "text-cale-accent font-medium"
+                          : "text-cale-textLight"
+                      }`}
+                    >
+                      {t.label}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </Group>
+
         <Group title="聊天">
           <div className="px-4 py-3.5 flex items-center justify-between">
             <span className="text-[15px] text-cale-textDark">回复模式</span>
@@ -170,7 +233,7 @@ export default function SettingsView({
                   }
                   className={`px-3 py-1 rounded-full transition-colors ${
                     app.settings.replyMode === mode
-                      ? "bg-white text-cale-accent font-medium shadow-sm"
+                      ? "bg-cale-card text-cale-accent font-medium shadow-sm"
                       : "text-cale-textLight"
                   }`}
                 >
@@ -267,7 +330,7 @@ function Group({
   return (
     <div>
       <div className="text-[12px] text-cale-textLight px-1 mb-1.5">{title}</div>
-      <div className="bg-white rounded-[14px] overflow-hidden divide-y divide-cale-divider">
+      <div className="bg-cale-card rounded-[14px] overflow-hidden divide-y divide-cale-divider">
         {children}
       </div>
     </div>

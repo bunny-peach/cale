@@ -51,7 +51,7 @@ function Section({
   onDelete: (i: number) => void;
 }) {
   return (
-    <div className="bg-white rounded-[14px] p-3">
+    <div className="bg-cale-card rounded-[14px] p-3">
       <div className="text-[15px] font-semibold mb-2 flex items-center gap-1.5">
         <Icon size={17} strokeWidth={1.8} className="text-cale-accent" />
         {title}

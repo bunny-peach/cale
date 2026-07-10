@@ -13,7 +13,7 @@ export default function SubPageHeader({
 }) {
   return (
     <header
-      className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center px-3 h-12"
+      className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
       style={{ paddingTop: "var(--safe-top)" }}
     >
       <button

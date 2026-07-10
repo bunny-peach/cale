@@ -29,7 +29,7 @@ export default function MemoryManager({ onBack }: { onBack: () => void }) {
         </p>
 
         {/* Add form */}
-        <div className="bg-white rounded-[14px] p-3 space-y-2">
+        <div className="bg-cale-card rounded-[14px] p-3 space-y-2">
           <input
             value={tag}
             onChange={(e) => setTag(e.target.value)}
@@ -57,7 +57,7 @@ export default function MemoryManager({ onBack }: { onBack: () => void }) {
           </div>
         )}
         {sorted.map((m) => (
-          <div key={m.id} className="bg-white rounded-[14px] px-4 py-3">
+          <div key={m.id} className="bg-cale-card rounded-[14px] px-4 py-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -90,7 +90,7 @@ export default function MemoryManager({ onBack }: { onBack: () => void }) {
                 aria-label="切换附加到 prompt"
               >
                 <span
-                  className="absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all"
+                  className="absolute top-0.5 w-5 h-5 bg-cale-card rounded-full transition-all"
                   style={{ left: m.appendToPrompt ? 18 : 2 }}
                 />
               </button>

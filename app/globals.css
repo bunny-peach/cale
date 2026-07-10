@@ -2,8 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme system
+ * ------------
+ * Every colour is a space-separated RGB triplet so Tailwind's opacity
+ * modifiers (bg-cale-card/50 …) keep working via rgb(var(--x) / <alpha-value>).
+ * Three themes (pink / glass / claude) each ship a light + dark variant.
+ * Dark mode follows the system automatically (prefers-color-scheme).
+ */
+
+:root,
+:root[data-theme="pink"] {
+  --cale-bg: 250 247 245;
+  --cale-card: 255 255 255;
+  --cale-primary: 232 160 191;
+  --cale-accent: 212 132 159;
+  --cale-input: 243 235 231;
+  --cale-userBubble: 245 224 234;
+  --cale-thinking: 255 240 245;
+  --cale-divider: 239 230 226;
+  --cale-textDark: 45 45 45;
+  --cale-textLight: 154 146 150;
+}
+
+:root[data-theme="glass"] {
+  --cale-bg: 233 237 245;
+  --cale-card: 255 255 255;
+  --cale-primary: 91 141 239;
+  --cale-accent: 91 141 239;
+  --cale-input: 255 255 255;
+  --cale-userBubble: 120 150 255;
+  --cale-thinking: 255 255 255;
+  --cale-divider: 255 255 255;
+  --cale-textDark: 28 34 48;
+  --cale-textLight: 107 114 128;
+}
+
+:root[data-theme="claude"] {
+  --cale-bg: 245 244 239;
+  --cale-card: 255 255 255;
+  --cale-primary: 201 100 66;
+  --cale-accent: 201 100 66;
+  --cale-input: 235 233 226;
+  --cale-userBubble: 239 235 228;
+  --cale-thinking: 239 235 228;
+  --cale-divider: 229 226 217;
+  --cale-textDark: 31 30 28;
+  --cale-textLight: 138 133 124;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  :root[data-theme="pink"] {
+    --cale-bg: 26 22 24;
+    --cale-card: 38 32 35;
+    --cale-primary: 232 160 191;
+    --cale-accent: 232 160 191;
+    --cale-input: 47 39 43;
+    --cale-userBubble: 61 42 51;
+    --cale-thinking: 44 32 40;
+    --cale-divider: 53 44 48;
+    --cale-textDark: 236 230 232;
+    --cale-textLight: 155 146 150;
+  }
+
+  :root[data-theme="glass"] {
+    --cale-bg: 14 18 32;
+    --cale-card: 60 66 88;
+    --cale-primary: 127 168 255;
+    --cale-accent: 127 168 255;
+    --cale-input: 255 255 255;
+    --cale-userBubble: 120 150 255;
+    --cale-thinking: 255 255 255;
+    --cale-divider: 255 255 255;
+    --cale-textDark: 236 238 245;
+    --cale-textLight: 154 161 178;
+  }
+
+  :root[data-theme="claude"] {
+    --cale-bg: 38 38 36;
+    --cale-card: 48 48 46;
+    --cale-primary: 217 119 87;
+    --cale-accent: 217 119 87;
+    --cale-input: 58 58 55;
+    --cale-userBubble: 58 58 55;
+    --cale-thinking: 58 58 55;
+    --cale-divider: 61 61 58;
+    --cale-textDark: 240 238 230;
+    --cale-textLight: 166 161 153;
+  }
+}
+
 :root {
-  --cale-bg: #fdf6f0;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
@@ -15,11 +105,33 @@ body {
 }
 
 body {
-  background-color: var(--cale-bg);
-  color: #2d2d2d;
+  background-color: rgb(var(--cale-bg));
+  color: rgb(var(--cale-textDark));
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Glass theme paints a soft gradient behind the frosted surfaces */
+:root[data-theme="glass"] body {
+  background-image: linear-gradient(
+    160deg,
+    #dfe7f7 0%,
+    #efe4f4 48%,
+    #e2edf8 100%
+  );
+  background-attachment: fixed;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="glass"] body {
+    background-image: linear-gradient(
+      160deg,
+      #0c1024 0%,
+      #171331 50%,
+      #0d1626 100%
+    );
+  }
 }
 
 /* Prevent iOS zoom on input focus (font-size >= 16px on inputs) */
@@ -36,6 +148,38 @@ select {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ---- Glass theme: frost the chrome + cards ---- */
+:root[data-theme="glass"] .bg-cale-card {
+  background-color: rgb(var(--cale-card) / 0.55);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+}
+:root[data-theme="glass"] .bg-cale-userBubble {
+  background-color: rgb(var(--cale-userBubble) / 0.28);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+}
+:root[data-theme="glass"] .bg-cale-input {
+  background-color: rgb(var(--cale-input) / 0.45);
+}
+:root[data-theme="glass"] .bg-cale-thinking {
+  background-color: rgb(var(--cale-thinking) / 0.4);
+}
+:root[data-theme="glass"] .border-cale-divider {
+  border-color: rgb(var(--cale-divider) / 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="glass"] .bg-cale-input {
+    background-color: rgb(var(--cale-input) / 0.08);
+  }
+  :root[data-theme="glass"] .bg-cale-thinking {
+    background-color: rgb(var(--cale-thinking) / 0.08);
+  }
+  :root[data-theme="glass"] .border-cale-divider {
+    border-color: rgb(var(--cale-divider) / 0.16);
+  }
 }
 
 /* Markdown content styling */
@@ -70,7 +214,7 @@ select {
   margin: 0.2em 0;
 }
 .markdown-body code {
-  background: rgba(212, 132, 159, 0.14);
+  background: rgb(var(--cale-accent) / 0.14);
   padding: 0.1em 0.35em;
   border-radius: 6px;
   font-family: "SF Mono", ui-monospace, Menlo, monospace;
@@ -90,7 +234,7 @@ select {
   color: inherit;
 }
 .markdown-body a {
-  color: #d4849f;
+  color: rgb(var(--cale-accent));
   text-decoration: underline;
 }
 .markdown-body h1,
@@ -100,10 +244,16 @@ select {
   margin: 0.5em 0 0.3em;
 }
 .markdown-body blockquote {
-  border-left: 3px solid #e8a0bf;
+  border-left: 3px solid rgb(var(--cale-primary));
   padding-left: 0.8em;
-  color: #8e8e93;
+  color: rgb(var(--cale-textLight));
   margin: 0.5em 0;
+}
+mark {
+  background: rgb(var(--cale-primary) / 0.42);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
 }
 
 /* Typing / streaming cursor */
@@ -120,7 +270,7 @@ select {
   content: "▍";
   animation: cale-blink 1s step-end infinite;
   margin-left: 1px;
-  color: #d4849f;
+  color: rgb(var(--cale-accent));
 }
 
 /* Heart pulse for anniversary */
@@ -135,4 +285,42 @@ select {
 }
 .heart-pulse {
   animation: heart-pulse 1.4s ease-in-out infinite;
+}
+
+/* Double-tap "like" heart burst */
+@keyframes heart-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-50%, -50%) scale(1.25);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -80%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -160%) scale(0.9);
+    opacity: 0;
+  }
+}
+.heart-burst {
+  animation: heart-burst 0.9s ease-out forwards;
+}
+
+/* Flash a message when jumped to from search */
+@keyframes cale-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--cale-accent) / 0);
+  }
+  30% {
+    box-shadow: 0 0 0 3px rgb(var(--cale-accent) / 0.7);
+  }
+}
+.cale-flash {
+  animation: cale-flash 1.1s ease-out;
+  border-radius: 18px;
 }

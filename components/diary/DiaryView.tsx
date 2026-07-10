@@ -17,7 +17,7 @@ export default function DiaryView() {
     return (
       <div className="h-full flex flex-col bg-cale-bg">
         <header
-          className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center px-3 h-12"
+          className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
           style={{ paddingTop: "var(--safe-top)" }}
         >
           <button
@@ -53,7 +53,7 @@ export default function DiaryView() {
   return (
     <div className="h-full flex flex-col bg-cale-bg">
       <header
-        className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center justify-center h-12"
+        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center justify-center h-12"
         style={{ paddingTop: "var(--safe-top)" }}
       >
         <div className="text-[17px] font-semibold">Cale 的日记</div>
@@ -73,7 +73,7 @@ export default function DiaryView() {
           <button
             key={d.id}
             onClick={() => setSelected(d)}
-            className="w-full text-left bg-white rounded-[14px] px-5 py-4 active:opacity-80"
+            className="w-full text-left bg-cale-card rounded-[14px] px-5 py-4 active:opacity-80"
             style={{ boxShadow: "0 1px 2px rgba(45,45,45,0.05)" }}
           >
             <div className="flex items-baseline justify-between gap-2">

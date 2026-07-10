@@ -25,8 +25,8 @@ export default function ThinkingBlock({
       </button>
       {open && (
         <div
-          className="mt-1 rounded-[14px] px-3 py-2 text-[13px] text-cale-textDark/80"
-          style={{ background: "#FFF0F5", borderLeft: "3px solid #E8A0BF" }}
+          className="mt-1 rounded-[14px] px-3 py-2 text-[13px] text-cale-textDark/80 bg-cale-thinking"
+          style={{ borderLeft: "3px solid rgb(var(--cale-primary))" }}
         >
           <Markdown>{thinking}</Markdown>
           {streaming && <span className="cale-cursor" />}
