@@ -1,5 +1,6 @@
 "use client";
 
+import { Music, BookOpen, X } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import SubPageHeader from "./SubPageHeader";
 
@@ -11,7 +12,8 @@ export default function RecommendManager({ onBack }: { onBack: () => void }) {
       <SubPageHeader title="Cale 的推荐" onBack={onBack} />
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-4">
         <Section
-          title="🎵 我们的歌单"
+          title="我们的歌单"
+          Icon={Music}
           items={playlist}
           empty="Cale 推荐的歌会出现在这里"
           onDelete={(i) =>
@@ -19,7 +21,8 @@ export default function RecommendManager({ onBack }: { onBack: () => void }) {
           }
         />
         <Section
-          title="📚 我们的书架"
+          title="我们的书架"
+          Icon={BookOpen}
           items={bookshelf}
           empty="Cale 推荐的书会出现在这里"
           onDelete={(i) =>
@@ -36,18 +39,23 @@ export default function RecommendManager({ onBack }: { onBack: () => void }) {
 
 function Section({
   title,
+  Icon,
   items,
   empty,
   onDelete,
 }: {
   title: string;
+  Icon: typeof Music;
   items: string[];
   empty: string;
   onDelete: (i: number) => void;
 }) {
   return (
-    <div className="bg-cale-card rounded-card p-3">
-      <div className="text-[15px] font-semibold mb-2">{title}</div>
+    <div className="bg-white rounded-[14px] p-3">
+      <div className="text-[15px] font-semibold mb-2 flex items-center gap-1.5">
+        <Icon size={17} strokeWidth={1.8} className="text-cale-accent" />
+        {title}
+      </div>
       {items.length === 0 ? (
         <div className="text-[13px] text-cale-textLight py-2">{empty}</div>
       ) : (
@@ -55,16 +63,16 @@ function Section({
           {items.map((item, i) => (
             <div
               key={i}
-              className="flex items-center justify-between gap-2 bg-cale-input rounded-xl px-3 py-2"
+              className="flex items-center justify-between gap-2 bg-cale-input rounded-[12px] px-3 py-2"
             >
               <span className="text-[14px] text-cale-textDark break-words min-w-0">
                 {item}
               </span>
               <button
                 onClick={() => onDelete(i)}
-                className="text-cale-textLight text-base active:opacity-60 flex-shrink-0"
+                className="text-cale-textLight active:opacity-60 flex-shrink-0"
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
           ))}

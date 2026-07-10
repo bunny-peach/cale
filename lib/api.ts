@@ -23,6 +23,18 @@ interface AnthropicContentPart {
   source?: { type: "base64"; media_type: string; data: string };
 }
 
+/** Text actually sent to the API: quote context + visible text + hidden text. */
+function apiText(m: Message): string {
+  let t = m.content || "";
+  if (m.quote) {
+    t = `（引用 ${m.quote.author}：${m.quote.text}）\n${t}`;
+  }
+  if (m.hiddenText) {
+    t = t ? `${t}\n${m.hiddenText}` : m.hiddenText;
+  }
+  return t;
+}
+
 function toOpenAIMessages(system: string, messages: Message[]) {
   const out: {
     role: string;
@@ -30,15 +42,16 @@ function toOpenAIMessages(system: string, messages: Message[]) {
   }[] = [];
   if (system.trim()) out.push({ role: "system", content: system });
   for (const m of messages) {
+    const text = apiText(m);
     if (m.images && m.images.length > 0 && m.role === "user") {
       const parts: OpenAIContentPart[] = [];
-      if (m.content) parts.push({ type: "text", text: m.content });
+      if (text) parts.push({ type: "text", text });
       for (const img of m.images) {
         parts.push({ type: "image_url", image_url: { url: img.dataUrl } });
       }
       out.push({ role: m.role, content: parts });
     } else {
-      out.push({ role: m.role, content: m.content });
+      out.push({ role: m.role, content: text });
     }
   }
   return out;
@@ -46,6 +59,7 @@ function toOpenAIMessages(system: string, messages: Message[]) {
 
 function toAnthropicMessages(messages: Message[]) {
   return messages.map((m) => {
+    const text = apiText(m);
     if (m.images && m.images.length > 0 && m.role === "user") {
       const parts: AnthropicContentPart[] = [];
       for (const img of m.images) {
@@ -59,10 +73,10 @@ function toAnthropicMessages(messages: Message[]) {
           },
         });
       }
-      if (m.content) parts.push({ type: "text", text: m.content });
+      if (text) parts.push({ type: "text", text });
       return { role: m.role, content: parts };
     }
-    return { role: m.role, content: m.content };
+    return { role: m.role, content: text };
   });
 }
 
@@ -249,4 +263,69 @@ export async function testConnection(config: ApiConfig): Promise<string> {
     }
   );
   return received.trim() || "(连接成功，但未返回文本)";
+}
+
+/** Fetch the list of available model ids from the provider. */
+export async function fetchModels(config: ApiConfig): Promise<string[]> {
+  const base = normalizeBaseURL(config.baseURL);
+  const headers: Record<string, string> =
+    config.format === "anthropic"
+      ? {
+          "x-api-key": config.apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        }
+      : { Authorization: `Bearer ${config.apiKey}` };
+
+  const res = await fetch(`${base}/v1/models`, { headers });
+  await ensureOk(res);
+  const json = await res.json();
+  // OpenAI: { data: [{ id }] }  ·  Anthropic: { data: [{ id }] }
+  const list = Array.isArray(json?.data)
+    ? json.data
+    : Array.isArray(json?.models)
+      ? json.models
+      : [];
+  const ids: string[] = list
+    .map((m: unknown): string =>
+      typeof m === "string"
+        ? m
+        : (m as { id?: string; name?: string })?.id ??
+          (m as { id?: string; name?: string })?.name ??
+          ""
+    )
+    .filter((s: string): s is string => Boolean(s));
+  return Array.from(new Set(ids)).sort();
+}
+
+/**
+ * Ask the model to summarize a conversation into memory JSON entries.
+ * Returns the raw model text (expected to be a JSON array).
+ */
+export async function summarizeConversation(
+  config: ApiConfig,
+  conversation: Message[],
+  instruction: string
+): Promise<string> {
+  let received = "";
+  const messages: Message[] = [
+    ...conversation,
+    {
+      id: "summary-req",
+      role: "user",
+      content: instruction,
+      createdAt: Date.now(),
+    },
+  ];
+  await streamChat(
+    config,
+    "你是一个对话摘要助手，只输出规定格式的 JSON，不要输出多余文字。",
+    messages,
+    {
+      onText: (t) => {
+        received += t;
+      },
+    }
+  );
+  return received.trim();
 }

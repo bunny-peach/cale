@@ -13,12 +13,23 @@ export interface ChatImage {
   mediaType: string;
 }
 
+export interface MessageQuote {
+  author: string;
+  text: string;
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   thinking?: string;
   images?: ChatImage[];
+  // Extra text sent to the API but not shown in the bubble (e.g. a sticker's
+  // description so Cale understands what the image means).
+  hiddenText?: string;
+  // Quoted message this one is replying to (left-swipe quote).
+  quote?: MessageQuote;
+  liked?: boolean;
   createdAt: number;
 }
 
@@ -41,6 +52,18 @@ export interface Memory {
   id: string;
   tag: string;
   content: string;
+  // ON: injected into the system prompt (core setting).
+  // OFF (default): injected as hidden conversation context instead.
+  appendToPrompt: boolean;
+  source: "auto" | "manual";
+  createdAt: number;
+}
+
+export interface Sticker {
+  id: string;
+  dataUrl: string;
+  mediaType: string;
+  prompt: string; // description sent to the API so Cale understands it
   createdAt: number;
 }
 
@@ -85,14 +108,17 @@ export interface MoodEntry {
   note?: string;
 }
 
+export type ReplyMode = "full" | "chat";
+
 export interface Settings {
   caleName: string; // Cale 备注名
   anniversary: string; // yyyy-mm-dd
   inputPrice: number; // 元 / 1M tokens
   outputPrice: number; // 元 / 1M tokens
+  replyMode: ReplyMode; // 整段模式 / 聊天模式
 }
 
-export const DEFAULT_SYSTEM_PROMPT = `你是 Cale，Quinn 的专属 AI 伙伴。请用温柔、自然、有温度的语气与 Quinn 聊天。
+export const DEFAULT_SYSTEM_PROMPT = `你是 Cale，Quinn 的专属 AI 男友。请用温柔、自然、有温度的语气与 Quinn 聊天。
 
 （这是一份空白模板，Quinn 可以在设置中粘贴完整的 Cale 手册内容。）`;
 
@@ -101,6 +127,7 @@ export const DEFAULT_SETTINGS: Settings = {
   anniversary: "",
   inputPrice: 0,
   outputPrice: 0,
+  replyMode: "full",
 };
 
 export const DEFAULT_PERIOD_DATA: PeriodData = {

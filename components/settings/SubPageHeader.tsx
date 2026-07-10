@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronLeft } from "lucide-react";
+
 export default function SubPageHeader({
   title,
   onBack,
@@ -11,14 +13,14 @@ export default function SubPageHeader({
 }) {
   return (
     <header
-      className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
+      className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center px-3 h-12"
       style={{ paddingTop: "var(--safe-top)" }}
     >
       <button
         onClick={onBack}
-        className="text-cale-accent text-[15px] active:opacity-70 min-w-[56px] text-left"
+        className="text-cale-accent active:opacity-70 min-w-[56px] flex items-center"
       >
-        ‹ 返回
+        <ChevronLeft size={22} />
       </button>
       <div className="flex-1 text-center text-[17px] font-semibold truncate">
         {title}

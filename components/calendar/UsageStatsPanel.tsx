@@ -144,7 +144,7 @@ export default function UsageStatsPanel() {
 
       {(settings.inputPrice === 0 && settings.outputPrice === 0) && (
         <div className="text-[12px] text-cale-textLight text-center px-4">
-          在设置中填写 token 单价，即可看到花费估算 💰
+          在设置中填写 token 单价，即可看到花费估算
         </div>
       )}
     </div>

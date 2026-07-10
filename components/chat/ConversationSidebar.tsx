@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus, Trash2 } from "lucide-react";
 import { Conversation } from "@/lib/types";
 
 export default function ConversationSidebar({
@@ -38,9 +39,9 @@ export default function ConversationSidebar({
           <span className="text-[17px] font-semibold">对话</span>
           <button
             onClick={onNew}
-            className="text-cale-accent text-[14px] active:opacity-70"
+            className="text-cale-accent text-[14px] flex items-center gap-1 active:opacity-70"
           >
-            ＋ 新建
+            <Plus size={16} /> 新建
           </button>
         </div>
         <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -70,10 +71,10 @@ export default function ConversationSidebar({
                   e.stopPropagation();
                   onDelete(c.id);
                 }}
-                className="ml-2 text-cale-textLight text-lg active:opacity-60"
+                className="ml-2 text-cale-textLight active:opacity-60"
                 aria-label="删除对话"
               >
-                🗑
+                <Trash2 size={17} strokeWidth={1.8} />
               </button>
             </div>
           ))}

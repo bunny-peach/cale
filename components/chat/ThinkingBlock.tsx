@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Brain, ChevronDown, ChevronUp } from "lucide-react";
 import Markdown from "@/components/Markdown";
 
 export default function ThinkingBlock({
@@ -18,16 +19,14 @@ export default function ThinkingBlock({
         onClick={() => setOpen((o) => !o)}
         className="text-[13px] text-cale-accent flex items-center gap-1 active:opacity-70"
       >
-        <span>💭 Cale的内心</span>
-        <span className="text-[11px]">{open ? "收起 ▲" : "展开 ▼"}</span>
+        <Brain size={14} strokeWidth={1.8} />
+        <span>Cale 的内心</span>
+        {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
       </button>
       {open && (
         <div
-          className="mt-1 rounded-xl px-3 py-2 text-[13px] text-cale-textDark/80"
-          style={{
-            background: "#FFF0F5",
-            borderLeft: "3px solid #E8A0BF",
-          }}
+          className="mt-1 rounded-[14px] px-3 py-2 text-[13px] text-cale-textDark/80"
+          style={{ background: "#FFF0F5", borderLeft: "3px solid #E8A0BF" }}
         >
           <Markdown>{thinking}</Markdown>
           {streaming && <span className="cale-cursor" />}

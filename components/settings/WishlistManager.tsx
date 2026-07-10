@@ -1,15 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { Square, CircleDot, CheckSquare, Trash2 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { WishItem, WishStatus } from "@/lib/types";
 import SubPageHeader from "./SubPageHeader";
 
 const STATUS_ORDER: WishStatus[] = ["todo", "doing", "done"];
 const STATUS_LABEL: Record<WishStatus, string> = {
-  todo: "⬜ 待做",
-  doing: "🔄 进行中",
-  done: "✅ 已完成",
+  todo: "待做",
+  doing: "进行中",
+  done: "已完成",
+};
+const STATUS_ICON: Record<WishStatus, typeof Square> = {
+  todo: Square,
+  doing: CircleDot,
+  done: CheckSquare,
 };
 
 export default function WishlistManager({ onBack }: { onBack: () => void }) {
@@ -73,17 +79,30 @@ export default function WishlistManager({ onBack }: { onBack: () => void }) {
 
         {wishlist.length === 0 && (
           <div className="text-center text-cale-textLight text-[13px] mt-6">
-            清单会自动同步给 Cale，她能主动提及进度 ✨
+            清单会自动同步给 Cale，他能主动提及进度
           </div>
         )}
 
-        {sorted.map((w) => (
-          <div key={w.id} className="bg-cale-card rounded-card px-3 py-3">
+        {sorted.map((w) => {
+          const StatusIcon = STATUS_ICON[w.status];
+          return (
+          <div key={w.id} className="bg-white rounded-[14px] px-3 py-3">
             <div className="flex items-start gap-2">
               <button
                 onClick={() => cycleStatus(w)}
-                className="text-[13px] flex-shrink-0 active:opacity-60"
+                className="flex-shrink-0 flex items-center gap-1 text-[12px] text-cale-textLight active:opacity-60 pt-0.5"
               >
+                <StatusIcon
+                  size={15}
+                  strokeWidth={1.8}
+                  className={
+                    w.status === "done"
+                      ? "text-cale-accent"
+                      : w.status === "doing"
+                        ? "text-cale-accent"
+                        : "text-cale-textLight"
+                  }
+                />
                 {STATUS_LABEL[w.status]}
               </button>
               <div className="flex-1 min-w-0">
@@ -130,13 +149,14 @@ export default function WishlistManager({ onBack }: { onBack: () => void }) {
                 onClick={() =>
                   setWishlist((prev) => prev.filter((x) => x.id !== w.id))
                 }
-                className="text-cale-textLight text-lg active:opacity-60 flex-shrink-0"
+                className="text-cale-textLight active:opacity-60 flex-shrink-0"
               >
-                🗑
+                <Trash2 size={16} strokeWidth={1.8} />
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

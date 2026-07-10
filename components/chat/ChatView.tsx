@@ -1,17 +1,34 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Menu, Plus, Check, X, Quote } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid } from "@/lib/storage";
-import { Conversation, Message, ChatImage } from "@/lib/types";
-import { streamChat } from "@/lib/api";
-import { buildSystemPrompt } from "@/lib/prompt";
-import { parseMarkers } from "@/lib/markers";
+import {
+  Conversation,
+  Message,
+  ChatImage,
+  Sticker,
+  MessageQuote,
+} from "@/lib/types";
+import { streamChat, summarizeConversation } from "@/lib/api";
+import {
+  buildSystemPrompt,
+  buildMemoryContext,
+  MEMORY_SUMMARY_PROMPT,
+} from "@/lib/prompt";
+import { parseMarkers, splitMessageBreaks } from "@/lib/markers";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 import ConversationSidebar from "./ConversationSidebar";
 
-export default function ChatView() {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export default function ChatView({
+  onManageStickers,
+}: {
+  onManageStickers: () => void;
+}) {
   const app = useApp();
   const {
     apiConfig,
@@ -19,14 +36,23 @@ export default function ChatView() {
     setConversations,
     currentId,
     setCurrentId,
+    settings,
+    setSettings,
+    stickers,
   } = app;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(settings.caleName);
+  const [burstMode, setBurstMode] = useState(false);
+  const [pendingQuote, setPendingQuote] = useState<MessageQuote | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const summarizedLen = useRef<Record<string, number>>({});
 
   const current = useMemo(
     () => conversations.find((c) => c.id === currentId) ?? null,
@@ -56,9 +82,7 @@ export default function ChatView() {
     id: string,
     updater: (c: Conversation) => Conversation
   ) => {
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? updater(c) : c))
-    );
+    setConversations((prev) => prev.map((c) => (c.id === id ? updater(c) : c)));
   };
 
   const newConversation = (): string => {
@@ -74,44 +98,51 @@ export default function ChatView() {
     return conv.id;
   };
 
-  const handleSend = async (text: string, images: ChatImage[]) => {
-    if (!apiConfig.baseURL) {
-      showToast("请先在设置中配置 API");
-      return;
+  // ---- Auto memory summary (idle / hidden) ----
+  const runSummary = async (cid: string) => {
+    if (!apiConfig.baseURL) return;
+    const conv = conversations.find((c) => c.id === cid);
+    if (!conv) return;
+    const done = summarizedLen.current[cid] ?? 0;
+    if (conv.messages.length <= done || conv.messages.length < 2) return;
+    summarizedLen.current[cid] = conv.messages.length;
+    try {
+      const raw = await summarizeConversation(
+        apiConfig,
+        conv.messages,
+        MEMORY_SUMMARY_PROMPT
+      );
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (!match) return;
+      const arr = JSON.parse(match[0]) as { tag?: string; content?: string }[];
+      arr.forEach((item) => {
+        if (item?.content) app.addMemory(item.tag || "对话", item.content, "auto", false);
+      });
+    } catch {
+      /* summary is best-effort */
     }
-    let convId = currentId;
-    if (!convId || !conversations.some((c) => c.id === convId)) {
-      convId = newConversation();
-    }
+  };
 
-    const userMsg: Message = {
-      id: uid(),
-      role: "user",
-      content: text,
-      images: images.length ? images : undefined,
-      createdAt: Date.now(),
+  const scheduleIdleSummary = (cid: string) => {
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(() => runSummary(cid), 10 * 60 * 1000);
+  };
+
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden" && currentId) runSummary(currentId);
     };
-    const assistantMsg: Message = {
-      id: uid(),
-      role: "assistant",
-      content: "",
-      thinking: "",
-      createdAt: Date.now(),
-    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentId, conversations, apiConfig]);
 
-    const cid = convId!;
-    updateConversation(cid, (c) => ({
-      ...c,
-      title: c.title || text.slice(0, 20) || "图片对话",
-      messages: [...c.messages, userMsg, assistantMsg],
-      updatedAt: Date.now(),
-    }));
-    scrollToBottom();
-
-    // Build history from the messages we just derived (avoid stale state)
-    const base = conversations.find((c) => c.id === cid);
-    const history: Message[] = [...(base?.messages ?? []), userMsg];
-
+  // ---- Core assistant run ----
+  const runAssistant = async (
+    cid: string,
+    apiHistory: Message[],
+    assistantMsgId: string
+  ) => {
     const system = buildSystemPrompt({
       systemPrompt: app.systemPrompt,
       memories: app.memories,
@@ -123,6 +154,23 @@ export default function ChatView() {
         : undefined,
     });
 
+    // Inject OFF memories as hidden context on the first user message
+    let finalHistory = apiHistory;
+    const memCtx = buildMemoryContext(app.memories);
+    if (memCtx) {
+      const idx = apiHistory.findIndex((m) => m.role === "user");
+      if (idx >= 0) {
+        finalHistory = apiHistory.map((m, i) =>
+          i === idx
+            ? {
+                ...m,
+                hiddenText: [memCtx, m.hiddenText].filter(Boolean).join("\n"),
+              }
+            : m
+        );
+      }
+    }
+
     const controller = new AbortController();
     abortRef.current = controller;
     setStreaming(true);
@@ -130,24 +178,25 @@ export default function ChatView() {
     let acc = "";
     let think = "";
     try {
-      await streamChat(apiConfig, system, history, {
+      await streamChat(apiConfig, system, finalHistory, {
         signal: controller.signal,
         onThinking: (d) => {
           think += d;
           updateConversation(cid, (c) => ({
             ...c,
             messages: c.messages.map((m) =>
-              m.id === assistantMsg.id ? { ...m, thinking: think } : m
+              m.id === assistantMsgId ? { ...m, thinking: think } : m
             ),
           }));
           scrollToBottom();
         },
         onText: (d) => {
           acc += d;
+          const preview = acc.replace(/\[MSG_BREAK\]/g, " ");
           updateConversation(cid, (c) => ({
             ...c,
             messages: c.messages.map((m) =>
-              m.id === assistantMsg.id ? { ...m, content: acc } : m
+              m.id === assistantMsgId ? { ...m, content: preview } : m
             ),
           }));
           scrollToBottom();
@@ -155,17 +204,8 @@ export default function ChatView() {
         onUsage: (input, output) => app.recordUsage(input, output),
       });
 
-      // Parse Cale's self-action markers, strip from displayed text
       const parsed = parseMarkers(acc);
-      updateConversation(cid, (c) => ({
-        ...c,
-        messages: c.messages.map((m) =>
-          m.id === assistantMsg.id
-            ? { ...m, content: parsed.cleanText, thinking: think || undefined }
-            : m
-        ),
-        updatedAt: Date.now(),
-      }));
+      // Side effects
       parsed.mcpAdds.forEach((t) => app.addWish(t, "cale"));
       parsed.songAdds.forEach((s) =>
         app.setPlaylist((prev) => (prev.includes(s) ? prev : [...prev, s]))
@@ -174,19 +214,62 @@ export default function ChatView() {
         app.setBookshelf((prev) => (prev.includes(b) ? prev : [...prev, b]))
       );
       parsed.moodNotes.forEach((n) => app.setTodayMoodNote(n));
-      if (
-        parsed.mcpAdds.length ||
-        parsed.songAdds.length ||
-        parsed.bookAdds.length
-      ) {
-        showToast("Cale 悄悄记下了一些东西 ✨");
+      parsed.diaryAdds.forEach((d) => app.addDiary(d.title, d.content));
+      if (parsed.diaryAdds.length) showToast("Cale 写了一篇日记");
+      else if (parsed.mcpAdds.length || parsed.songAdds.length || parsed.bookAdds.length)
+        showToast("Cale 悄悄记下了一些东西");
+
+      const segments = splitMessageBreaks(parsed.cleanText);
+      const chatMode = app.settings.replyMode === "chat";
+
+      if (chatMode && segments.length > 1) {
+        // First segment replaces the placeholder
+        updateConversation(cid, (c) => ({
+          ...c,
+          messages: c.messages.map((m) =>
+            m.id === assistantMsgId
+              ? { ...m, content: segments[0], thinking: think || undefined }
+              : m
+          ),
+          updatedAt: Date.now(),
+        }));
+        scrollToBottom();
+        // Remaining segments as separate bubbles with a typing delay
+        for (let i = 1; i < segments.length; i++) {
+          await sleep(600 + Math.random() * 500);
+          updateConversation(cid, (c) => ({
+            ...c,
+            messages: [
+              ...c.messages,
+              {
+                id: uid(),
+                role: "assistant",
+                content: segments[i],
+                createdAt: Date.now(),
+              },
+            ],
+            updatedAt: Date.now(),
+          }));
+          scrollToBottom();
+        }
+      } else {
+        const finalText = parsed.cleanText.replace(/\[MSG_BREAK\]/g, " ").trim();
+        updateConversation(cid, (c) => ({
+          ...c,
+          messages: c.messages.map((m) =>
+            m.id === assistantMsgId
+              ? { ...m, content: finalText, thinking: think || undefined }
+              : m
+          ),
+          updatedAt: Date.now(),
+        }));
       }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         updateConversation(cid, (c) => ({
           ...c,
           messages: c.messages.map((m) =>
-            m.id === assistantMsg.id
+            m.id === assistantMsgId
               ? {
                   ...m,
                   content:
@@ -200,7 +283,175 @@ export default function ChatView() {
     } finally {
       setStreaming(false);
       abortRef.current = null;
+      scheduleIdleSummary(cid);
     }
+  };
+
+  // ---- Sending ----
+  const appendUserMessage = (
+    cid: string,
+    partial: Partial<Message>,
+    titleSeed: string
+  ): Message => {
+    const userMsg: Message = {
+      id: uid(),
+      role: "user",
+      content: "",
+      createdAt: Date.now(),
+      quote: pendingQuote ?? undefined,
+      ...partial,
+    };
+    updateConversation(cid, (c) => ({
+      ...c,
+      title: c.title || titleSeed.slice(0, 20) || "新对话",
+      messages: [...c.messages, userMsg],
+      updatedAt: Date.now(),
+    }));
+    setPendingQuote(null);
+    return userMsg;
+  };
+
+  const ensureConversation = (): string => {
+    let cid = currentId;
+    if (!cid || !conversations.some((c) => c.id === cid)) cid = newConversation();
+    return cid!;
+  };
+
+  const handleSubmit = (text: string, images: ChatImage[]) => {
+    if (!apiConfig.baseURL) {
+      showToast("请先在设置中配置 API");
+      return;
+    }
+    const cid = ensureConversation();
+    const base = conversations.find((c) => c.id === cid);
+    const prior = base?.messages ?? [];
+    const userMsg = appendUserMessage(
+      cid,
+      { content: text, images: images.length ? images : undefined },
+      text || "图片"
+    );
+    scrollToBottom();
+    if (burstMode) return; // wait for "让 Cale 回复"
+
+    const assistantMsg: Message = {
+      id: uid(),
+      role: "assistant",
+      content: "",
+      thinking: "",
+      createdAt: Date.now(),
+    };
+    updateConversation(cid, (c) => ({
+      ...c,
+      messages: [...c.messages, assistantMsg],
+    }));
+    runAssistant(cid, [...prior, userMsg], assistantMsg.id);
+  };
+
+  const handleSendSticker = (s: Sticker) => {
+    if (!apiConfig.baseURL) {
+      showToast("请先在设置中配置 API");
+      return;
+    }
+    const cid = ensureConversation();
+    const base = conversations.find((c) => c.id === cid);
+    const prior = base?.messages ?? [];
+    const userMsg = appendUserMessage(
+      cid,
+      {
+        images: [{ dataUrl: s.dataUrl, mediaType: s.mediaType }],
+        hiddenText: s.prompt ? `（表情包含义：${s.prompt}）` : undefined,
+      },
+      "表情"
+    );
+    scrollToBottom();
+    if (burstMode) return;
+
+    const assistantMsg: Message = {
+      id: uid(),
+      role: "assistant",
+      content: "",
+      thinking: "",
+      createdAt: Date.now(),
+    };
+    updateConversation(cid, (c) => ({
+      ...c,
+      messages: [...c.messages, assistantMsg],
+    }));
+    runAssistant(cid, [...prior, userMsg], assistantMsg.id);
+  };
+
+  const triggerBurstReply = () => {
+    if (!current) return;
+    const cid = current.id;
+    const history = current.messages;
+    const assistantMsg: Message = {
+      id: uid(),
+      role: "assistant",
+      content: "",
+      thinking: "",
+      createdAt: Date.now(),
+    };
+    updateConversation(cid, (c) => ({
+      ...c,
+      messages: [...c.messages, assistantMsg],
+    }));
+    runAssistant(cid, history, assistantMsg.id);
+  };
+
+  const handleRegenerate = (assistantMsg: Message) => {
+    if (!current || streaming) return;
+    const cid = current.id;
+    const idx = current.messages.findIndex((m) => m.id === assistantMsg.id);
+    if (idx < 0) return;
+    const history = current.messages.slice(0, idx); // up to preceding user msg
+    const fresh: Message = {
+      id: uid(),
+      role: "assistant",
+      content: "",
+      thinking: "",
+      createdAt: Date.now(),
+    };
+    updateConversation(cid, (c) => ({
+      ...c,
+      messages: [...c.messages.slice(0, idx), fresh],
+    }));
+    runAssistant(cid, history, fresh.id);
+  };
+
+  const handleUndo = (m: Message) => {
+    if (!current) return;
+    const cid = current.id;
+    updateConversation(cid, (c) => {
+      const idx = c.messages.findIndex((x) => x.id === m.id);
+      if (idx < 0) return c;
+      // remove the user message and a following assistant reply, if any
+      const drop = [idx];
+      if (c.messages[idx + 1]?.role === "assistant") drop.push(idx + 1);
+      return {
+        ...c,
+        messages: c.messages.filter((_, i) => !drop.includes(i)),
+      };
+    });
+    setActionMsg(null);
+    showToast("已撤回");
+  };
+
+  const handleLike = (m: Message) => {
+    if (!current) return;
+    updateConversation(current.id, (c) => ({
+      ...c,
+      messages: c.messages.map((x) =>
+        x.id === m.id ? { ...x, liked: !x.liked } : x
+      ),
+    }));
+  };
+
+  const handleQuote = (m: Message) => {
+    setPendingQuote({
+      author: settings.caleName || "Cale",
+      text: m.content,
+    });
+    showToast("已引用，输入你的回复");
   };
 
   const handleStop = () => {
@@ -209,17 +460,9 @@ export default function ChatView() {
   };
 
   const saveAsDiary = (m: Message) => {
-    app.setDiary((prev) => [
-      {
-        id: uid(),
-        title: `来自聊天 · ${new Date().toLocaleDateString("zh-CN")}`,
-        content: m.content,
-        createdAt: Date.now(),
-      },
-      ...prev,
-    ]);
+    app.addDiary(`来自聊天 · ${new Date().toLocaleDateString("zh-CN")}`, m.content);
     setActionMsg(null);
-    showToast("已保存为日记 📖");
+    showToast("已保存到日记");
   };
 
   const copyMessage = async (m: Message) => {
@@ -232,48 +475,103 @@ export default function ChatView() {
     setActionMsg(null);
   };
 
+  const saveName = () => {
+    app.updateCaleName(nameDraft);
+    setEditingName(false);
+    showToast("备注名已更新");
+  };
+
   const messages = current?.messages ?? [];
+  const showBurstButton =
+    burstMode &&
+    !streaming &&
+    messages.length > 0 &&
+    messages[messages.length - 1].role === "user";
+  const displayName = settings.caleName || "Cale";
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden">
       {/* Top bar */}
       <header
-        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
+        className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center px-3 h-12"
         style={{ paddingTop: "var(--safe-top)" }}
       >
         <button
           onClick={() => setSidebarOpen(true)}
-          className="w-9 h-9 rounded-full bg-cale-primary/30 flex items-center justify-center text-lg active:opacity-70"
+          className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
           aria-label="对话列表"
         >
-          🌸
+          <Menu size={22} strokeWidth={1.8} />
         </button>
-        <div className="flex-1 text-center text-[17px] font-semibold">
-          {app.settings.caleName || "Cale"}
+
+        <div className="flex-1 flex items-center justify-center">
+          {editingName ? (
+            <div className="flex items-center gap-1">
+              <input
+                autoFocus
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && saveName()}
+                className="w-28 text-center text-[17px] font-semibold bg-cale-input rounded-lg px-2 py-0.5 outline-none"
+              />
+              <button onClick={saveName} className="text-cale-accent p-1">
+                <Check size={18} />
+              </button>
+              <button
+                onClick={() => {
+                  setEditingName(false);
+                  setNameDraft(displayName);
+                }}
+                className="text-cale-textLight p-1"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setNameDraft(displayName);
+                setEditingName(true);
+              }}
+              className="text-[17px] font-semibold active:opacity-60"
+            >
+              {displayName}
+            </button>
+          )}
         </div>
+
+        <button
+          onClick={() =>
+            setSettings({
+              ...settings,
+              replyMode: settings.replyMode === "chat" ? "full" : "chat",
+            })
+          }
+          className="h-7 px-2 mr-1 rounded-full text-[11px] bg-cale-input text-cale-textLight active:opacity-70"
+          title="切换回复模式"
+        >
+          {settings.replyMode === "chat" ? "聊天" : "整段"}
+        </button>
         <button
           onClick={() => {
             newConversation();
             showToast("新对话已开始");
           }}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-cale-accent text-xl active:opacity-70"
+          className="w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
           aria-label="新建对话"
         >
-          ✏️
+          <Plus size={22} strokeWidth={2} />
         </button>
       </header>
 
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto no-scrollbar px-3 py-3 space-y-2"
+        className="flex-1 overflow-y-auto no-scrollbar px-3 py-3 space-y-3"
       >
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-cale-textLight">
-            <div className="text-5xl mb-3">🌸</div>
-            <div className="text-[15px]">
-              和 {app.settings.caleName || "Cale"} 开始聊天吧
-            </div>
+          <div className="h-full flex items-center justify-center text-cale-textLight">
+            <span className="text-[15px]">和 {displayName} 说点什么…</span>
           </div>
         )}
         {messages.map((m, i) => (
@@ -284,14 +582,49 @@ export default function ChatView() {
               streaming && i === messages.length - 1 && m.role === "assistant"
             }
             onAction={setActionMsg}
+            onLike={handleLike}
+            onQuote={handleQuote}
+            onRegenerate={handleRegenerate}
           />
         ))}
       </div>
 
+      {/* Burst reply button */}
+      {showBurstButton && (
+        <div className="px-3 pb-1">
+          <button
+            onClick={triggerBurstReply}
+            className="w-full py-2.5 rounded-[14px] bg-cale-accent text-white text-[14px] font-medium active:opacity-80"
+          >
+            让 {displayName} 回复
+          </button>
+        </div>
+      )}
+
+      {/* Pending quote preview */}
+      {pendingQuote && (
+        <div className="px-3 pb-1">
+          <div className="flex items-center gap-2 bg-cale-thinking rounded-[12px] px-3 py-2 text-[12px] text-cale-textLight">
+            <Quote size={13} className="text-cale-accent flex-shrink-0" />
+            <span className="flex-1 truncate">
+              {pendingQuote.author}：{pendingQuote.text}
+            </span>
+            <button onClick={() => setPendingQuote(null)}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <ChatInput
-        onSend={handleSend}
+        onSubmit={handleSubmit}
+        onSendSticker={handleSendSticker}
         onStop={handleStop}
         streaming={streaming}
+        burstMode={burstMode}
+        onToggleBurst={() => setBurstMode((b) => !b)}
+        stickers={stickers}
+        onManageStickers={onManageStickers}
       />
 
       <ConversationSidebar
@@ -320,7 +653,7 @@ export default function ChatView() {
           onClick={() => setActionMsg(null)}
         >
           <div
-            className="w-full bg-cale-card rounded-t-2xl p-2 pb-6"
+            className="w-full bg-white rounded-t-2xl p-2"
             style={{ paddingBottom: "calc(1.5rem + var(--safe-bottom))" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -330,12 +663,20 @@ export default function ChatView() {
             >
               复制
             </button>
+            {actionMsg.role === "user" && (
+              <button
+                onClick={() => handleUndo(actionMsg)}
+                className="w-full py-3.5 text-center text-[16px] text-red-500 active:bg-cale-input rounded-xl"
+              >
+                撤回
+              </button>
+            )}
             {actionMsg.role === "assistant" && actionMsg.content && (
               <button
                 onClick={() => saveAsDiary(actionMsg)}
                 className="w-full py-3.5 text-center text-[16px] text-cale-textDark active:bg-cale-input rounded-xl"
               >
-                保存为日记
+                保存到日记
               </button>
             )}
             <button

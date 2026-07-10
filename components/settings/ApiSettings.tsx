@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { ApiConfig, ApiFormat } from "@/lib/types";
-import { testConnection } from "@/lib/api";
+import { testConnection, fetchModels } from "@/lib/api";
 import SubPageHeader from "./SubPageHeader";
 
 export default function ApiSettings({ onBack }: { onBack: () => void }) {
@@ -16,10 +17,37 @@ export default function ApiSettings({ onBack }: { onBack: () => void }) {
   );
   const [saved, setSaved] = useState(false);
 
+  const [models, setModels] = useState<string[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelError, setModelError] = useState<string | null>(null);
+  const [manualModel, setManualModel] = useState(false);
+
   const update = (patch: Partial<ApiConfig>) => {
     setDraft((d) => ({ ...d, ...patch }));
     setSaved(false);
     setResult(null);
+  };
+
+  const loadModels = async () => {
+    setLoadingModels(true);
+    setModelError(null);
+    try {
+      const list = await fetchModels(draft);
+      if (list.length === 0) {
+        setModelError("未获取到模型，请手动输入");
+        setManualModel(true);
+      } else {
+        setModels(list);
+        setManualModel(false);
+        // keep current model if present, else pick first
+        if (!list.includes(draft.model)) update({ model: list[0] });
+      }
+    } catch (e) {
+      setModelError(`获取失败：${(e as Error).message.slice(0, 80)}`);
+      setManualModel(true);
+    } finally {
+      setLoadingModels(false);
+    }
   };
 
   const save = () => {
@@ -83,23 +111,58 @@ export default function ApiSettings({ onBack }: { onBack: () => void }) {
             />
             <button
               onClick={() => setShowKey((s) => !s)}
-              className="px-3 text-cale-textLight text-lg"
+              className="px-3 text-cale-textLight"
             >
-              {showKey ? "🙈" : "👁"}
+              {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           <p className="hint">API Key 只保存在本机，不会上传到任何服务器</p>
         </Field>
 
-        <Field label="模型名称">
-          <input
-            value={draft.model}
-            onChange={(e) => update({ model: e.target.value.trim() })}
-            placeholder="例如 claude-opus-4-6"
-            className="input"
-            autoCapitalize="off"
-            autoCorrect="off"
-          />
+        <Field label="模型">
+          <button
+            onClick={loadModels}
+            disabled={loadingModels || !draft.baseURL || !draft.apiKey}
+            className="w-full mb-2 py-2.5 rounded-card bg-cale-input text-cale-textDark text-[14px] flex items-center justify-center gap-2 active:opacity-70 disabled:opacity-40"
+          >
+            <RefreshCw
+              size={15}
+              className={loadingModels ? "animate-spin" : ""}
+            />
+            {loadingModels ? "获取中…" : "获取模型列表"}
+          </button>
+
+          {models.length > 0 && !manualModel ? (
+            <select
+              value={draft.model}
+              onChange={(e) => update({ model: e.target.value })}
+              className="input appearance-none"
+            >
+              {models.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              value={draft.model}
+              onChange={(e) => update({ model: e.target.value.trim() })}
+              placeholder="例如 claude-opus-4-6"
+              className="input"
+              autoCapitalize="off"
+              autoCorrect="off"
+            />
+          )}
+          {modelError && <p className="hint text-red-500">{modelError}</p>}
+          {models.length > 0 && !manualModel && (
+            <button
+              onClick={() => setManualModel(true)}
+              className="hint underline"
+            >
+              改为手动输入
+            </button>
+          )}
         </Field>
 
         <Field label="接口格式">
