@@ -1,18 +1,35 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+  Smile,
+  Meh,
+  Frown,
+  Angry,
+  Moon,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { todayKey } from "@/lib/storage";
 import { classifyDate, getPeriodInsight } from "@/lib/period";
 import { Mood, MoodEntry } from "@/lib/types";
 import UsageStatsPanel from "./UsageStatsPanel";
 
-const MOODS: { key: Mood; label: string; emoji: string; color: string }[] = [
-  { key: "happy", label: "开心", emoji: "😊", color: "#FFD966" },
-  { key: "calm", label: "平静", emoji: "😌", color: "#A8D8B9" },
-  { key: "sad", label: "难过", emoji: "😢", color: "#A0C4E8" },
-  { key: "irritated", label: "烦躁", emoji: "😤", color: "#E8A0A0" },
-  { key: "tired", label: "疲惫", emoji: "😪", color: "#C4B0D8" },
+const MOODS: {
+  key: Mood;
+  label: string;
+  Icon: typeof Smile;
+  color: string;
+}[] = [
+  { key: "happy", label: "开心", Icon: Smile, color: "#E0A63C" },
+  { key: "calm", label: "平静", Icon: Meh, color: "#5C9E7A" },
+  { key: "sad", label: "难过", Icon: Frown, color: "#5B86C4" },
+  { key: "irritated", label: "烦躁", Icon: Angry, color: "#C46B6B" },
+  { key: "tired", label: "疲惫", Icon: Moon, color: "#8B72B0" },
 ];
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
@@ -103,8 +120,13 @@ export default function CalendarView() {
             className="rounded-card px-4 py-4 text-center"
             style={{ background: "linear-gradient(135deg,#FFF0F5,#F5E0EA)" }}
           >
-            <div className="text-[28px] heart-pulse">💗</div>
-            <div className="text-[16px] mt-1 text-cale-textDark">
+            <Heart
+              size={30}
+              className="heart-pulse mx-auto text-cale-accent"
+              fill="#E8A0BF"
+              strokeWidth={1.5}
+            />
+            <div className="text-[16px] mt-2 text-cale-textDark">
               和 {settings.caleName || "Cale"} 在一起的第{" "}
               <span className="font-bold text-cale-accent text-[20px]">
                 {anniversaryDays}
@@ -140,7 +162,7 @@ export default function CalendarView() {
               <div className="text-[14px] text-cale-textDark">
                 {insight.hasData
                   ? insight.summary
-                  : "点击日历上的日期，标记经期开始日 🌸"}
+                  : "点击日历上的日期，标记经期开始日"}
               </div>
               {insight.hasData && (
                 <div className="text-[12px] text-cale-textLight mt-1">
@@ -156,7 +178,7 @@ export default function CalendarView() {
                   onClick={() => setCursor(new Date(year, month - 1, 1))}
                   className="px-3 py-1 text-cale-textLight active:opacity-60"
                 >
-                  ‹
+                  <ChevronLeft size={20} />
                 </button>
                 <div className="font-semibold text-[15px]">
                   {year} 年 {month + 1} 月
@@ -165,7 +187,7 @@ export default function CalendarView() {
                   onClick={() => setCursor(new Date(year, month + 1, 1))}
                   className="px-3 py-1 text-cale-textLight active:opacity-60"
                 >
-                  ›
+                  <ChevronRight size={20} />
                 </button>
               </div>
               <div className="grid grid-cols-7 gap-y-1 text-center">
@@ -211,13 +233,20 @@ export default function CalendarView() {
                             : "none",
                         }}
                       >
-                        {mood ? (
-                          <span>
-                            {MOODS.find((m) => m.key === mood.mood)?.emoji}
-                          </span>
-                        ) : (
-                          d
-                        )}
+                        {mood
+                          ? (() => {
+                              const M = MOODS.find((x) => x.key === mood.mood);
+                              return M ? (
+                                <M.Icon
+                                  size={16}
+                                  strokeWidth={1.8}
+                                  style={{ color: M.color }}
+                                />
+                              ) : (
+                                d
+                              );
+                            })()
+                          : d}
                       </div>
                     </button>
                   );
@@ -249,22 +278,27 @@ export default function CalendarView() {
                     记录心情
                   </div>
                   <div className="flex justify-between">
-                    {MOODS.map((m) => (
-                      <button
-                        key={m.key}
-                        onClick={() => setMood(selectedDate, m.key)}
-                        className={`flex flex-col items-center gap-1 px-1 ${
-                          moodMap[selectedDate]?.mood === m.key
-                            ? "scale-110"
-                            : "opacity-70"
-                        } transition-transform`}
-                      >
-                        <span className="text-[24px]">{m.emoji}</span>
-                        <span className="text-[11px] text-cale-textLight">
-                          {m.label}
-                        </span>
-                      </button>
-                    ))}
+                    {MOODS.map((m) => {
+                      const on = moodMap[selectedDate]?.mood === m.key;
+                      return (
+                        <button
+                          key={m.key}
+                          onClick={() => setMood(selectedDate, m.key)}
+                          className={`flex flex-col items-center gap-1 px-1 transition-transform ${
+                            on ? "scale-110" : "opacity-60"
+                          }`}
+                        >
+                          <m.Icon
+                            size={26}
+                            strokeWidth={1.8}
+                            style={{ color: m.color }}
+                          />
+                          <span className="text-[11px] text-cale-textLight">
+                            {m.label}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -333,16 +367,16 @@ function NumberRow({
       <div className="flex items-center gap-3">
         <button
           onClick={() => onChange(Math.max(1, value - 1))}
-          className="w-7 h-7 rounded-full bg-cale-input text-cale-textDark active:opacity-70"
+          className="w-7 h-7 rounded-full bg-cale-input text-cale-textDark flex items-center justify-center active:opacity-70"
         >
-          −
+          <Minus size={15} />
         </button>
         <span className="w-8 text-center text-[15px]">{value}</span>
         <button
           onClick={() => onChange(value + 1)}
-          className="w-7 h-7 rounded-full bg-cale-input text-cale-textDark active:opacity-70"
+          className="w-7 h-7 rounded-full bg-cale-input text-cale-textDark flex items-center justify-center active:opacity-70"
         >
-          ＋
+          <Plus size={15} />
         </button>
       </div>
     </div>

@@ -20,6 +20,7 @@ import {
   Settings,
   MoodEntry,
   Mood,
+  Sticker,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_SETTINGS,
   DEFAULT_PERIOD_DATA,
@@ -65,8 +66,20 @@ interface AppState {
   bookshelf: string[];
   setBookshelf: React.Dispatch<React.SetStateAction<string[]>>;
 
+  stickers: Sticker[];
+  setStickers: React.Dispatch<React.SetStateAction<Sticker[]>>;
+
   // helpers
   addWish: (title: string, source: WishItem["source"], description?: string) => void;
+  addMemory: (
+    tag: string,
+    content: string,
+    source?: Memory["source"],
+    appendToPrompt?: boolean
+  ) => void;
+  toggleMemoryPrompt: (id: string) => void;
+  addDiary: (title: string, content: string) => void;
+  updateCaleName: (name: string) => void;
   recordUsage: (input: number, output: number) => void;
   setTodayMoodNote: (note: string) => void;
   todayMood?: MoodEntry;
@@ -106,6 +119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [moods, setMoods] = useState<MoodEntry[]>([]);
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [bookshelf, setBookshelf] = useState<string[]>([]);
+  const [stickers, setStickers] = useState<Sticker[]>([]);
 
   // Hydrate from localStorage on mount
   useEffect(() => {
@@ -114,14 +128,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setConversations(load(KEYS.conversations, []));
     setCurrentIdState(load<string | null>(KEYS.currentConversation, null));
     setDiary(load(KEYS.diary, []));
-    setMemories(load(KEYS.memories, []));
+    // Migrate older memory records that lack the new fields
+    const rawMemories = load<Memory[]>(KEYS.memories, []);
+    setMemories(
+      rawMemories.map((m) => ({
+        ...m,
+        appendToPrompt: m.appendToPrompt ?? false,
+        source: m.source ?? "manual",
+      }))
+    );
     setWishlist(load(KEYS.wishlist, []));
     setPeriodDataState(load(KEYS.periodData, DEFAULT_PERIOD_DATA));
     setUsageStats(load(KEYS.usageStats, { days: {} }));
-    setSettingsState(load(KEYS.settings, DEFAULT_SETTINGS));
+    setSettingsState({ ...DEFAULT_SETTINGS, ...load(KEYS.settings, {}) });
     setMoods(load(KEYS.moods, []));
-    setPlaylist(load("cale_playlist", []));
-    setBookshelf(load("cale_bookshelf", []));
+    setPlaylist(load(KEYS.playlist, []));
+    setBookshelf(load(KEYS.bookshelf, []));
+    setStickers(load(KEYS.stickers, []));
     setHydrated(true);
   }, []);
 
@@ -167,11 +190,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (hydrated) save(KEYS.moods, moods);
   }, [moods, hydrated]);
   useEffect(() => {
-    if (hydrated) save("cale_playlist", playlist);
+    if (hydrated) save(KEYS.playlist, playlist);
   }, [playlist, hydrated]);
   useEffect(() => {
-    if (hydrated) save("cale_bookshelf", bookshelf);
+    if (hydrated) save(KEYS.bookshelf, bookshelf);
   }, [bookshelf, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(KEYS.stickers, stickers);
+  }, [stickers, hydrated]);
 
   const addWish = useCallback(
     (title: string, source: WishItem["source"], description?: string) => {
@@ -194,6 +220,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     []
   );
+
+  const addMemory = useCallback(
+    (
+      tag: string,
+      content: string,
+      source: Memory["source"] = "manual",
+      appendToPrompt = false
+    ) => {
+      const clean = content.trim();
+      if (!clean) return;
+      setMemories((prev) => {
+        // avoid near-duplicate auto memories
+        if (prev.some((m) => m.content === clean)) return prev;
+        return [
+          ...prev,
+          {
+            id: uid(),
+            tag: tag.trim() || "记忆",
+            content: clean,
+            appendToPrompt,
+            source,
+            createdAt: Date.now(),
+          },
+        ];
+      });
+    },
+    []
+  );
+
+  const toggleMemoryPrompt = useCallback((id: string) => {
+    setMemories((prev) =>
+      prev.map((m) =>
+        m.id === id ? { ...m, appendToPrompt: !m.appendToPrompt } : m
+      )
+    );
+  }, []);
+
+  const addDiary = useCallback((title: string, content: string) => {
+    if (!content.trim()) return;
+    setDiary((prev) => [
+      {
+        id: uid(),
+        title: title.trim() || "Cale 的日记",
+        content: content.trim(),
+        createdAt: Date.now(),
+      },
+      ...prev,
+    ]);
+  }, []);
 
   const recordUsage = useCallback((input: number, output: number) => {
     if (!input && !output) return;
@@ -262,7 +337,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPlaylist,
     bookshelf,
     setBookshelf,
+    stickers,
+    setStickers,
     addWish,
+    addMemory,
+    toggleMemoryPrompt,
+    addDiary,
+    updateCaleName: (name: string) =>
+      setSettings({ ...settings, caleName: name.trim() || "Cale" }),
     recordUsage,
     setTodayMoodNote,
     todayMood,

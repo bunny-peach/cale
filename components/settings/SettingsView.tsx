@@ -1,6 +1,18 @@
 "use client";
 
 import { useRef, useState } from "react";
+import {
+  KeyRound,
+  FileText,
+  Brain,
+  Sparkles,
+  Gift,
+  Smile,
+  Download,
+  Upload,
+  Trash2,
+  ChevronRight,
+} from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { KEYS } from "@/lib/storage";
 import ApiSettings from "./ApiSettings";
@@ -9,21 +21,17 @@ import MemoryManager from "./MemoryManager";
 import WishlistManager from "./WishlistManager";
 import RecommendManager from "./RecommendManager";
 
-type Page =
-  | "main"
-  | "api"
-  | "prompt"
-  | "memory"
-  | "wishlist"
-  | "recommend";
+type Page = "main" | "api" | "prompt" | "memory" | "wishlist" | "recommend";
 
-const ALL_KEYS = [
-  ...Object.values(KEYS),
-  "cale_playlist",
-  "cale_bookshelf",
-];
+const ALL_KEYS = Object.values(KEYS);
 
-export default function SettingsView({ goToChat }: { goToChat: () => void }) {
+export default function SettingsView({
+  goToChat,
+  onManageStickers,
+}: {
+  goToChat: () => void;
+  onManageStickers: () => void;
+}) {
   const app = useApp();
   const [page, setPage] = useState<Page>("main");
   const [toast, setToast] = useState<string | null>(null);
@@ -63,7 +71,7 @@ export default function SettingsView({ goToChat }: { goToChat: () => void }) {
     a.download = `cale-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast("已导出备份 ✓");
+    showToast("已导出备份");
   };
 
   const importData = (file: File) => {
@@ -72,7 +80,7 @@ export default function SettingsView({ goToChat }: { goToChat: () => void }) {
       try {
         const data = JSON.parse(reader.result as string);
         Object.entries(data).forEach(([k, v]) => {
-          if (ALL_KEYS.includes(k)) {
+          if ((ALL_KEYS as string[]).includes(k)) {
             localStorage.setItem(k, JSON.stringify(v));
           }
         });
@@ -86,10 +94,7 @@ export default function SettingsView({ goToChat }: { goToChat: () => void }) {
   };
 
   const clearConversations = () => {
-    if (
-      !confirm("确定要清除所有对话记录吗？此操作不可恢复。")
-    )
-      return;
+    if (!confirm("确定要清除所有对话记录吗？此操作不可恢复。")) return;
     app.setConversations([]);
     app.setCurrentId(null);
     showToast("已清除所有对话");
@@ -98,68 +103,86 @@ export default function SettingsView({ goToChat }: { goToChat: () => void }) {
   return (
     <div className="h-full flex flex-col bg-cale-bg">
       <header
-        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center justify-center h-12"
+        className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center justify-center h-12"
         style={{ paddingTop: "var(--safe-top)" }}
       >
         <div className="text-[17px] font-semibold">设置</div>
       </header>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-3 space-y-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-5">
         {!app.apiConfig.baseURL && (
-          <div className="bg-cale-userBubble/60 rounded-card px-4 py-3 text-[13px] text-cale-accent">
-            👋 欢迎！请先配置 API，就能开始和 Cale 聊天啦。
+          <div className="bg-cale-userBubble/60 rounded-[14px] px-4 py-3 text-[13px] text-cale-accent">
+            请先配置 API，就能开始和 Cale 聊天啦。
           </div>
         )}
 
-        {/* Core settings */}
         <Group title="核心设置">
           <Row
             label="API 设置"
-            icon="🔑"
+            Icon={KeyRound}
             value={app.apiConfig.baseURL ? "已配置" : "未配置"}
             onClick={() => setPage("api")}
           />
           <Row
             label="System Prompt"
-            icon="📝"
+            Icon={FileText}
             value={`${app.systemPrompt.length} 字`}
             onClick={() => setPage("prompt")}
           />
         </Group>
 
-        {/* Sub features */}
         <Group title="Cale 的小世界">
           <Row
             label="记忆库"
-            icon="🧠"
+            Icon={Brain}
             value={`${app.memories.length} 条`}
             onClick={() => setPage("memory")}
           />
           <Row
             label="MCP 愿望清单"
-            icon="✨"
+            Icon={Sparkles}
             value={`${app.wishlist.length} 项`}
             onClick={() => setPage("wishlist")}
           />
           <Row
             label="Cale 的推荐"
-            icon="🎁"
+            Icon={Gift}
             value={`${app.playlist.length + app.bookshelf.length} 条`}
             onClick={() => setPage("recommend")}
           />
+          <Row
+            label="表情包"
+            Icon={Smile}
+            value={`${app.stickers.length} 个`}
+            onClick={onManageStickers}
+          />
         </Group>
 
-        {/* Personalization */}
+        <Group title="聊天">
+          <div className="px-4 py-3.5 flex items-center justify-between">
+            <span className="text-[15px] text-cale-textDark">回复模式</span>
+            <div className="flex bg-cale-input rounded-full p-0.5 text-[13px]">
+              {(["full", "chat"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() =>
+                    app.setSettings({ ...app.settings, replyMode: mode })
+                  }
+                  className={`px-3 py-1 rounded-full transition-colors ${
+                    app.settings.replyMode === mode
+                      ? "bg-white text-cale-accent font-medium shadow-sm"
+                      : "text-cale-textLight"
+                  }`}
+                >
+                  {mode === "full" ? "整段" : "聊天"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Group>
+
         <Group title="个性化">
-          <div className="px-4 py-3 space-y-3">
-            <LabeledInput
-              label="Cale 的备注名"
-              value={app.settings.caleName}
-              placeholder="Cale"
-              onChange={(v) =>
-                app.setSettings({ ...app.settings, caleName: v })
-              }
-            />
+          <div className="px-4 py-3.5 space-y-3.5">
             <LabeledInput
               label="在一起的日期"
               type="date"
@@ -192,15 +215,17 @@ export default function SettingsView({ goToChat }: { goToChat: () => void }) {
                 }
               />
             </div>
+            <p className="text-[12px] text-cale-textLight">
+              Cale 的备注名可在聊天页顶部点击名字直接修改。
+            </p>
           </div>
         </Group>
 
-        {/* Data management */}
         <Group title="数据管理">
-          <Row label="导出数据" icon="⬇️" onClick={exportData} />
+          <Row label="导出数据" Icon={Download} onClick={exportData} />
           <Row
             label="导入数据"
-            icon="⬆️"
+            Icon={Upload}
             onClick={() => fileRef.current?.click()}
           />
           <input
@@ -208,20 +233,18 @@ export default function SettingsView({ goToChat }: { goToChat: () => void }) {
             type="file"
             accept="application/json"
             className="hidden"
-            onChange={(e) =>
-              e.target.files?.[0] && importData(e.target.files[0])
-            }
+            onChange={(e) => e.target.files?.[0] && importData(e.target.files[0])}
           />
           <Row
             label="清除所有对话记录"
-            icon="🗑"
+            Icon={Trash2}
             danger
             onClick={clearConversations}
           />
         </Group>
 
         <div className="text-center text-[12px] text-cale-textLight pt-2 pb-4">
-          Cale · 只属于你的 AI 伙伴 🌸
+          Cale · 只属于你的 AI 伙伴
         </div>
       </div>
 
@@ -243,8 +266,8 @@ function Group({
 }) {
   return (
     <div>
-      <div className="text-[12px] text-cale-textLight px-3 mb-1.5">{title}</div>
-      <div className="bg-cale-card rounded-card overflow-hidden divide-y divide-cale-divider">
+      <div className="text-[12px] text-cale-textLight px-1 mb-1.5">{title}</div>
+      <div className="bg-white rounded-[14px] overflow-hidden divide-y divide-cale-divider">
         {children}
       </div>
     </div>
@@ -253,13 +276,13 @@ function Group({
 
 function Row({
   label,
-  icon,
+  Icon,
   value,
   danger,
   onClick,
 }: {
   label: string;
-  icon: string;
+  Icon: typeof KeyRound;
   value?: string;
   danger?: boolean;
   onClick: () => void;
@@ -269,9 +292,13 @@ function Row({
       onClick={onClick}
       className="w-full flex items-center px-4 py-3.5 active:bg-cale-input"
     >
-      <span className="text-lg mr-3">{icon}</span>
+      <Icon
+        size={19}
+        strokeWidth={1.8}
+        className={danger ? "text-red-500" : "text-cale-accent"}
+      />
       <span
-        className={`flex-1 text-left text-[15px] ${
+        className={`flex-1 text-left text-[15px] ml-3 ${
           danger ? "text-red-500" : "text-cale-textDark"
         }`}
       >
@@ -280,7 +307,7 @@ function Row({
       {value && (
         <span className="text-[13px] text-cale-textLight mr-1">{value}</span>
       )}
-      <span className="text-cale-textLight">›</span>
+      <ChevronRight size={18} className="text-cale-textLight" />
     </button>
   );
 }
@@ -306,7 +333,7 @@ function LabeledInput({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-cale-input rounded-xl px-3 py-2 outline-none text-[16px] mt-1"
+        className="w-full bg-cale-input rounded-[12px] px-3 py-2 outline-none text-[16px] mt-1"
         inputMode={type === "number" ? "decimal" : undefined}
       />
     </label>

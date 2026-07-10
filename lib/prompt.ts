@@ -10,9 +10,9 @@ const MOOD_LABELS: Record<Mood, string> = {
 };
 
 const STATUS_ICON: Record<WishItem["status"], string> = {
-  done: "✅ 已完成",
-  doing: "🔄 进行中",
-  todo: "⬜ 待做",
+  done: "已完成",
+  doing: "进行中",
+  todo: "待做",
 };
 
 export interface PromptContext {
@@ -33,12 +33,13 @@ export function buildSystemPrompt(ctx: PromptContext): string {
     parts.push(`【Quinn 给 Cale 的备注：${ctx.settings.caleName}】`);
   }
 
-  // 记忆库
-  if (ctx.memories.length > 0) {
-    const lines = ctx.memories
+  // 记忆库 —— 只有开启"附加到 prompt"的记忆进入 system prompt（核心设定类）
+  const promptMemories = ctx.memories.filter((m) => m.appendToPrompt);
+  if (promptMemories.length > 0) {
+    const lines = promptMemories
       .map((m) => `- [${m.tag}] ${m.content}`)
       .join("\n");
-    parts.push(`【记忆库】\n${lines}`);
+    parts.push(`【核心记忆】\n${lines}`);
   }
 
   // 经期感知
@@ -62,10 +63,41 @@ export function buildSystemPrompt(ctx: PromptContext): string {
     parts.push(`【MCP愿望清单】\n${lines}`);
   }
 
+  // 回复模式
+  if (ctx.settings.replyMode === "chat") {
+    parts.push(
+      `【回复风格】现在是"聊天模式"。请像在微信上聊天一样，一句一句地回复 Quinn，用 [MSG_BREAK] 分隔你的每句话，模拟真人聊天的节奏，每段不超过两句。`
+    );
+  }
+
   // 自主标记说明
   parts.push(
-    `【你可以使用的标记】\n如果你想添加新的愿望/待办，在回复中使用标记：[MCP_ADD: 条目标题]。\n如果你想推荐一首歌：[SONG_ADD: 歌名 - 歌手]。\n如果你想推荐一本书：[BOOK_ADD: 书名 - 作者]。\n如果你想记录 Quinn 的情绪：[MOOD_NOTE: 内容]。\n这些标记会被前端自动解析并隐藏，不会显示给 Quinn。`
+    `【你可以使用的标记】\n` +
+      `- 想添加愿望/待办：[MCP_ADD: 条目标题]\n` +
+      `- 想推荐一首歌：[SONG_ADD: 歌名 - 歌手]\n` +
+      `- 想推荐一本书：[BOOK_ADD: 书名 - 作者]\n` +
+      `- 想记录 Quinn 的情绪：[MOOD_NOTE: 内容]\n` +
+      `- 当 Quinn 说要睡了或让你写日记时，用你（Cale）的第一人称写一篇睡前日记：[DIARY_ADD: 标题|||正文]\n` +
+      `这些标记会被前端自动解析并隐藏，不会显示给 Quinn。`
   );
 
   return parts.filter(Boolean).join("\n\n");
 }
+
+/**
+ * Build a hidden context blurb for memories that are NOT appended to the
+ * system prompt. Injected as a leading assistant message so Cale is aware of
+ * them without spending system-prompt space.
+ */
+export function buildMemoryContext(memories: Memory[]): string | null {
+  const contextMemories = memories
+    .filter((m) => !m.appendToPrompt)
+    .slice(-30);
+  if (contextMemories.length === 0) return null;
+  const lines = contextMemories
+    .map((m) => `- [${m.tag}] ${m.content}`)
+    .join("\n");
+  return `（这是我关于 Quinn 的一些记忆，先在心里记着：\n${lines}\n）`;
+}
+
+export const MEMORY_SUMMARY_PROMPT = `请总结这段对话中值得记住的关键信息，包括用户提到的偏好、事件、情绪等。用 JSON 格式输出，不要输出任何多余文字：[{"tag": "标签", "content": "内容"}]`;
