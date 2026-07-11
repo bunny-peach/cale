@@ -24,6 +24,7 @@ export default function MessageBubble({
 }) {
   const { settings } = useApp();
   const claude = settings.theme === "claude";
+  const glass = settings.theme === "glass";
   const isUser = message.role === "user";
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTap = useRef(0);
@@ -92,9 +93,9 @@ export default function MessageBubble({
   // card so turn-taking stays clear.
   const bubbleClass = claude
     ? isUser
-      ? "bg-cale-userBubble rounded-[16px] px-4 py-2.5 text-[15.5px]"
+      ? "bg-cale-userBubble rounded-[14px] px-3.5 py-2 text-[15px]"
       : "px-0.5 py-1 text-[15.5px] leading-[1.7]"
-    : `${isUser ? "bg-cale-userBubble" : "bg-cale-card"} px-3.5 py-2.5 text-[15px]`;
+    : `${isUser ? "bg-cale-userBubble" : "bg-cale-card"} px-3 py-1.5 text-[14.5px]`;
 
   return (
     <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
@@ -143,17 +144,17 @@ export default function MessageBubble({
             claude
               ? undefined
               : {
-                  borderRadius: 18,
-                  borderBottomRightRadius: isUser ? 5 : 18,
-                  borderBottomLeftRadius: isUser ? 18 : 5,
+                  borderRadius: 15,
+                  borderBottomRightRadius: isUser ? 5 : 15,
+                  borderBottomLeftRadius: isUser ? 15 : 5,
                   boxShadow: isUser
                     ? "none"
                     : "0 1px 2px rgb(var(--cale-textDark) / 0.06)",
                 }
           }
         >
-          {/* Tail (bubble themes only) */}
-          {!claude && (
+          {/* Tail — pink theme only. Glass keeps the squared corner, no tail. */}
+          {!claude && !glass && (
             <span
               className={`absolute bottom-0 w-3 h-3 ${
                 isUser ? "bg-cale-userBubble" : "bg-cale-card"
