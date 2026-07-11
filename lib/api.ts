@@ -1,10 +1,13 @@
 import { ApiConfig, Message } from "./types";
+import { streamClaudeCode } from "./ccBridge";
 
 export interface StreamCallbacks {
   onThinking?: (delta: string) => void;
   onText?: (delta: string) => void;
   onUsage?: (input: number, output: number) => void;
   signal?: AbortSignal;
+  // Upper bound on generated tokens. Theater mode pushes this to the max.
+  maxTokens?: number;
 }
 
 function normalizeBaseURL(baseURL: string): string {
@@ -141,6 +144,7 @@ async function streamOpenAI(
         messages: toOpenAIMessages(system, messages),
         stream: true,
         stream_options: { include_usage: true },
+        ...(cb.maxTokens ? { max_tokens: cb.maxTokens } : {}),
       }),
       signal: cb.signal,
     }
@@ -190,7 +194,7 @@ async function streamAnthropic(
     },
     body: JSON.stringify({
       model: config.model,
-      max_tokens: 16384,
+      max_tokens: cb.maxTokens ?? 16384,
       system: system,
       messages: toAnthropicMessages(messages),
       stream: true,
@@ -243,6 +247,10 @@ export async function streamChat(
   messages: Message[],
   cb: StreamCallbacks
 ): Promise<void> {
+  // Claude Code channel (Pro/Max subscription) is routed through a bridge.
+  if (config.provider === "claude-code") {
+    return streamClaudeCode(config, system, messages, cb);
+  }
   if (config.format === "anthropic") {
     return streamAnthropic(config, system, messages, cb);
   }

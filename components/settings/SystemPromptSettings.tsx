@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import SubPageHeader from "./SubPageHeader";
 
@@ -52,8 +53,8 @@ export default function SystemPromptSettings({
           className="flex-1 bg-cale-card rounded-card px-3 py-3 outline-none text-[15px] leading-relaxed resize-none"
         />
         {saved && (
-          <div className="text-center text-cale-accent text-[13px] mt-2">
-            已保存 ✓
+          <div className="flex items-center justify-center gap-1 text-cale-accent text-[13px] mt-2">
+            <Check size={14} strokeWidth={2} /> 已保存
           </div>
         )}
         <p className="text-[12px] text-cale-textLight mt-2 px-1">

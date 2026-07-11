@@ -32,7 +32,7 @@ const THEMES: {
   swatchBg: string;
   swatchDot: string;
 }[] = [
-  { key: "pink", label: "粉色", swatchBg: "#FAF7F5", swatchDot: "#E8A0BF" },
+  { key: "pink", label: "粉色", swatchBg: "#F8F5F1", swatchDot: "#D4A0A0" },
   {
     key: "glass",
     label: "液态玻璃",
@@ -155,7 +155,7 @@ export default function SettingsView({
       </header>
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-5">
-        {!app.apiConfig.baseURL && (
+        {app.apiConfig.provider === "proxy" && !app.apiConfig.baseURL && (
           <div className="bg-cale-userBubble/60 rounded-[14px] px-4 py-3 text-[13px] text-cale-accent">
             请先配置 API，就能开始和 Cale 聊天啦。
           </div>
@@ -165,7 +165,13 @@ export default function SettingsView({
           <Row
             label="API 设置"
             Icon={KeyRound}
-            value={app.apiConfig.baseURL ? "已配置" : "未配置"}
+            value={
+              app.apiConfig.provider === "claude-code"
+                ? "Claude Code"
+                : app.apiConfig.baseURL
+                  ? "已配置"
+                  : "未配置"
+            }
             onClick={() => setPage("api")}
           />
           <Row

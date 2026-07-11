@@ -1,11 +1,12 @@
 "use client";
 
-import { MessageCircle, BookOpen, Calendar, Settings } from "lucide-react";
+import { MessageCircle, Drama, BookOpen, Calendar, Settings } from "lucide-react";
 
-export type Tab = "chat" | "diary" | "calendar" | "settings";
+export type Tab = "chat" | "theater" | "diary" | "calendar" | "settings";
 
 const TABS: { key: Tab; label: string; Icon: typeof MessageCircle }[] = [
   { key: "chat", label: "聊天", Icon: MessageCircle },
+  { key: "theater", label: "剧场", Icon: Drama },
   { key: "diary", label: "日记", Icon: BookOpen },
   { key: "calendar", label: "日历", Icon: Calendar },
   { key: "settings", label: "设置", Icon: Settings },

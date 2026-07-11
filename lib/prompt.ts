@@ -22,7 +22,13 @@ export interface PromptContext {
   settings: Settings;
   periodData: PeriodData;
   todayMood?: { mood: Mood; note?: string };
+  // 小剧场模式：追加长文小说质感写作指令
+  theater?: boolean;
 }
+
+export const THEATER_INSTRUCTION =
+  "【小剧场模式】当前为小剧场模式，请以小说质感写作，字数不少于 4000 字，" +
+  "文笔细腻，感官描写丰富，节奏舒缓，注重场景、动作与心理刻画，不受输出长度限制。";
 
 export function buildSystemPrompt(ctx: PromptContext): string {
   const parts: string[] = [];
@@ -68,6 +74,11 @@ export function buildSystemPrompt(ctx: PromptContext): string {
     parts.push(
       `【回复风格】现在是"聊天模式"。请像在微信上聊天一样，一句一句地回复 Quinn，用 [MSG_BREAK] 分隔你的每句话，模拟真人聊天的节奏，每段不超过两句。`
     );
+  }
+
+  // 小剧场模式
+  if (ctx.theater) {
+    parts.push(THEATER_INSTRUCTION);
   }
 
   // 自主标记说明

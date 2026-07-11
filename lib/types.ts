@@ -1,10 +1,14 @@
 export type ApiFormat = "openai" | "anthropic";
 
+// 线路：中转 API / Claude Code 通道（使用 Pro 订阅额度）
+export type ApiProvider = "proxy" | "claude-code";
+
 export interface ApiConfig {
   baseURL: string;
   apiKey: string;
   model: string;
   format: ApiFormat;
+  provider: ApiProvider;
 }
 
 export interface ChatImage {

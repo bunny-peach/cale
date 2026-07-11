@@ -20,7 +20,7 @@ export default function ThinkingBlock({
         className="text-[13px] text-cale-accent flex items-center gap-1 active:opacity-70"
       >
         <Brain size={14} strokeWidth={1.8} />
-        <span>Cale 的内心</span>
+        <span>Cale&apos;s mind</span>
         {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
       </button>
       {open && (

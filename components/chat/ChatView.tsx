@@ -21,6 +21,7 @@ import { parseMarkers, splitMessageBreaks } from "@/lib/markers";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 import ConversationSidebar from "./ConversationSidebar";
+import QuotaIndicator from "@/components/QuotaIndicator";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -103,7 +104,7 @@ export default function ChatView({
 
   // ---- Auto memory summary (idle / hidden) ----
   const runSummary = async (cid: string) => {
-    if (!apiConfig.baseURL) return;
+    if (apiConfig.provider === "proxy" && !apiConfig.baseURL) return;
     const conv = conversations.find((c) => c.id === cid);
     if (!conv) return;
     const done = summarizedLen.current[cid] ?? 0;
@@ -204,7 +205,10 @@ export default function ChatView({
           }));
           scrollToBottom();
         },
-        onUsage: (input, output) => app.recordUsage(input, output),
+        onUsage: (input, output) => {
+          app.recordUsage(input, output);
+          app.recordQuota(input, output);
+        },
       });
 
       const parsed = parseMarkers(acc);
@@ -277,7 +281,7 @@ export default function ChatView({
                   ...m,
                   content:
                     (m.content ? m.content + "\n\n" : "") +
-                    `⚠️ ${(err as Error).message}`,
+                    `（出错了）${(err as Error).message}`,
                 }
               : m
           ),
@@ -321,7 +325,7 @@ export default function ChatView({
   };
 
   const handleSubmit = (text: string, images: ChatImage[]) => {
-    if (!apiConfig.baseURL) {
+    if (apiConfig.provider === "proxy" && !apiConfig.baseURL) {
       showToast("请先在设置中配置 API");
       return;
     }
@@ -351,7 +355,7 @@ export default function ChatView({
   };
 
   const handleSendSticker = (s: Sticker) => {
-    if (!apiConfig.baseURL) {
+    if (apiConfig.provider === "proxy" && !apiConfig.baseURL) {
       showToast("请先在设置中配置 API");
       return;
     }
@@ -582,13 +586,21 @@ export default function ChatView({
                 setNameDraft(displayName);
                 setEditingName(true);
               }}
-              className="text-[17px] font-semibold active:opacity-60"
+              className="flex flex-col items-center active:opacity-60"
             >
-              {displayName}
+              <span className="text-[17px] font-semibold leading-tight">
+                {displayName}
+              </span>
+              {streaming && (
+                <span className="text-[11px] text-cale-textLight leading-tight mt-0.5">
+                  thinking quietly…
+                </span>
+              )}
             </button>
           )}
         </div>
 
+        <QuotaIndicator />
         <button
           onClick={() => {
             setSearchQuery("");

@@ -100,59 +100,62 @@ export default function MessageBubble({
   return (
     <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
       {!isUser && message.thinking && (
-        <div className={claude ? "w-full" : "max-w-[85%]"}>
+        <div className={claude ? "w-full" : "max-w-[70%]"}>
           <ThinkingBlock thinking={message.thinking} streaming={streaming} />
         </div>
       )}
 
       <div
-        className={`relative ${
-          claude && !isUser ? "w-full max-w-full" : "max-w-[85%]"
-        }`}
-        style={{
-          transform: dragX ? `translateX(${dragX}px)` : undefined,
-          transition: dragX ? "none" : "transform 0.2s",
-        }}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          onAction(message);
-        }}
-        onDoubleClick={() => onLike(message)}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        className={`flex items-center gap-1.5 ${
+          isUser ? "flex-row-reverse" : ""
+        } ${claude && !isUser ? "w-full" : "max-w-[70%]"}`}
       >
-        {/* Quoted message */}
-        {message.quote && (
-          <div
-            className={`text-[12px] mb-1 px-2.5 py-1 rounded-lg text-cale-textLight ${
-              isUser ? "ml-auto" : ""
-            }`}
-            style={{
-              background: "rgb(var(--cale-textDark) / 0.06)",
-              maxWidth: "100%",
-            }}
-          >
-            <span className="font-medium">{message.quote.author}</span>：
-            {message.quote.text.slice(0, 40)}
-          </div>
-        )}
-
         <div
-          className={`relative select-text text-cale-textDark ${bubbleClass}`}
-          style={
-            claude
-              ? undefined
-              : {
-                  borderRadius: 15,
-                  borderBottomRightRadius: isUser ? 5 : 15,
-                  borderBottomLeftRadius: isUser ? 15 : 5,
-                  boxShadow: isUser
-                    ? "none"
-                    : "0 1px 2px rgb(var(--cale-textDark) / 0.06)",
-                }
-          }
+          className={`relative min-w-0 ${claude && !isUser ? "flex-1" : ""}`}
+          style={{
+            transform: dragX ? `translateX(${dragX}px)` : undefined,
+            transition: dragX ? "none" : "transform 0.2s",
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            onAction(message);
+          }}
+          onDoubleClick={() => onLike(message)}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
+          {/* Quoted message */}
+          {message.quote && (
+            <div
+              className={`text-[12px] mb-1 px-2.5 py-1 rounded-lg text-cale-textLight ${
+                isUser ? "ml-auto" : ""
+              }`}
+              style={{
+                background: "rgb(var(--cale-textDark) / 0.06)",
+                maxWidth: "100%",
+              }}
+            >
+              <span className="font-medium">{message.quote.author}</span>：
+              {message.quote.text.slice(0, 40)}
+            </div>
+          )}
+
+          <div
+            className={`relative select-text text-cale-textDark ${bubbleClass}`}
+            style={
+              claude
+                ? undefined
+                : {
+                    borderRadius: 16,
+                    borderBottomRightRadius: isUser ? 5 : 16,
+                    borderBottomLeftRadius: isUser ? 16 : 5,
+                    boxShadow: isUser
+                      ? "none"
+                      : "0 1px 2px rgb(var(--cale-textDark) / 0.06)",
+                  }
+            }
+          >
           {/* Tail — pink theme only. Glass keeps the squared corner, no tail. */}
           {!claude && !glass && (
             <span
@@ -198,22 +201,24 @@ export default function MessageBubble({
               />
             </div>
           )}
+          </div>
         </div>
 
-        {/* Like heart */}
-        {message.liked && (
-          <div
-            className={`absolute -bottom-2 ${
-              isUser ? "left-0" : "right-0"
-            } bg-cale-card rounded-full p-0.5 shadow`}
-          >
-            <Heart
-              size={12}
-              className="text-cale-accent"
-              fill="rgb(var(--cale-accent))"
-            />
-          </div>
-        )}
+        {/* Like heart button beside the message */}
+        <button
+          onClick={() => onLike(message)}
+          className="flex-shrink-0 p-1 active:opacity-60"
+          aria-label="点赞"
+        >
+          <Heart
+            size={15}
+            strokeWidth={1.8}
+            className={
+              message.liked ? "text-cale-accent" : "text-cale-textLight"
+            }
+            fill={message.liked ? "rgb(var(--cale-accent))" : "none"}
+          />
+        </button>
       </div>
 
       {/* Regenerate (Cale replies only, when not streaming) */}

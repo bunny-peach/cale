@@ -13,16 +13,16 @@
 
 :root,
 :root[data-theme="pink"] {
-  --cale-bg: 250 247 245;
+  --cale-bg: 248 245 241;
   --cale-card: 255 255 255;
-  --cale-primary: 232 160 191;
-  --cale-accent: 212 132 159;
-  --cale-input: 243 235 231;
-  --cale-userBubble: 245 224 234;
-  --cale-thinking: 255 240 245;
-  --cale-divider: 239 230 226;
-  --cale-textDark: 45 45 45;
-  --cale-textLight: 154 146 150;
+  --cale-primary: 212 160 160;
+  --cale-accent: 212 160 160;
+  --cale-input: 240 236 232;
+  --cale-userBubble: 242 232 232;
+  --cale-thinking: 247 240 240;
+  --cale-divider: 236 228 224;
+  --cale-textDark: 58 53 53;
+  --cale-textLight: 181 170 170;
 }
 
 :root[data-theme="glass"] {
@@ -54,16 +54,16 @@
 @media (prefers-color-scheme: dark) {
   :root,
   :root[data-theme="pink"] {
-    --cale-bg: 26 22 24;
-    --cale-card: 38 32 35;
-    --cale-primary: 232 160 191;
-    --cale-accent: 232 160 191;
-    --cale-input: 47 39 43;
-    --cale-userBubble: 61 42 51;
-    --cale-thinking: 44 32 40;
-    --cale-divider: 53 44 48;
-    --cale-textDark: 236 230 232;
-    --cale-textLight: 155 146 150;
+    --cale-bg: 26 24 22;
+    --cale-card: 42 38 37;
+    --cale-primary: 192 139 139;
+    --cale-accent: 192 139 139;
+    --cale-input: 35 32 32;
+    --cale-userBubble: 53 44 44;
+    --cale-thinking: 44 36 34;
+    --cale-divider: 53 46 44;
+    --cale-textDark: 232 224 220;
+    --cale-textLight: 122 112 112;
   }
 
   :root[data-theme="glass"] {
