@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Menu, Plus, Check, X, Quote } from "lucide-react";
+import { Menu, Plus, Check, X, Quote, Search } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid } from "@/lib/storage";
 import {
@@ -21,6 +21,7 @@ import { parseMarkers, splitMessageBreaks } from "@/lib/markers";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 import ConversationSidebar from "./ConversationSidebar";
+import QuotaIndicator from "@/components/QuotaIndicator";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -49,6 +50,9 @@ export default function ChatView({
   const [nameDraft, setNameDraft] = useState(settings.caleName);
   const [burstMode, setBurstMode] = useState(false);
   const [pendingQuote, setPendingQuote] = useState<MessageQuote | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [flashId, setFlashId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,7 +104,7 @@ export default function ChatView({
 
   // ---- Auto memory summary (idle / hidden) ----
   const runSummary = async (cid: string) => {
-    if (!apiConfig.baseURL) return;
+    if (apiConfig.provider === "proxy" && !apiConfig.baseURL) return;
     const conv = conversations.find((c) => c.id === cid);
     if (!conv) return;
     const done = summarizedLen.current[cid] ?? 0;
@@ -201,7 +205,10 @@ export default function ChatView({
           }));
           scrollToBottom();
         },
-        onUsage: (input, output) => app.recordUsage(input, output),
+        onUsage: (input, output) => {
+          app.recordUsage(input, output);
+          app.recordQuota(input, output);
+        },
       });
 
       const parsed = parseMarkers(acc);
@@ -274,7 +281,7 @@ export default function ChatView({
                   ...m,
                   content:
                     (m.content ? m.content + "\n\n" : "") +
-                    `⚠️ ${(err as Error).message}`,
+                    `（出错了）${(err as Error).message}`,
                 }
               : m
           ),
@@ -318,7 +325,7 @@ export default function ChatView({
   };
 
   const handleSubmit = (text: string, images: ChatImage[]) => {
-    if (!apiConfig.baseURL) {
+    if (apiConfig.provider === "proxy" && !apiConfig.baseURL) {
       showToast("请先在设置中配置 API");
       return;
     }
@@ -348,7 +355,7 @@ export default function ChatView({
   };
 
   const handleSendSticker = (s: Sticker) => {
-    if (!apiConfig.baseURL) {
+    if (apiConfig.provider === "proxy" && !apiConfig.baseURL) {
       showToast("请先在设置中配置 API");
       return;
     }
@@ -465,6 +472,37 @@ export default function ChatView({
     showToast("已保存到日记");
   };
 
+  const handleDelete = (m: Message) => {
+    if (!current) return;
+    updateConversation(current.id, (c) => ({
+      ...c,
+      messages: c.messages.filter((x) => x.id !== m.id),
+    }));
+    setActionMsg(null);
+    showToast("已删除");
+  };
+
+  const clearConversation = () => {
+    if (!current) return;
+    if (!confirm("确定清空当前对话的所有消息吗？此操作不可恢复。")) return;
+    updateConversation(current.id, (c) => ({ ...c, messages: [] }));
+    setActionMsg(null);
+    showToast("已清空对话");
+  };
+
+  const jumpToMessage = (id: string) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    requestAnimationFrame(() => {
+      const el = document.getElementById("msg-" + id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setFlashId(id);
+        setTimeout(() => setFlashId(null), 1200);
+      }
+    });
+  };
+
   const copyMessage = async (m: Message) => {
     try {
       await navigator.clipboard.writeText(m.content);
@@ -489,11 +527,26 @@ export default function ChatView({
     messages[messages.length - 1].role === "user";
   const displayName = settings.caleName || "Cale";
 
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return messages
+      .filter((m) => m.content && m.content.toLowerCase().includes(q))
+      .map((m) => {
+        const idx = m.content.toLowerCase().indexOf(q);
+        const start = Math.max(0, idx - 12);
+        const before = (start > 0 ? "…" : "") + m.content.slice(start, idx);
+        const match = m.content.slice(idx, idx + q.length);
+        const after = m.content.slice(idx + q.length, idx + q.length + 24);
+        return { m, before, match, after };
+      });
+  }, [messages, searchQuery]);
+
   return (
     <div className="h-full flex flex-col relative overflow-hidden">
       {/* Top bar */}
       <header
-        className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center px-3 h-12"
+        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
         style={{ paddingTop: "var(--safe-top)" }}
       >
         <button
@@ -533,13 +586,31 @@ export default function ChatView({
                 setNameDraft(displayName);
                 setEditingName(true);
               }}
-              className="text-[17px] font-semibold active:opacity-60"
+              className="flex flex-col items-center active:opacity-60"
             >
-              {displayName}
+              <span className="text-[17px] font-semibold leading-tight">
+                {displayName}
+              </span>
+              {streaming && (
+                <span className="text-[11px] text-cale-textLight leading-tight mt-0.5">
+                  thinking quietly…
+                </span>
+              )}
             </button>
           )}
         </div>
 
+        <QuotaIndicator />
+        <button
+          onClick={() => {
+            setSearchQuery("");
+            setSearchOpen(true);
+          }}
+          className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
+          aria-label="搜索聊天记录"
+        >
+          <Search size={19} strokeWidth={1.8} />
+        </button>
         <button
           onClick={() =>
             setSettings({
@@ -575,17 +646,22 @@ export default function ChatView({
           </div>
         )}
         {messages.map((m, i) => (
-          <MessageBubble
+          <div
             key={m.id}
-            message={m}
-            streaming={
-              streaming && i === messages.length - 1 && m.role === "assistant"
-            }
-            onAction={setActionMsg}
-            onLike={handleLike}
-            onQuote={handleQuote}
-            onRegenerate={handleRegenerate}
-          />
+            id={"msg-" + m.id}
+            className={flashId === m.id ? "cale-flash" : undefined}
+          >
+            <MessageBubble
+              message={m}
+              streaming={
+                streaming && i === messages.length - 1 && m.role === "assistant"
+              }
+              onAction={setActionMsg}
+              onLike={handleLike}
+              onQuote={handleQuote}
+              onRegenerate={handleRegenerate}
+            />
+          </div>
         ))}
       </div>
 
@@ -653,7 +729,7 @@ export default function ChatView({
           onClick={() => setActionMsg(null)}
         >
           <div
-            className="w-full bg-white rounded-t-2xl p-2"
+            className="w-full bg-cale-card rounded-t-2xl p-2"
             style={{ paddingBottom: "calc(1.5rem + var(--safe-bottom))" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -666,9 +742,9 @@ export default function ChatView({
             {actionMsg.role === "user" && (
               <button
                 onClick={() => handleUndo(actionMsg)}
-                className="w-full py-3.5 text-center text-[16px] text-red-500 active:bg-cale-input rounded-xl"
+                className="w-full py-3.5 text-center text-[16px] text-cale-textDark active:bg-cale-input rounded-xl"
               >
-                撤回
+                撤回（连同 Cale 的回复）
               </button>
             )}
             {actionMsg.role === "assistant" && actionMsg.content && (
@@ -680,11 +756,85 @@ export default function ChatView({
               </button>
             )}
             <button
+              onClick={() => handleDelete(actionMsg)}
+              className="w-full py-3.5 text-center text-[16px] text-red-500 active:bg-cale-input rounded-xl"
+            >
+              删除这条消息
+            </button>
+            <button
+              onClick={clearConversation}
+              className="w-full py-3.5 text-center text-[16px] text-red-500 active:bg-cale-input rounded-xl"
+            >
+              清空整个对话
+            </button>
+            <button
               onClick={() => setActionMsg(null)}
               className="w-full py-3.5 mt-1 text-center text-[16px] text-cale-accent active:bg-cale-input rounded-xl"
             >
               取消
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Search panel */}
+      {searchOpen && (
+        <div className="absolute inset-0 z-40 flex flex-col bg-cale-bg">
+          <div
+            className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center gap-2 px-3 h-12"
+            style={{ paddingTop: "var(--safe-top)" }}
+          >
+            <Search size={18} className="text-cale-textLight flex-shrink-0" />
+            <input
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索聊天记录…"
+              className="flex-1 bg-transparent outline-none text-[16px] placeholder:text-cale-textLight"
+            />
+            <button
+              onClick={() => {
+                setSearchOpen(false);
+                setSearchQuery("");
+              }}
+              className="text-cale-accent text-[15px] px-1 active:opacity-60"
+            >
+              取消
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-2">
+            {searchQuery.trim() === "" ? (
+              <div className="text-center text-cale-textLight text-[14px] mt-10">
+                输入关键词，查找这段对话里的消息
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div className="text-center text-cale-textLight text-[14px] mt-10">
+                没有找到「{searchQuery.trim()}」
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="text-[12px] text-cale-textLight px-1 mb-1">
+                  找到 {searchResults.length} 条
+                </div>
+                {searchResults.map(({ m, before, match, after }) => (
+                  <button
+                    key={m.id}
+                    onClick={() => jumpToMessage(m.id)}
+                    className="w-full text-left bg-cale-card rounded-[14px] px-4 py-3 active:opacity-80"
+                  >
+                    <div className="text-[12px] text-cale-textLight mb-0.5">
+                      {m.role === "user" ? "你" : displayName} ·{" "}
+                      {new Date(m.createdAt).toLocaleDateString("zh-CN")}
+                    </div>
+                    <div className="text-[14px] text-cale-textDark">
+                      {before}
+                      <mark>{match}</mark>
+                      {after}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

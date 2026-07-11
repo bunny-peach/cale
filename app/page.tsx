@@ -4,24 +4,30 @@ import { useEffect, useState } from "react";
 import { useApp } from "@/components/AppContext";
 import TabBar, { Tab } from "@/components/TabBar";
 import ChatView from "@/components/chat/ChatView";
+import TheaterView from "@/components/theater/TheaterView";
 import DiaryView from "@/components/diary/DiaryView";
 import CalendarView from "@/components/calendar/CalendarView";
 import SettingsView from "@/components/settings/SettingsView";
 import StickerManager from "@/components/stickers/StickerManager";
+import WelcomeView from "@/components/WelcomeView";
 
 export default function Home() {
-  const { hydrated, apiConfig } = useApp();
+  const { hydrated, apiConfig, conversations } = useApp();
   const [tab, setTab] = useState<Tab>("chat");
   const [guided, setGuided] = useState(false);
+  const [entered, setEntered] = useState(false);
   const [stickerOpen, setStickerOpen] = useState(false);
 
   // First launch with no API config → guide user to settings
   useEffect(() => {
-    if (hydrated && !guided && !apiConfig.baseURL) {
+    if (hydrated && entered && !guided && apiConfig.provider === "proxy" && !apiConfig.baseURL) {
       setTab("settings");
       setGuided(true);
     }
-  }, [hydrated, apiConfig.baseURL, guided]);
+  }, [hydrated, entered, apiConfig.baseURL, guided]);
+
+  // Welcome page: only on first open / when there are no conversations yet
+  const showWelcome = hydrated && !entered && conversations.length === 0;
 
   if (!hydrated) {
     return (
@@ -34,11 +40,18 @@ export default function Home() {
     );
   }
 
+  if (showWelcome) {
+    return <WelcomeView onEnter={() => setEntered(true)} />;
+  }
+
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-cale-bg">
       <div className="flex-1 min-h-0 relative">
         <div className={tab === "chat" ? "h-full" : "hidden"}>
           <ChatView onManageStickers={() => setStickerOpen(true)} />
+        </div>
+        <div className={tab === "theater" ? "h-full" : "hidden"}>
+          <TheaterView />
         </div>
         {tab === "diary" && <DiaryView />}
         {tab === "calendar" && <CalendarView />}

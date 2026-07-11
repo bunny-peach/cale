@@ -15,6 +15,10 @@ export const KEYS = {
   stickers: "cale_stickers",
   playlist: "cale_playlist",
   bookshelf: "cale_bookshelf",
+  glassBg: "cale_glass_bg",
+  theaterConversations: "cale_theater_conversations",
+  theaterCurrent: "cale_theater_current",
+  quota: "cale_quota_tracking",
 } as const;
 
 export function load<T>(key: string, fallback: T): T {

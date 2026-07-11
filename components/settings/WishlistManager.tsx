@@ -86,7 +86,7 @@ export default function WishlistManager({ onBack }: { onBack: () => void }) {
         {sorted.map((w) => {
           const StatusIcon = STATUS_ICON[w.status];
           return (
-          <div key={w.id} className="bg-white rounded-[14px] px-3 py-3">
+          <div key={w.id} className="bg-cale-card rounded-[14px] px-3 py-3">
             <div className="flex items-start gap-2">
               <button
                 onClick={() => cycleStatus(w)}

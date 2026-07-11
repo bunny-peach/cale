@@ -22,7 +22,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#E8A0BF",
+  themeColor: "#D4A0A0",
 };
 
 export default function RootLayout({
@@ -36,7 +36,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-status-bar-style"
-          content="default"
+          content="black-translucent"
+        />
+        {/* Apply the saved theme + glass background before first paint (no flash) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var s=JSON.parse(localStorage.getItem('cale_settings')||'{}');document.documentElement.dataset.theme=(s&&s.theme)||'pink';var g=JSON.parse(localStorage.getItem('cale_glass_bg')||'""');if(g)document.documentElement.style.setProperty('--glass-bg','url("'+g+'")');}catch(e){document.documentElement.dataset.theme='pink';}`,
+          }}
         />
       </head>
       <body>

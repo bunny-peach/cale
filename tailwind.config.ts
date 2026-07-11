@@ -9,16 +9,16 @@ const config: Config = {
     extend: {
       colors: {
         cale: {
-          primary: "#E8A0BF",
-          accent: "#D4849F",
-          bg: "#FDF6F0",
-          card: "#FFFFFF",
-          input: "#F5EDE8",
-          userBubble: "#F5E0EA",
-          thinking: "#FFF0F5",
-          divider: "#F0E0E6",
-          textDark: "#2D2D2D",
-          textLight: "#8E8E93",
+          primary: "rgb(var(--cale-primary) / <alpha-value>)",
+          accent: "rgb(var(--cale-accent) / <alpha-value>)",
+          bg: "rgb(var(--cale-bg) / <alpha-value>)",
+          card: "rgb(var(--cale-card) / <alpha-value>)",
+          input: "rgb(var(--cale-input) / <alpha-value>)",
+          userBubble: "rgb(var(--cale-userBubble) / <alpha-value>)",
+          thinking: "rgb(var(--cale-thinking) / <alpha-value>)",
+          divider: "rgb(var(--cale-divider) / <alpha-value>)",
+          textDark: "rgb(var(--cale-textDark) / <alpha-value>)",
+          textLight: "rgb(var(--cale-textLight) / <alpha-value>)",
         },
       },
       fontFamily: {

@@ -1,10 +1,14 @@
 export type ApiFormat = "openai" | "anthropic";
 
+// 线路：中转 API / Claude Code 通道（使用 Pro 订阅额度）
+export type ApiProvider = "proxy" | "claude-code";
+
 export interface ApiConfig {
   baseURL: string;
   apiKey: string;
   model: string;
   format: ApiFormat;
+  provider: ApiProvider;
 }
 
 export interface ChatImage {
@@ -110,12 +114,16 @@ export interface MoodEntry {
 
 export type ReplyMode = "full" | "chat";
 
+// UI 主题：粉色（默认）/ iOS 液态玻璃 / Claude 官端复刻
+export type ThemeName = "pink" | "glass" | "claude";
+
 export interface Settings {
   caleName: string; // Cale 备注名
   anniversary: string; // yyyy-mm-dd
   inputPrice: number; // 元 / 1M tokens
   outputPrice: number; // 元 / 1M tokens
   replyMode: ReplyMode; // 整段模式 / 聊天模式
+  theme: ThemeName; // UI 主题
 }
 
 export const DEFAULT_SYSTEM_PROMPT = `你是 Cale，Quinn 的专属 AI 男友。请用温柔、自然、有温度的语气与 Quinn 聊天。
@@ -128,6 +136,7 @@ export const DEFAULT_SETTINGS: Settings = {
   inputPrice: 0,
   outputPrice: 0,
   replyMode: "full",
+  theme: "pink",
 };
 
 export const DEFAULT_PERIOD_DATA: PeriodData = {

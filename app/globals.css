@@ -2,8 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme system
+ * ------------
+ * Every colour is a space-separated RGB triplet so Tailwind's opacity
+ * modifiers (bg-cale-card/50 …) keep working via rgb(var(--x) / <alpha-value>).
+ * Three themes (pink / glass / claude) each ship a light + dark variant.
+ * Dark mode follows the system automatically (prefers-color-scheme).
+ */
+
+:root,
+:root[data-theme="pink"] {
+  --cale-bg: 248 245 241;
+  --cale-card: 255 255 255;
+  --cale-primary: 212 160 160;
+  --cale-accent: 212 160 160;
+  --cale-input: 240 236 232;
+  --cale-userBubble: 242 232 232;
+  --cale-thinking: 247 240 240;
+  --cale-divider: 236 228 224;
+  --cale-textDark: 58 53 53;
+  --cale-textLight: 181 170 170;
+}
+
+:root[data-theme="glass"] {
+  --cale-bg: 236 238 242;
+  --cale-card: 255 255 255;
+  --cale-primary: 60 64 72;
+  --cale-accent: 60 64 72;
+  --cale-input: 255 255 255;
+  --cale-userBubble: 255 255 255;
+  --cale-thinking: 255 255 255;
+  --cale-divider: 255 255 255;
+  --cale-textDark: 28 31 38;
+  --cale-textLight: 92 98 110;
+}
+
+:root[data-theme="claude"] {
+  --cale-bg: 245 244 239;
+  --cale-card: 255 255 255;
+  --cale-primary: 201 100 66;
+  --cale-accent: 201 100 66;
+  --cale-input: 235 233 226;
+  --cale-userBubble: 239 235 228;
+  --cale-thinking: 239 235 228;
+  --cale-divider: 229 226 217;
+  --cale-textDark: 31 30 28;
+  --cale-textLight: 138 133 124;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  :root[data-theme="pink"] {
+    --cale-bg: 26 24 22;
+    --cale-card: 42 38 37;
+    --cale-primary: 192 139 139;
+    --cale-accent: 192 139 139;
+    --cale-input: 35 32 32;
+    --cale-userBubble: 53 44 44;
+    --cale-thinking: 44 36 34;
+    --cale-divider: 53 46 44;
+    --cale-textDark: 232 224 220;
+    --cale-textLight: 122 112 112;
+  }
+
+  :root[data-theme="glass"] {
+    --cale-bg: 16 18 24;
+    --cale-card: 255 255 255;
+    --cale-primary: 224 227 232;
+    --cale-accent: 224 227 232;
+    --cale-input: 255 255 255;
+    --cale-userBubble: 255 255 255;
+    --cale-thinking: 255 255 255;
+    --cale-divider: 255 255 255;
+    --cale-textDark: 236 238 245;
+    --cale-textLight: 162 168 182;
+  }
+
+  :root[data-theme="claude"] {
+    --cale-bg: 38 38 36;
+    --cale-card: 48 48 46;
+    --cale-primary: 217 119 87;
+    --cale-accent: 217 119 87;
+    --cale-input: 58 58 55;
+    --cale-userBubble: 58 58 55;
+    --cale-thinking: 58 58 55;
+    --cale-divider: 61 61 58;
+    --cale-textDark: 240 238 230;
+    --cale-textLight: 166 161 153;
+  }
+}
+
 :root {
-  --cale-bg: #fdf6f0;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
@@ -15,11 +105,39 @@ body {
 }
 
 body {
-  background-color: var(--cale-bg);
-  color: #2d2d2d;
+  background-color: rgb(var(--cale-bg));
+  color: rgb(var(--cale-textDark));
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/*
+ * Glass theme: a user-supplied background image (or a soft neutral gradient
+ * fallback) sits behind the frosted, colourless glass surfaces. The app
+ * containers go transparent so the image shows through everywhere.
+ */
+:root[data-theme="glass"] body {
+  background-image: var(
+    --glass-bg,
+    linear-gradient(160deg, #e7ebf1 0%, #eee9ee 50%, #e8edf2 100%)
+  );
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="glass"] body {
+    background-image: var(
+      --glass-bg,
+      linear-gradient(160deg, #101218 0%, #16141d 50%, #101620 100%)
+    );
+  }
+}
+:root[data-theme="glass"] .bg-cale-bg {
+  background-color: transparent;
 }
 
 /* Prevent iOS zoom on input focus (font-size >= 16px on inputs) */
@@ -36,6 +154,48 @@ select {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ---- Glass theme: colourless frosted surfaces over the background ---- */
+:root[data-theme="glass"] .bg-cale-card {
+  background-color: rgb(var(--cale-card) / 0.5);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+:root[data-theme="glass"] .bg-cale-userBubble {
+  background-color: rgb(var(--cale-userBubble) / 0.62);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+}
+:root[data-theme="glass"] .bg-cale-input {
+  background-color: rgb(var(--cale-input) / 0.5);
+}
+:root[data-theme="glass"] .bg-cale-thinking {
+  background-color: rgb(var(--cale-thinking) / 0.42);
+}
+:root[data-theme="glass"] .border-cale-divider {
+  border-color: rgb(var(--cale-divider) / 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  /* Dark glass uses a dark tint so it darkens whatever image is behind,
+     keeping the light text readable over both bright and dark backgrounds. */
+  :root[data-theme="glass"] .bg-cale-card {
+    background-color: rgb(24 26 32 / 0.44);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+  :root[data-theme="glass"] .bg-cale-userBubble {
+    background-color: rgb(44 46 56 / 0.52);
+  }
+  :root[data-theme="glass"] .bg-cale-input {
+    background-color: rgb(24 26 32 / 0.42);
+  }
+  :root[data-theme="glass"] .bg-cale-thinking {
+    background-color: rgb(24 26 32 / 0.4);
+  }
+  :root[data-theme="glass"] .border-cale-divider {
+    border-color: rgb(255 255 255 / 0.14);
+  }
 }
 
 /* Markdown content styling */
@@ -70,7 +230,7 @@ select {
   margin: 0.2em 0;
 }
 .markdown-body code {
-  background: rgba(212, 132, 159, 0.14);
+  background: rgb(var(--cale-accent) / 0.14);
   padding: 0.1em 0.35em;
   border-radius: 6px;
   font-family: "SF Mono", ui-monospace, Menlo, monospace;
@@ -90,7 +250,7 @@ select {
   color: inherit;
 }
 .markdown-body a {
-  color: #d4849f;
+  color: rgb(var(--cale-accent));
   text-decoration: underline;
 }
 .markdown-body h1,
@@ -100,10 +260,16 @@ select {
   margin: 0.5em 0 0.3em;
 }
 .markdown-body blockquote {
-  border-left: 3px solid #e8a0bf;
+  border-left: 3px solid rgb(var(--cale-primary));
   padding-left: 0.8em;
-  color: #8e8e93;
+  color: rgb(var(--cale-textLight));
   margin: 0.5em 0;
+}
+mark {
+  background: rgb(var(--cale-primary) / 0.42);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
 }
 
 /* Typing / streaming cursor */
@@ -120,7 +286,7 @@ select {
   content: "▍";
   animation: cale-blink 1s step-end infinite;
   margin-left: 1px;
-  color: #d4849f;
+  color: rgb(var(--cale-accent));
 }
 
 /* Heart pulse for anniversary */
@@ -135,4 +301,42 @@ select {
 }
 .heart-pulse {
   animation: heart-pulse 1.4s ease-in-out infinite;
+}
+
+/* Double-tap "like" heart burst */
+@keyframes heart-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-50%, -50%) scale(1.25);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -80%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -160%) scale(0.9);
+    opacity: 0;
+  }
+}
+.heart-burst {
+  animation: heart-burst 0.9s ease-out forwards;
+}
+
+/* Flash a message when jumped to from search */
+@keyframes cale-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--cale-accent) / 0);
+  }
+  30% {
+    box-shadow: 0 0 0 3px rgb(var(--cale-accent) / 0.7);
+  }
+}
+.cale-flash {
+  animation: cale-flash 1.1s ease-out;
+  border-radius: 18px;
 }

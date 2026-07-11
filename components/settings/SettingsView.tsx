@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { KEYS } from "@/lib/storage";
+import { ThemeName } from "@/lib/types";
 import ApiSettings from "./ApiSettings";
 import SystemPromptSettings from "./SystemPromptSettings";
 import MemoryManager from "./MemoryManager";
@@ -24,6 +25,22 @@ import RecommendManager from "./RecommendManager";
 type Page = "main" | "api" | "prompt" | "memory" | "wishlist" | "recommend";
 
 const ALL_KEYS = Object.values(KEYS);
+
+const THEMES: {
+  key: ThemeName;
+  label: string;
+  swatchBg: string;
+  swatchDot: string;
+}[] = [
+  { key: "pink", label: "粉色", swatchBg: "#F8F5F1", swatchDot: "#D4A0A0" },
+  {
+    key: "glass",
+    label: "液态玻璃",
+    swatchBg: "linear-gradient(160deg,#eef1f5,#f3eef2,#e9eef3)",
+    swatchDot: "#a9adb8",
+  },
+  { key: "claude", label: "Claude", swatchBg: "#F5F4EF", swatchDot: "#C96442" },
+];
 
 export default function SettingsView({
   goToChat,
@@ -36,6 +53,34 @@ export default function SettingsView({
   const [page, setPage] = useState<Page>("main");
   const [toast, setToast] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const bgFileRef = useRef<HTMLInputElement>(null);
+
+  // Load, downscale and store a background image for the glass theme.
+  const pickGlassBg = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 1200;
+        let { width, height } = img;
+        if (width > max || height > max) {
+          const r = Math.min(max / width, max / height);
+          width = Math.round(width * r);
+          height = Math.round(height * r);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, width, height);
+        app.setGlassBg(canvas.toDataURL("image/jpeg", 0.82));
+        showToast("背景图已更新");
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const showToast = (t: string) => {
     setToast(t);
@@ -103,14 +148,14 @@ export default function SettingsView({
   return (
     <div className="h-full flex flex-col bg-cale-bg">
       <header
-        className="flex-shrink-0 bg-white border-b border-cale-divider flex items-center justify-center h-12"
+        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center justify-center h-12"
         style={{ paddingTop: "var(--safe-top)" }}
       >
         <div className="text-[17px] font-semibold">设置</div>
       </header>
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-5">
-        {!app.apiConfig.baseURL && (
+        {app.apiConfig.provider === "proxy" && !app.apiConfig.baseURL && (
           <div className="bg-cale-userBubble/60 rounded-[14px] px-4 py-3 text-[13px] text-cale-accent">
             请先配置 API，就能开始和 Cale 聊天啦。
           </div>
@@ -120,7 +165,13 @@ export default function SettingsView({
           <Row
             label="API 设置"
             Icon={KeyRound}
-            value={app.apiConfig.baseURL ? "已配置" : "未配置"}
+            value={
+              app.apiConfig.provider === "claude-code"
+                ? "Claude Code"
+                : app.apiConfig.baseURL
+                  ? "已配置"
+                  : "未配置"
+            }
             onClick={() => setPage("api")}
           />
           <Row
@@ -158,6 +209,99 @@ export default function SettingsView({
           />
         </Group>
 
+        <Group title="外观">
+          <div className="px-4 py-3.5 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] text-cale-textDark">主题</span>
+              <span className="text-[12px] text-cale-textLight">
+                深色模式跟随系统
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {THEMES.map((t) => {
+                const on = app.settings.theme === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    onClick={() =>
+                      app.setSettings({ ...app.settings, theme: t.key })
+                    }
+                    className={`rounded-[12px] p-2 border transition-colors ${
+                      on ? "border-cale-accent" : "border-cale-divider"
+                    }`}
+                  >
+                    <div
+                      className="h-10 rounded-[8px] mb-1.5 flex items-end p-1"
+                      style={{ background: t.swatchBg }}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ background: t.swatchDot }}
+                      />
+                    </div>
+                    <div
+                      className={`text-[12px] text-center ${
+                        on
+                          ? "text-cale-accent font-medium"
+                          : "text-cale-textLight"
+                      }`}
+                    >
+                      {t.label}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {app.settings.theme === "glass" && (
+              <div className="pt-2.5 mt-1 border-t border-cale-divider">
+                <div className="flex items-center justify-between">
+                  <span className="text-[15px] text-cale-textDark">背景图</span>
+                  <div className="flex items-center gap-3">
+                    {app.glassBg && (
+                      <button
+                        onClick={() => {
+                          app.setGlassBg("");
+                          showToast("已恢复默认背景");
+                        }}
+                        className="text-[13px] text-red-500 active:opacity-60"
+                      >
+                        移除
+                      </button>
+                    )}
+                    <button
+                      onClick={() => bgFileRef.current?.click()}
+                      className="text-[13px] text-cale-accent active:opacity-60"
+                    >
+                      {app.glassBg ? "更换" : "上传"}
+                    </button>
+                  </div>
+                </div>
+                {app.glassBg && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={app.glassBg}
+                    alt="背景图预览"
+                    className="mt-2.5 w-full h-24 object-cover rounded-[12px]"
+                  />
+                )}
+                <p className="text-[12px] text-cale-textLight mt-2">
+                  玻璃卡片会磨砂折射这张背景图，未设置时使用柔和渐变。
+                </p>
+                <input
+                  ref={bgFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    e.target.files?.[0] && pickGlassBg(e.target.files[0])
+                  }
+                />
+              </div>
+            )}
+          </div>
+        </Group>
+
         <Group title="聊天">
           <div className="px-4 py-3.5 flex items-center justify-between">
             <span className="text-[15px] text-cale-textDark">回复模式</span>
@@ -170,7 +314,7 @@ export default function SettingsView({
                   }
                   className={`px-3 py-1 rounded-full transition-colors ${
                     app.settings.replyMode === mode
-                      ? "bg-white text-cale-accent font-medium shadow-sm"
+                      ? "bg-cale-card text-cale-accent font-medium shadow-sm"
                       : "text-cale-textLight"
                   }`}
                 >
@@ -267,7 +411,7 @@ function Group({
   return (
     <div>
       <div className="text-[12px] text-cale-textLight px-1 mb-1.5">{title}</div>
-      <div className="bg-white rounded-[14px] overflow-hidden divide-y divide-cale-divider">
+      <div className="bg-cale-card rounded-[14px] overflow-hidden divide-y divide-cale-divider">
         {children}
       </div>
     </div>

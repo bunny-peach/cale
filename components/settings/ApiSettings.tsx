@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { RefreshCw, Eye, EyeOff } from "lucide-react";
+import { RefreshCw, Eye, EyeOff, Check } from "lucide-react";
 import { useApp } from "@/components/AppContext";
-import { ApiConfig, ApiFormat } from "@/lib/types";
+import { ApiConfig, ApiFormat, ApiProvider } from "@/lib/types";
 import { testConnection, fetchModels } from "@/lib/api";
 import SubPageHeader from "./SubPageHeader";
 
@@ -86,6 +86,36 @@ export default function ApiSettings({ onBack }: { onBack: () => void }) {
         }
       />
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-4">
+        <Field label="线路">
+          <div className="flex gap-2">
+            {(
+              [
+                { key: "proxy", label: "中转 API" },
+                { key: "claude-code", label: "Claude Code 通道" },
+              ] as { key: ApiProvider; label: string }[]
+            ).map((p) => (
+              <button
+                key={p.key}
+                onClick={() => update({ provider: p.key })}
+                className={`flex-1 py-2.5 rounded-card text-[13px] border transition-colors ${
+                  draft.provider === p.key
+                    ? "border-cale-accent bg-cale-userBubble text-cale-accent font-medium"
+                    : "border-transparent bg-cale-card text-cale-textLight"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <p className="hint">
+            {draft.provider === "claude-code"
+              ? "使用本机 Claude Code（Pro/Max 订阅额度），无需填地址和 Key。"
+              : "使用中转 API 的地址与 Key。"}
+          </p>
+        </Field>
+
+        {draft.provider === "proxy" ? (
+          <>
         <Field label="API 地址">
           <input
             value={draft.baseURL}
@@ -187,6 +217,19 @@ export default function ApiSettings({ onBack }: { onBack: () => void }) {
             ))}
           </div>
         </Field>
+          </>
+        ) : (
+          <div className="rounded-card bg-cale-card px-4 py-3.5 text-[13px] text-cale-textLight leading-relaxed">
+            当前线路：
+            <span className="text-cale-accent font-medium">
+              Claude Code 通道
+            </span>
+            <br />
+            通过本机已登录的 claude CLI 使用订阅额度。当前为插桩版本：界面与配置已就绪，真实调用待在本地接入{" "}
+            <code>/api/claude-code</code>。在 Vercel
+            等静态托管上会自动回退到中转 API。
+          </div>
+        )}
 
         <button
           onClick={test}
@@ -209,8 +252,8 @@ export default function ApiSettings({ onBack }: { onBack: () => void }) {
         )}
 
         {saved && (
-          <div className="text-center text-cale-accent text-[13px]">
-            已保存 ✓
+          <div className="flex items-center justify-center gap-1 text-cale-accent text-[13px]">
+            <Check size={14} strokeWidth={2} /> 已保存
           </div>
         )}
       </div>
