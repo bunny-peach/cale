@@ -15,6 +15,7 @@ export const KEYS = {
   stickers: "cale_stickers",
   playlist: "cale_playlist",
   bookshelf: "cale_bookshelf",
+  glassBg: "cale_glass_bg",
 } as const;
 
 export function load<T>(key: string, fallback: T): T {

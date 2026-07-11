@@ -38,10 +38,10 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        {/* Apply the saved theme before first paint to avoid a flash */}
+        {/* Apply the saved theme + glass background before first paint (no flash) */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var s=JSON.parse(localStorage.getItem('cale_settings')||'{}');document.documentElement.dataset.theme=(s&&s.theme)||'pink';}catch(e){document.documentElement.dataset.theme='pink';}`,
+            __html: `try{var s=JSON.parse(localStorage.getItem('cale_settings')||'{}');document.documentElement.dataset.theme=(s&&s.theme)||'pink';var g=JSON.parse(localStorage.getItem('cale_glass_bg')||'""');if(g)document.documentElement.style.setProperty('--glass-bg','url("'+g+'")');}catch(e){document.documentElement.dataset.theme='pink';}`,
           }}
         />
       </head>

@@ -69,6 +69,10 @@ interface AppState {
   stickers: Sticker[];
   setStickers: React.Dispatch<React.SetStateAction<Sticker[]>>;
 
+  // Custom background image (data URL) for the liquid-glass theme.
+  glassBg: string;
+  setGlassBg: (url: string) => void;
+
   // helpers
   addWish: (title: string, source: WishItem["source"], description?: string) => void;
   addMemory: (
@@ -120,6 +124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [bookshelf, setBookshelf] = useState<string[]>([]);
   const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [glassBg, setGlassBgState] = useState<string>("");
 
   // Hydrate from localStorage on mount
   useEffect(() => {
@@ -145,6 +150,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPlaylist(load(KEYS.playlist, []));
     setBookshelf(load(KEYS.bookshelf, []));
     setStickers(load(KEYS.stickers, []));
+    setGlassBgState(load<string>(KEYS.glassBg, ""));
     setHydrated(true);
   }, []);
 
@@ -170,6 +176,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     save(KEYS.settings, s);
   }, []);
 
+  const setGlassBg = useCallback((url: string) => {
+    setGlassBgState(url);
+    save(KEYS.glassBg, url);
+  }, []);
+
   // Apply the active UI theme to <html data-theme>. Dark mode follows the
   // system automatically via CSS prefers-color-scheme, so nothing else needed.
   useEffect(() => {
@@ -177,6 +188,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       document.documentElement.dataset.theme = settings.theme;
     }
   }, [settings.theme]);
+
+  // Expose the glass background image to CSS as a custom property.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    if (glassBg) root.style.setProperty("--glass-bg", `url("${glassBg}")`);
+    else root.style.removeProperty("--glass-bg");
+  }, [glassBg]);
 
   // Persist collections whenever they change (after hydration)
   useEffect(() => {
@@ -347,6 +366,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setBookshelf,
     stickers,
     setStickers,
+    glassBg,
+    setGlassBg,
     addWish,
     addMemory,
     toggleMemoryPrompt,

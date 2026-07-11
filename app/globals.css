@@ -26,16 +26,16 @@
 }
 
 :root[data-theme="glass"] {
-  --cale-bg: 233 237 245;
+  --cale-bg: 236 238 242;
   --cale-card: 255 255 255;
-  --cale-primary: 91 141 239;
-  --cale-accent: 91 141 239;
+  --cale-primary: 60 64 72;
+  --cale-accent: 60 64 72;
   --cale-input: 255 255 255;
-  --cale-userBubble: 120 150 255;
+  --cale-userBubble: 255 255 255;
   --cale-thinking: 255 255 255;
   --cale-divider: 255 255 255;
-  --cale-textDark: 28 34 48;
-  --cale-textLight: 107 114 128;
+  --cale-textDark: 28 31 38;
+  --cale-textLight: 92 98 110;
 }
 
 :root[data-theme="claude"] {
@@ -67,16 +67,16 @@
   }
 
   :root[data-theme="glass"] {
-    --cale-bg: 14 18 32;
-    --cale-card: 60 66 88;
-    --cale-primary: 127 168 255;
-    --cale-accent: 127 168 255;
+    --cale-bg: 16 18 24;
+    --cale-card: 255 255 255;
+    --cale-primary: 224 227 232;
+    --cale-accent: 224 227 232;
     --cale-input: 255 255 255;
-    --cale-userBubble: 120 150 255;
+    --cale-userBubble: 255 255 255;
     --cale-thinking: 255 255 255;
     --cale-divider: 255 255 255;
     --cale-textDark: 236 238 245;
-    --cale-textLight: 154 161 178;
+    --cale-textLight: 162 168 182;
   }
 
   :root[data-theme="claude"] {
@@ -113,25 +113,31 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Glass theme paints a soft gradient behind the frosted surfaces */
+/*
+ * Glass theme: a user-supplied background image (or a soft neutral gradient
+ * fallback) sits behind the frosted, colourless glass surfaces. The app
+ * containers go transparent so the image shows through everywhere.
+ */
 :root[data-theme="glass"] body {
-  background-image: linear-gradient(
-    160deg,
-    #dfe7f7 0%,
-    #efe4f4 48%,
-    #e2edf8 100%
+  background-image: var(
+    --glass-bg,
+    linear-gradient(160deg, #e7ebf1 0%, #eee9ee 50%, #e8edf2 100%)
   );
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
 }
 @media (prefers-color-scheme: dark) {
   :root[data-theme="glass"] body {
-    background-image: linear-gradient(
-      160deg,
-      #0c1024 0%,
-      #171331 50%,
-      #0d1626 100%
+    background-image: var(
+      --glass-bg,
+      linear-gradient(160deg, #101218 0%, #16141d 50%, #101620 100%)
     );
   }
+}
+:root[data-theme="glass"] .bg-cale-bg {
+  background-color: transparent;
 }
 
 /* Prevent iOS zoom on input focus (font-size >= 16px on inputs) */
@@ -150,35 +156,45 @@ select {
   scrollbar-width: none;
 }
 
-/* ---- Glass theme: frost the chrome + cards ---- */
+/* ---- Glass theme: colourless frosted surfaces over the background ---- */
 :root[data-theme="glass"] .bg-cale-card {
-  background-color: rgb(var(--cale-card) / 0.55);
-  backdrop-filter: blur(22px) saturate(170%);
-  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  background-color: rgb(var(--cale-card) / 0.5);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
 }
 :root[data-theme="glass"] .bg-cale-userBubble {
-  background-color: rgb(var(--cale-userBubble) / 0.28);
-  backdrop-filter: blur(22px) saturate(170%);
-  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  background-color: rgb(var(--cale-userBubble) / 0.62);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
 }
 :root[data-theme="glass"] .bg-cale-input {
-  background-color: rgb(var(--cale-input) / 0.45);
+  background-color: rgb(var(--cale-input) / 0.5);
 }
 :root[data-theme="glass"] .bg-cale-thinking {
-  background-color: rgb(var(--cale-thinking) / 0.4);
+  background-color: rgb(var(--cale-thinking) / 0.42);
 }
 :root[data-theme="glass"] .border-cale-divider {
   border-color: rgb(var(--cale-divider) / 0.55);
 }
 @media (prefers-color-scheme: dark) {
+  /* Dark glass uses a dark tint so it darkens whatever image is behind,
+     keeping the light text readable over both bright and dark backgrounds. */
+  :root[data-theme="glass"] .bg-cale-card {
+    background-color: rgb(24 26 32 / 0.44);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+  :root[data-theme="glass"] .bg-cale-userBubble {
+    background-color: rgb(44 46 56 / 0.52);
+  }
   :root[data-theme="glass"] .bg-cale-input {
-    background-color: rgb(var(--cale-input) / 0.08);
+    background-color: rgb(24 26 32 / 0.42);
   }
   :root[data-theme="glass"] .bg-cale-thinking {
-    background-color: rgb(var(--cale-thinking) / 0.08);
+    background-color: rgb(24 26 32 / 0.4);
   }
   :root[data-theme="glass"] .border-cale-divider {
-    border-color: rgb(var(--cale-divider) / 0.16);
+    border-color: rgb(255 255 255 / 0.14);
   }
 }
 

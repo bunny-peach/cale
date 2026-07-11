@@ -36,8 +36,8 @@ const THEMES: {
   {
     key: "glass",
     label: "液态玻璃",
-    swatchBg: "linear-gradient(160deg,#dfe7f7,#efe4f4,#e2edf8)",
-    swatchDot: "#5B8DEF",
+    swatchBg: "linear-gradient(160deg,#eef1f5,#f3eef2,#e9eef3)",
+    swatchDot: "#a9adb8",
   },
   { key: "claude", label: "Claude", swatchBg: "#F5F4EF", swatchDot: "#C96442" },
 ];
@@ -53,6 +53,34 @@ export default function SettingsView({
   const [page, setPage] = useState<Page>("main");
   const [toast, setToast] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const bgFileRef = useRef<HTMLInputElement>(null);
+
+  // Load, downscale and store a background image for the glass theme.
+  const pickGlassBg = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 1200;
+        let { width, height } = img;
+        if (width > max || height > max) {
+          const r = Math.min(max / width, max / height);
+          width = Math.round(width * r);
+          height = Math.round(height * r);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, width, height);
+        app.setGlassBg(canvas.toDataURL("image/jpeg", 0.82));
+        showToast("背景图已更新");
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const showToast = (t: string) => {
     setToast(t);
@@ -218,6 +246,53 @@ export default function SettingsView({
                 );
               })}
             </div>
+
+            {app.settings.theme === "glass" && (
+              <div className="pt-2.5 mt-1 border-t border-cale-divider">
+                <div className="flex items-center justify-between">
+                  <span className="text-[15px] text-cale-textDark">背景图</span>
+                  <div className="flex items-center gap-3">
+                    {app.glassBg && (
+                      <button
+                        onClick={() => {
+                          app.setGlassBg("");
+                          showToast("已恢复默认背景");
+                        }}
+                        className="text-[13px] text-red-500 active:opacity-60"
+                      >
+                        移除
+                      </button>
+                    )}
+                    <button
+                      onClick={() => bgFileRef.current?.click()}
+                      className="text-[13px] text-cale-accent active:opacity-60"
+                    >
+                      {app.glassBg ? "更换" : "上传"}
+                    </button>
+                  </div>
+                </div>
+                {app.glassBg && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={app.glassBg}
+                    alt="背景图预览"
+                    className="mt-2.5 w-full h-24 object-cover rounded-[12px]"
+                  />
+                )}
+                <p className="text-[12px] text-cale-textLight mt-2">
+                  玻璃卡片会磨砂折射这张背景图，未设置时使用柔和渐变。
+                </p>
+                <input
+                  ref={bgFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    e.target.files?.[0] && pickGlassBg(e.target.files[0])
+                  }
+                />
+              </div>
+            )}
           </div>
         </Group>
 
