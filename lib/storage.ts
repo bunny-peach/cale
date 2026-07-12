@@ -21,6 +21,8 @@ export const KEYS = {
   quota: "cale_quota_tracking",
   wallet: "cale_wallet",
   transactions: "cale_transactions",
+  lastActive: "cale_last_active",
+  weather: "cale_weather",
 } as const;
 
 export function load<T>(key: string, fallback: T): T {

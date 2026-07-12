@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { List, Plus, Square, Send, Trash2, X } from "lucide-react";
 import { useApp } from "@/components/AppContext";
-import { uid } from "@/lib/storage";
+import { uid, load, save, KEYS } from "@/lib/storage";
 import { Conversation, Message } from "@/lib/types";
 import { streamChat } from "@/lib/api";
 import { buildSystemPrompt, buildMemoryContext } from "@/lib/prompt";
@@ -69,6 +69,8 @@ export default function TheaterView() {
   };
 
   const runAssistant = async (cid: string, history: Message[], aId: string) => {
+    const prevActive = load<number | null>(KEYS.lastActive, null);
+    save(KEYS.lastActive, Date.now());
     const system = buildSystemPrompt({
       systemPrompt: app.systemPrompt,
       memories: app.memories,
@@ -79,6 +81,11 @@ export default function TheaterView() {
         ? { mood: app.todayMood.mood, note: app.todayMood.note }
         : undefined,
       theater: true,
+      lastActive: prevActive,
+      weather:
+        app.settings.weatherEnabled && app.weather
+          ? { tempC: app.weather.tempC, desc: app.weather.desc }
+          : null,
     });
 
     // Inject OFF memories as hidden context on the first user message (shared lib)
