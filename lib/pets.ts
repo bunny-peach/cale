@@ -152,31 +152,139 @@ export function wolfPresence(lastActive: number | null, now = Date.now()): {
   return { pose: "happy", caption: "精神很好，尾巴摇个不停" };
 }
 
-// Click-to-speak lines.
-export const PET_LINES: Record<PetKind, string[]> = {
-  wolf: [
-    "汪！",
-    "（用鼻子蹭蹭你的手）",
-    "陪我玩会儿嘛…",
-    "今天也在想 Quinn",
-    "有肉干吗？",
-    "（把拖鞋叼给你）",
-    "唔…有点困了",
-    "别走呀——",
-    "（尾巴摇成了螺旋桨）",
-  ],
-  rabbit: [
-    "（竖起耳朵看你）",
-    "有桃子吗？",
-    "哼，才不理你呢",
-    "（原地蹦跶两下）",
-    "鼻子动了动",
-    "想被摸摸头…",
-    "（把自己缩成一团）",
-    "偷偷看你一眼",
-    "要吃草莓！",
-  ],
+// Click-to-speak lines, split by mood/fullness/intimacy state so the same
+// poke says different things depending on how the pet is feeling.
+type PetMoodKey = "cold" | "grumpy" | "hungry" | "sad" | "love" | "happy" | "normal";
+
+const PET_LINES_BY_STATE: Record<PetKind, Record<PetMoodKey, string[]>> = {
+  wolf: {
+    // low mood + low intimacy: distant, doesn't warm up to you
+    cold: [
+      "（别过头，不看你）",
+      "……（喉咙里低低地哼了一声）",
+      "（往后退了半步）",
+      "哼。",
+    ],
+    // 炸毛 / very irritated
+    grumpy: [
+      "（龇了下牙）",
+      "别碰我！",
+      "（尾巴夹了起来）",
+      "……走开一会儿。",
+    ],
+    // low fullness
+    hungry: [
+      "肚子…咕咕叫了",
+      "有肉干吗？求你了",
+      "（可怜巴巴地盯着食盆）",
+      "好饿…给点吃的嘛",
+    ],
+    // low mood (but not cold)
+    sad: [
+      "（耳朵耷拉着）",
+      "唔…没精神",
+      "（趴下，叹了口气）",
+      "陪我一会儿好不好…",
+    ],
+    // high intimacy + good mood
+    love: [
+      "（把整个脑袋埋进你怀里）",
+      "最喜欢 Quinn 了！",
+      "（尾巴摇成了螺旋桨）",
+      "（叼来最爱的骨头放你脚边）",
+      "你在我就开心！",
+    ],
+    // decent mood
+    happy: [
+      "汪！",
+      "（用鼻子蹭蹭你的手）",
+      "陪我玩会儿嘛…",
+      "（原地转了两个圈）",
+      "（把拖鞋叼给你）",
+    ],
+    // default / neutral
+    normal: [
+      "（竖起一只耳朵看你）",
+      "今天也在想 Quinn",
+      "唔…有点困了",
+      "（鼻子动了动）",
+      "在呢在呢。",
+    ],
+  },
+  rabbit: {
+    cold: [
+      "（背过身去，一动不动）",
+      "……",
+      "（耳朵压得低低的，不理你）",
+      "（挪到角落里）",
+    ],
+    grumpy: [
+      "（气鼓鼓地跺脚）",
+      "哼，才不理你！",
+      "（把脸埋进爪子里）",
+      "别戳我啦——",
+    ],
+    hungry: [
+      "有桃子吗…",
+      "（扒着食盆看）",
+      "要吃草莓！现在！",
+      "肚子扁扁的了…",
+    ],
+    sad: [
+      "（缩成小小的一团）",
+      "（鼻子红红的）",
+      "……想被抱抱",
+      "（耳朵软软地垂下来）",
+    ],
+    love: [
+      "（蹦到你手心里蹭蹭）",
+      "最喜欢你啦！",
+      "（把脑袋顶进你掌心）",
+      "（开心地转圈圈）",
+      "今天也想黏着你～",
+    ],
+    happy: [
+      "（原地蹦跶两下）",
+      "（竖起耳朵看你）",
+      "想被摸摸头…",
+      "（鼻子动了动）",
+      "嗯哼～",
+    ],
+    normal: [
+      "（偷偷看你一眼）",
+      "（歪了歪脑袋）",
+      "在听呢。",
+      "（抖了抖耳朵）",
+      "唔？",
+    ],
+  },
 };
+
+export interface PetVitals {
+  mood: number;
+  fullness: number;
+  intimacy: number;
+  hiding?: boolean; // 炸毛缩窝：谁戳都不说话
+  grumpy?: boolean; // 生气但还会哼两句
+}
+
+const pickLine = (pool: string[]) => pool[Math.floor(Math.random() * pool.length)];
+
+// Returns the line to show on click, or null when the pet refuses to speak
+// (e.g. a 炸毛缩窝 rabbit says nothing no matter how you poke it).
+export function petLine(kind: PetKind, v: PetVitals): string | null {
+  if (v.hiding) return null;
+  const table = PET_LINES_BY_STATE[kind];
+  let key: PetMoodKey;
+  if (v.grumpy) key = "grumpy";
+  else if (v.mood < 30 && v.intimacy < 20) key = "cold";
+  else if (v.fullness < 25) key = "hungry";
+  else if (v.mood < 30) key = "sad";
+  else if (v.mood >= 60 && v.intimacy >= 60) key = "love";
+  else if (v.mood >= 55) key = "happy";
+  else key = "normal";
+  return pickLine(table[key]);
+}
 
 // Idle activities the pet cycles through on its own.
 export type Activity = "idle" | "walk" | "sleep" | "play";
@@ -187,27 +295,37 @@ export interface OutfitItem {
   name: string;
   slot: OutfitSlot;
   unlock: number;
+  unique?: boolean; // exclusive to this pet
 }
+// Items tagged `unique: true` are exclusive to that pet — no shared version on
+// the other side. Everything else is a common (interchangeable) piece.
 export const WOLF_OUTFITS: OutfitItem[] = [
   { id: "bow", name: "蝴蝶结", slot: "hat", unlock: 0 },
   { id: "crown", name: "小皇冠", slot: "hat", unlock: 25 },
   { id: "flower", name: "花冠", slot: "hat", unlock: 50 },
+  { id: "beret", name: "贝雷帽", slot: "hat", unlock: 70 },
   { id: "bunnyEars", name: "兔耳头饰", slot: "hat", unlock: 90 },
   { id: "redScarf", name: "红领巾", slot: "scarf", unlock: 0 },
   { id: "knit", name: "针织围脖", slot: "scarf", unlock: 30 },
+  { id: "bandana", name: "海盗领巾", slot: "scarf", unlock: 55, unique: true },
   { id: "vest", name: "小背心", slot: "clothes", unlock: 40 },
+  { id: "cape", name: "英雄小披风", slot: "clothes", unlock: 75, unique: true },
   { id: "collar", name: "铃铛项圈", slot: "accessory", unlock: 0 },
   { id: "glasses", name: "墨镜", slot: "accessory", unlock: 60 },
+  { id: "bowtie", name: "绅士领结", slot: "accessory", unlock: 45, unique: true },
 ];
 export const RABBIT_OUTFITS: OutfitItem[] = [
   { id: "bow", name: "粉蝴蝶结", slot: "hat", unlock: 0 },
   { id: "crown", name: "小皇冠", slot: "hat", unlock: 25 },
   { id: "flower", name: "干花花冠", slot: "hat", unlock: 50 },
+  { id: "beret", name: "毛线贝雷帽", slot: "hat", unlock: 70 },
   { id: "redScarf", name: "小围巾", slot: "scarf", unlock: 0 },
   { id: "knit", name: "针织围脖", slot: "scarf", unlock: 30 },
   { id: "vest", name: "小马甲", slot: "clothes", unlock: 40 },
+  { id: "dress", name: "碎花小裙", slot: "clothes", unlock: 65, unique: true },
   { id: "collar", name: "铃铛项圈", slot: "accessory", unlock: 0 },
   { id: "glasses", name: "圆眼镜", slot: "accessory", unlock: 60 },
+  { id: "pearls", name: "珍珠项链", slot: "accessory", unlock: 45, unique: true },
 ];
 export function outfitCatalog(kind: PetKind): OutfitItem[] {
   return kind === "wolf" ? WOLF_OUTFITS : RABBIT_OUTFITS;

@@ -292,6 +292,46 @@ export default function ChatView({
       );
       parsed.moodNotes.forEach((n) => app.setTodayMoodNote(n));
       parsed.diaryAdds.forEach((d) => app.addDiary(d.title, d.content));
+      // Cale tends to his own rabbit / pranks Quinn's wolf
+      if (parsed.petActions.length) {
+        const clampPet = (n: number) => Math.max(0, Math.min(100, n));
+        const wolfPranks = [
+          "毛发被扎了个歪歪扭扭的小辫子",
+          "脖子上多了一条粉色小丝带",
+          "爪子上被点了粉色指甲油",
+          "头顶被扣了一个兔耳发箍",
+        ];
+        app.setPetState((prev) => {
+          let rabbit = prev.rabbit;
+          let wolf = prev.wolf;
+          for (const a of parsed.petActions) {
+            if (a === "feed") {
+              rabbit = {
+                ...rabbit,
+                fullness: clampPet(rabbit.fullness + 15),
+                mood: clampPet(rabbit.mood + 8),
+                intimacy: rabbit.intimacy + 2,
+                updatedAt: Date.now(),
+              };
+            } else if (a === "hug") {
+              rabbit = {
+                ...rabbit,
+                mood: clampPet(rabbit.mood + 12),
+                mischief: clampPet(rabbit.mischief - 30),
+                intimacy: rabbit.intimacy + 2,
+                updatedAt: Date.now(),
+              };
+            } else if (a === "prank") {
+              wolf = {
+                ...wolf,
+                surprise: wolfPranks[Math.floor(Math.random() * wolfPranks.length)],
+                updatedAt: Date.now(),
+              };
+            }
+          }
+          return { wolf, rabbit };
+        });
+      }
       // Cale sends Quinn a gift
       parsed.giftSends.forEach((name) => {
         const gift = findGift(name);
