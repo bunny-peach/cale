@@ -156,6 +156,36 @@ body {
 :root[data-theme="pink"] .bg-cale-bg {
   background-color: transparent;
 }
+
+/*
+ * Opaque full-screen surface for overlays (theater / stickers / search) so they
+ * fully cover what's behind even when .bg-cale-bg is made transparent for glass.
+ */
+.app-bg {
+  background-color: rgb(var(--cale-bg));
+}
+:root[data-theme="pink"] .app-bg {
+  background-image: linear-gradient(160deg, #fbeef3 0%, #f6e6ee 48%, #fcecf1 100%);
+}
+:root[data-theme="glass"] .app-bg {
+  background-image: var(
+    --glass-bg,
+    linear-gradient(160deg, #e7ebf1 0%, #eee9ee 50%, #e8edf2 100%)
+  );
+  background-size: cover;
+  background-position: center;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="pink"] .app-bg {
+    background-image: linear-gradient(160deg, #201a1c 0%, #1a1517 50%, #221b1e 100%);
+  }
+  :root[data-theme="glass"] .app-bg {
+    background-image: var(
+      --glass-bg,
+      linear-gradient(160deg, #101218 0%, #16141d 50%, #101620 100%)
+    );
+  }
+}
 :root[data-theme="pink"] .bg-cale-card:not(.no-glass) {
   background-color: rgb(255 255 255 / 0.6);
   backdrop-filter: blur(18px) saturate(160%);
@@ -419,6 +449,80 @@ mark {
   animation: ear-sway 3.4s ease-in-out infinite;
   transform-box: fill-box;
   transform-origin: top center;
+}
+
+/* ---- Per-interaction reaction animations ---- */
+@keyframes pet-jump {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-20px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  68% {
+    transform: translateY(-9px);
+  }
+  85% {
+    transform: translateY(0);
+  }
+}
+@keyframes pet-shake {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-9deg);
+  }
+  40% {
+    transform: rotate(8deg);
+  }
+  60% {
+    transform: rotate(-6deg);
+  }
+  80% {
+    transform: rotate(3deg);
+  }
+}
+@keyframes pet-wiggle {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  25% {
+    transform: rotate(-7deg) scale(1.05);
+  }
+  50% {
+    transform: rotate(7deg) scale(1.05);
+  }
+  75% {
+    transform: rotate(-4deg) scale(1.03);
+  }
+}
+@keyframes pet-nod {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(5px) scale(1.03);
+  }
+}
+.pet-jump {
+  animation: pet-jump 0.7s ease;
+}
+.pet-shake {
+  animation: pet-shake 0.6s ease;
+}
+.pet-wiggle {
+  animation: pet-wiggle 0.7s ease;
+}
+.pet-nod {
+  animation: pet-nod 0.5s ease;
 }
 
 /* Transfer / gift card pop-in */
