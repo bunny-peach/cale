@@ -8,6 +8,7 @@ import {
   Sparkles,
   Gift,
   Smile,
+  Wallet,
   Download,
   Upload,
   Trash2,
@@ -21,8 +22,16 @@ import SystemPromptSettings from "./SystemPromptSettings";
 import MemoryManager from "./MemoryManager";
 import WishlistManager from "./WishlistManager";
 import RecommendManager from "./RecommendManager";
+import WalletManager from "./WalletManager";
 
-type Page = "main" | "api" | "prompt" | "memory" | "wishlist" | "recommend";
+type Page =
+  | "main"
+  | "api"
+  | "prompt"
+  | "memory"
+  | "wishlist"
+  | "recommend"
+  | "wallet";
 
 const ALL_KEYS = Object.values(KEYS);
 
@@ -94,6 +103,7 @@ export default function SettingsView({
   if (page === "memory") return <MemoryManager onBack={back} />;
   if (page === "wishlist") return <WishlistManager onBack={back} />;
   if (page === "recommend") return <RecommendManager onBack={back} />;
+  if (page === "wallet") return <WalletManager onBack={back} />;
 
   const exportData = () => {
     const dump: Record<string, unknown> = {};
@@ -206,6 +216,12 @@ export default function SettingsView({
             Icon={Smile}
             value={`${app.stickers.length} 个`}
             onClick={onManageStickers}
+          />
+          <Row
+            label="钱包"
+            Icon={Wallet}
+            value={`你 ¥${app.wallet.quinn}`}
+            onClick={() => setPage("wallet")}
           />
         </Group>
 

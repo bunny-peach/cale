@@ -19,6 +19,8 @@ export const KEYS = {
   theaterConversations: "cale_theater_conversations",
   theaterCurrent: "cale_theater_current",
   quota: "cale_quota_tracking",
+  wallet: "cale_wallet",
+  transactions: "cale_transactions",
 } as const;
 
 export function load<T>(key: string, fallback: T): T {

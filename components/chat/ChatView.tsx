@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Menu, Plus, Check, X, Quote, Search } from "lucide-react";
+import { Menu, Plus, Check, X, Quote, Search, Gift } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid } from "@/lib/storage";
 import {
@@ -18,12 +18,39 @@ import {
   MEMORY_SUMMARY_PROMPT,
 } from "@/lib/prompt";
 import { parseMarkers, splitMessageBreaks } from "@/lib/markers";
+import { findGift, Gift as GiftType } from "@/lib/gifts";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
+import TransferSheet from "./TransferSheet";
+import GiftShop from "./GiftShop";
 import ConversationSidebar from "./ConversationSidebar";
 import QuotaIndicator from "@/components/QuotaIndicator";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// WeChat-style time separators: show one only after a gap since the last message.
+const STAMP_GAP = 5 * 60 * 1000;
+const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+function formatStamp(ts: number): string {
+  const d = new Date(ts);
+  const now = new Date();
+  const hm = d.toLocaleTimeString("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  if (d.toDateString() === now.toDateString()) return hm;
+  const yst = new Date(now);
+  yst.setDate(now.getDate() - 1);
+  if (d.toDateString() === yst.toDateString()) return `昨天 ${hm}`;
+  if ((now.getTime() - d.getTime()) / 86400000 < 7)
+    return `${WEEKDAYS[d.getDay()]} ${hm}`;
+  return (
+    d.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" }) +
+    " " +
+    hm
+  );
+}
 
 export default function ChatView({
   onManageStickers,
@@ -53,6 +80,12 @@ export default function ChatView({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [flashId, setFlashId] = useState<string | null>(null);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [giftOpen, setGiftOpen] = useState(false);
+  const [celebrate, setCelebrate] = useState<{
+    type: "transfer" | "gift";
+    giftName?: string;
+  } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -223,6 +256,34 @@ export default function ChatView({
       );
       parsed.moodNotes.forEach((n) => app.setTodayMoodNote(n));
       parsed.diaryAdds.forEach((d) => app.addDiary(d.title, d.content));
+      // Cale sends Quinn a gift
+      parsed.giftSends.forEach((name) => {
+        const gift = findGift(name);
+        app.applyGift("cale", gift?.name ?? name, gift?.price ?? 0);
+        updateConversation(cid, (c) => ({
+          ...c,
+          messages: [
+            ...c.messages,
+            {
+              id: uid(),
+              role: "assistant",
+              content: "",
+              payload: {
+                kind: "gift",
+                from: "cale",
+                giftName: gift?.name ?? name,
+                amount: gift?.price ?? 0,
+              },
+              createdAt: Date.now(),
+            },
+          ],
+          updatedAt: Date.now(),
+        }));
+      });
+      if (parsed.giftSends.length) {
+        celebrateFor({ type: "gift", giftName: parsed.giftSends[0] });
+        showToast("Cale 送了你一个礼物");
+      }
       if (parsed.diaryAdds.length) showToast("Cale 写了一篇日记");
       else if (parsed.mcpAdds.length || parsed.songAdds.length || parsed.bookAdds.length)
         showToast("Cale 悄悄记下了一些东西");
@@ -388,6 +449,73 @@ export default function ChatView({
     runAssistant(cid, [...prior, userMsg], assistantMsg.id);
   };
 
+  const celebrateFor = (c: { type: "transfer" | "gift"; giftName?: string }) => {
+    setCelebrate(c);
+    setTimeout(() => setCelebrate(null), 1400);
+  };
+
+  const insertPayload = (payload: Message["payload"], hidden: string) => {
+    const cid = ensureConversation();
+    const base = conversations.find((c) => c.id === cid);
+    const prior = base?.messages ?? [];
+    const userMsg: Message = {
+      id: uid(),
+      role: "user",
+      content: "",
+      payload,
+      hiddenText: hidden,
+      createdAt: Date.now(),
+    };
+    updateConversation(cid, (c) => ({
+      ...c,
+      title: c.title || "聊天",
+      messages: [...c.messages, userMsg],
+      updatedAt: Date.now(),
+    }));
+    scrollToBottom();
+    const apiReady =
+      apiConfig.provider === "claude-code" || !!apiConfig.baseURL;
+    if (burstMode || !apiReady) return;
+    const aMsg: Message = {
+      id: uid(),
+      role: "assistant",
+      content: "",
+      thinking: "",
+      createdAt: Date.now(),
+    };
+    updateConversation(cid, (c) => ({
+      ...c,
+      messages: [...c.messages, aMsg],
+    }));
+    runAssistant(cid, [...prior, userMsg], aMsg.id);
+  };
+
+  const handleTransfer = (amount: number) => {
+    setTransferOpen(false);
+    if (!app.applyTransfer(amount)) {
+      showToast("余额不足");
+      return;
+    }
+    celebrateFor({ type: "transfer" });
+    insertPayload(
+      { kind: "transfer", from: "quinn", amount },
+      `（Quinn 给你转账 ¥${amount}）`
+    );
+  };
+
+  const handleGift = (gift: GiftType) => {
+    setGiftOpen(false);
+    if (!app.applyGift("quinn", gift.name, gift.price)) {
+      showToast("余额不足");
+      return;
+    }
+    celebrateFor({ type: "gift", giftName: gift.name });
+    insertPayload(
+      { kind: "gift", from: "quinn", giftName: gift.name, amount: gift.price },
+      `（Quinn 送了你一个"${gift.name}"）`
+    );
+  };
+
   const triggerBurstReply = () => {
     if (!current) return;
     const cid = current.id;
@@ -547,18 +675,26 @@ export default function ChatView({
     <div className="h-full flex flex-col relative overflow-hidden">
       {/* Top bar */}
       <header
-        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
+        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center justify-between px-3 h-12 relative"
         style={{ paddingTop: "var(--safe-top)" }}
       >
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
-          aria-label="对话列表"
-        >
-          <Menu size={22} strokeWidth={1.8} />
-        </button>
+        {/* Left cluster */}
+        <div className="flex items-center">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
+            aria-label="对话列表"
+          >
+            <Menu size={22} strokeWidth={1.8} />
+          </button>
+          <QuotaIndicator />
+        </div>
 
-        <div className="flex-1 flex items-center justify-center">
+        {/* Centered title (absolute so it stays centered regardless of clusters) */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center"
+          style={{ top: "calc(var(--safe-top) + 0px)", height: "3rem", justifyContent: "center" }}
+        >
           {editingName ? (
             <div className="flex items-center gap-1">
               <input
@@ -601,39 +737,41 @@ export default function ChatView({
           )}
         </div>
 
-        <QuotaIndicator />
-        <button
-          onClick={() => {
-            setSearchQuery("");
-            setSearchOpen(true);
-          }}
-          className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
-          aria-label="搜索聊天记录"
-        >
-          <Search size={19} strokeWidth={1.8} />
-        </button>
-        <button
-          onClick={() =>
-            setSettings({
-              ...settings,
-              replyMode: settings.replyMode === "chat" ? "full" : "chat",
-            })
-          }
-          className="h-7 px-2 mr-1 rounded-full text-[11px] bg-cale-input text-cale-textLight active:opacity-70"
-          title="切换回复模式"
-        >
-          {settings.replyMode === "chat" ? "聊天" : "整段"}
-        </button>
-        <button
-          onClick={() => {
-            newConversation();
-            showToast("新对话已开始");
-          }}
-          className="w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
-          aria-label="新建对话"
-        >
-          <Plus size={22} strokeWidth={2} />
-        </button>
+        {/* Right cluster */}
+        <div className="flex items-center">
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setSearchOpen(true);
+            }}
+            className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
+            aria-label="搜索聊天记录"
+          >
+            <Search size={19} strokeWidth={1.8} />
+          </button>
+          <button
+            onClick={() =>
+              setSettings({
+                ...settings,
+                replyMode: settings.replyMode === "chat" ? "full" : "chat",
+              })
+            }
+            className="h-7 px-2 mx-1 rounded-full text-[11px] bg-cale-input text-cale-textLight active:opacity-70"
+            title="切换回复模式"
+          >
+            {settings.replyMode === "chat" ? "聊天" : "整段"}
+          </button>
+          <button
+            onClick={() => {
+              newConversation();
+              showToast("新对话已开始");
+            }}
+            className="w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
+            aria-label="新建对话"
+          >
+            <Plus size={22} strokeWidth={2} />
+          </button>
+        </div>
       </header>
 
       {/* Messages */}
@@ -650,26 +788,37 @@ export default function ChatView({
               <span className="text-[15px]">和 {displayName} 说点什么…</span>
             </div>
           )}
-          {messages.map((m, i) => (
-            <div
-              key={m.id}
-              id={"msg-" + m.id}
-              className={flashId === m.id ? "cale-flash" : undefined}
-            >
-              <MessageBubble
-                message={m}
-                streaming={
-                  streaming &&
-                  i === messages.length - 1 &&
-                  m.role === "assistant"
-                }
-                onAction={setActionMsg}
-                onLike={handleLike}
-                onQuote={handleQuote}
-                onRegenerate={handleRegenerate}
-              />
-            </div>
-          ))}
+          {messages.map((m, i) => {
+            const showStamp =
+              !claudeTheme &&
+              (i === 0 || m.createdAt - messages[i - 1].createdAt > STAMP_GAP);
+            return (
+              <div key={m.id}>
+                {showStamp && (
+                  <div className="text-center text-[11px] text-cale-textLight my-2 select-none">
+                    {formatStamp(m.createdAt)}
+                  </div>
+                )}
+                <div
+                  id={"msg-" + m.id}
+                  className={flashId === m.id ? "cale-flash" : undefined}
+                >
+                  <MessageBubble
+                    message={m}
+                    streaming={
+                      streaming &&
+                      i === messages.length - 1 &&
+                      m.role === "assistant"
+                    }
+                    onAction={setActionMsg}
+                    onLike={handleLike}
+                    onQuote={handleQuote}
+                    onRegenerate={handleRegenerate}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -709,6 +858,8 @@ export default function ChatView({
         onToggleBurst={() => setBurstMode((b) => !b)}
         stickers={stickers}
         onManageStickers={onManageStickers}
+        onTransfer={() => setTransferOpen(true)}
+        onGift={() => setGiftOpen(true)}
       />
 
       <ConversationSidebar
@@ -781,6 +932,51 @@ export default function ChatView({
             >
               取消
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer / gift sheets */}
+      {transferOpen && (
+        <TransferSheet
+          balance={app.wallet.quinn}
+          onClose={() => setTransferOpen(false)}
+          onConfirm={handleTransfer}
+        />
+      )}
+      {giftOpen && (
+        <GiftShop
+          balance={app.wallet.quinn}
+          onClose={() => setGiftOpen(false)}
+          onConfirm={handleGift}
+        />
+      )}
+
+      {/* Celebration animation */}
+      {celebrate && (
+        <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
+          <div className="gift-float flex flex-col items-center">
+            <div
+              className="w-24 h-24 rounded-full flex items-center justify-center shadow-lg"
+              style={{
+                background:
+                  celebrate.type === "transfer"
+                    ? "linear-gradient(135deg,#F6B98A,#E8916B)"
+                    : "linear-gradient(135deg,#F3A6C0,#E884A6)",
+                color: "#fff",
+              }}
+            >
+              {celebrate.type === "transfer" ? (
+                <span className="text-[40px] font-semibold">¥</span>
+              ) : (
+                <Gift size={44} strokeWidth={1.8} />
+              )}
+            </div>
+            {celebrate.giftName && (
+              <div className="mt-2 text-[14px] font-medium text-cale-textDark">
+                {celebrate.giftName}
+              </div>
+            )}
           </div>
         </div>
       )}

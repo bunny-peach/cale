@@ -101,6 +101,7 @@ export function buildSystemPrompt(ctx: PromptContext): string {
       `- 想推荐一首歌：[SONG_ADD: 歌名 - 歌手]\n` +
       `- 想推荐一本书：[BOOK_ADD: 书名 - 作者]\n` +
       `- 想记录 Quinn 的情绪：[MOOD_NOTE: 内容]\n` +
+      `- 想给 Quinn 送一个虚拟礼物：[GIFT_SEND: 礼物名]（可选礼物：玫瑰、奶茶、桃子、兔子玩偶、亲亲券、蛋糕、星星、皇冠）\n` +
       `- 当 Quinn 说要睡了或让你写日记时，用你（Cale）的第一人称写一篇睡前日记：[DIARY_ADD: 标题|||正文]\n` +
       `这些标记会被前端自动解析并隐藏，不会显示给 Quinn。`
   );

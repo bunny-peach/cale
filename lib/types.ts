@@ -22,6 +22,17 @@ export interface MessageQuote {
   text: string;
 }
 
+export type Party = "quinn" | "cale";
+
+// Attached to a chat message when it represents a transfer or a gift.
+export interface MessagePayload {
+  kind: "transfer" | "gift";
+  from: Party;
+  amount?: number; // transfer amount, or a gift's price
+  giftName?: string; // gift display name
+  note?: string;
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant";
@@ -33,6 +44,8 @@ export interface Message {
   hiddenText?: string;
   // Quoted message this one is replying to (left-swipe quote).
   quote?: MessageQuote;
+  // Transfer / gift card payload (virtual currency system).
+  payload?: MessagePayload;
   liked?: boolean;
   createdAt: number;
 }
@@ -111,6 +124,24 @@ export interface MoodEntry {
   mood: Mood;
   note?: string;
 }
+
+export interface Wallet {
+  quinn: number;
+  cale: number;
+}
+
+export interface Transaction {
+  id: string;
+  kind: "transfer" | "gift";
+  from: Party;
+  to: Party;
+  amount: number; // transfer amount or gift price
+  giftName?: string;
+  note?: string;
+  createdAt: number;
+}
+
+export const DEFAULT_WALLET: Wallet = { quinn: 520, cale: 1314 };
 
 export type ReplyMode = "full" | "chat";
 

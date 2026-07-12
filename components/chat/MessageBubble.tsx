@@ -6,6 +6,7 @@ import { Message } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
 import Markdown from "@/components/Markdown";
 import ThinkingBlock from "./ThinkingBlock";
+import PayloadCard from "./PayloadCard";
 
 export default function MessageBubble({
   message,
@@ -26,6 +27,7 @@ export default function MessageBubble({
   const claude = settings.theme === "claude";
   const glass = settings.theme === "glass";
   const isUser = message.role === "user";
+  const isPayload = !!message.payload;
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTap = useRef(0);
   const startX = useRef(0);
@@ -91,11 +93,13 @@ export default function MessageBubble({
   // Claude theme: no bubbles — messages sit directly on the canvas, wider and
   // with slightly larger, "readable" type. User messages keep a subtle rounded
   // card so turn-taking stays clear.
-  const bubbleClass = claude
-    ? isUser
-      ? "bg-cale-userBubble rounded-[18px] px-4 py-2.5 text-[15px]"
-      : "px-0.5 py-0.5 text-[16px] leading-[1.8]"
-    : `${isUser ? "bg-cale-userBubble" : "bg-cale-card"} px-3 py-1.5 text-[14.5px]`;
+  const bubbleClass = isPayload
+    ? ""
+    : claude
+      ? isUser
+        ? "bg-cale-userBubble rounded-[18px] px-4 py-2.5 text-[15px]"
+        : "px-0.5 py-0.5 text-[16px] leading-[1.8]"
+      : `${isUser ? "bg-cale-userBubble" : "bg-cale-card"} px-3 py-1.5 text-[14.5px]`;
 
   return (
     <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
@@ -146,7 +150,7 @@ export default function MessageBubble({
           <div
             className={`relative select-text text-cale-textDark ${bubbleClass}`}
             style={
-              claude
+              claude || isPayload
                 ? undefined
                 : {
                     borderRadius: 16,
@@ -158,8 +162,12 @@ export default function MessageBubble({
                   }
             }
           >
+          {/* Transfer / gift card */}
+          {message.payload && (
+            <PayloadCard payload={message.payload} isUser={isUser} />
+          )}
           {/* Tail — pink theme only. Glass keeps the squared corner, no tail. */}
-          {!claude && !glass && (
+          {!claude && !glass && !isPayload && (
             <span
               className={`absolute bottom-0 w-3 h-3 ${
                 isUser ? "bg-cale-userBubble" : "bg-cale-card"
@@ -173,7 +181,7 @@ export default function MessageBubble({
               }}
             />
           )}
-          {message.images && message.images.length > 0 && (
+          {!isPayload && message.images && message.images.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-1.5">
               {message.images.map((img, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
