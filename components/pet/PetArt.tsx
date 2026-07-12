@@ -95,54 +95,103 @@ export function WolfArt({
 
 export function RabbitArt({
   grumpy = false,
+  hiding = false,
   outfit,
   size = 190,
 }: {
   grumpy?: boolean;
+  hiding?: boolean;
   outfit?: Outfit;
   size?: number;
 }) {
+  // 炸毛缩窝: a puffed-up ball with ears flattened back and a cross look.
+  if (hiding) {
+    const spikes = [];
+    const cx = 100,
+      cy = 130,
+      r = 46;
+    for (let i = 0; i < 20; i++) {
+      const a = (i / 20) * Math.PI * 2;
+      const x1 = cx + Math.cos(a - 0.12) * r;
+      const y1 = cy + Math.sin(a - 0.12) * r;
+      const x2 = cx + Math.cos(a) * (r + 12);
+      const y2 = cy + Math.sin(a) * (r + 12);
+      const x3 = cx + Math.cos(a + 0.12) * r;
+      const y3 = cy + Math.sin(a + 0.12) * r;
+      spikes.push(`M${x1} ${y1} L${x2} ${y2} L${x3} ${y3} Z`);
+    }
+    return (
+      <svg viewBox="0 0 200 200" width={size} height={size} style={{ overflow: "visible" }}>
+        <g className="pet-bob">
+          {spikes.map((d, i) => (
+            <path key={i} d={d} fill="#f2eeec" />
+          ))}
+          {/* flattened-back ears */}
+          <ellipse cx="82" cy="96" rx="9" ry="22" transform="rotate(-58 82 96)" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+          <ellipse cx="118" cy="96" rx="9" ry="22" transform="rotate(58 118 96)" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+          <circle cx="100" cy="130" r="46" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+          {/* cross / annoyed eyes */}
+          <path d="M84 122 l12 10 M96 122 l-12 10" stroke="#4a4a4a" strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M104 122 l12 10 M116 122 l-12 10" stroke="#4a4a4a" strokeWidth="3.2" strokeLinecap="round" />
+          {/* angry brows */}
+          <path d="M80 114 l14 4 M120 114 l-14 4" stroke="#8a8a8a" strokeWidth="3" strokeLinecap="round" />
+          <path d="M94 140 h12 l-6 6 z" fill="#f19bb0" />
+          <path d="M92 150 q8 -6 16 0" stroke="#c98a95" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+        </g>
+      </svg>
+    );
+  }
+
   return (
     <svg viewBox="0 0 200 200" width={size} height={size} style={{ overflow: "visible" }}>
       <g className="pet-bob">
         {/* upright ears, close together on top of the head */}
         <g className={grumpy ? undefined : "ear-sway"}>
-          <ellipse cx="89" cy="46" rx="11" ry="34" transform="rotate(-7 89 78)" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
-          <ellipse cx="111" cy="46" rx="11" ry="34" transform="rotate(7 111 78)" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
-          <ellipse cx="89" cy="48" rx="5" ry="23" transform="rotate(-7 89 78)" fill="#f7ccd9" />
-          <ellipse cx="111" cy="48" rx="5" ry="23" transform="rotate(7 111 78)" fill="#f7ccd9" />
+          <ellipse cx="90" cy="52" rx="11" ry="30" transform="rotate(-7 90 80)" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+          <ellipse cx="110" cy="52" rx="11" ry="30" transform="rotate(7 110 80)" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+          <ellipse cx="90" cy="54" rx="5" ry="20" transform="rotate(-7 90 80)" fill="#f7ccd9" />
+          <ellipse cx="110" cy="54" rx="5" ry="20" transform="rotate(7 110 80)" fill="#f7ccd9" />
         </g>
 
-        {/* slimmer body */}
-        <ellipse cx="100" cy="152" rx="42" ry="33" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
-        <ellipse cx="80" cy="180" rx="12" ry="8" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
-        <ellipse cx="120" cy="180" rx="12" ry="8" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+        {/* small tucked body */}
+        <ellipse cx="100" cy="160" rx="38" ry="26" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+        <ellipse cx="82" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+        <ellipse cx="118" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
 
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={134} bodyY={152} eyeY={106} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={140} bodyY={160} eyeY={108} />
 
-        <circle cx="100" cy="106" r="41" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
-        <circle cx="72" cy="118" r="8.5" fill="#fbd5e0" />
-        <circle cx="128" cy="118" r="8.5" fill="#fbd5e0" />
+        {/* short round face (wider than tall) */}
+        <ellipse cx="100" cy="108" rx="47" ry="43" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+        <circle cx="70" cy="118" r="9" fill="#fbd5e0" />
+        <circle cx="130" cy="118" r="9" fill="#fbd5e0" />
 
         {grumpy ? (
           <>
-            <path d="M77 108 q9 -6 18 -1" stroke="#4a4a4a" strokeWidth="4" fill="none" strokeLinecap="round" />
-            <path d="M105 107 q9 -5 18 1" stroke="#4a4a4a" strokeWidth="4" fill="none" strokeLinecap="round" />
+            {/* angry slanted brows + small eyes + pout */}
+            <path d="M74 100 L92 106" stroke="#6a6a6a" strokeWidth="3.4" strokeLinecap="round" />
+            <path d="M126 100 L108 106" stroke="#6a6a6a" strokeWidth="3.4" strokeLinecap="round" />
+            <circle cx="85" cy="110" r="4.5" fill="#3a3237" />
+            <circle cx="115" cy="110" r="4.5" fill="#3a3237" />
+            <path d="M92 124 q8 -6 16 0" stroke="#c98a95" strokeWidth="2.6" fill="none" strokeLinecap="round" />
           </>
         ) : (
           <g className="pet-blink">
-            <ellipse cx="84" cy="106" rx="7.5" ry="9" fill="#3a3237" />
-            <ellipse cx="116" cy="106" rx="7.5" ry="9" fill="#3a3237" />
-            <circle cx="87" cy="102" r="2.4" fill="#fff" />
-            <circle cx="119" cy="102" r="2.4" fill="#fff" />
+            <ellipse cx="84" cy="108" rx="8" ry="9.5" fill="#3a3237" />
+            <ellipse cx="116" cy="108" rx="8" ry="9.5" fill="#3a3237" />
+            <circle cx="87" cy="104" r="2.6" fill="#fff" />
+            <circle cx="119" cy="104" r="2.6" fill="#fff" />
           </g>
         )}
 
-        <path d="M94 116 h12 l-6 6 z" fill="#f19bb0" />
-        <path d="M100 122 q-6 6 -12 3 M100 122 q6 6 12 3" stroke="#e0aeb8" strokeWidth="2" fill="none" strokeLinecap="round" />
-        <path d="M64 114 h-16 M66 120 h-14 M136 114 h16 M134 120 h14" stroke="#ded7d4" strokeWidth="1.6" strokeLinecap="round" />
+        {!grumpy && (
+          <>
+            <path d="M94 118 h12 l-6 6 z" fill="#f19bb0" />
+            <path d="M100 124 q-6 6 -12 3 M100 124 q6 6 12 3" stroke="#e0aeb8" strokeWidth="2" fill="none" strokeLinecap="round" />
+          </>
+        )}
+        <path d="M64 116 h-15 M66 122 h-13 M136 116 h15 M134 122 h13" stroke="#ded7d4" strokeWidth="1.6" strokeLinecap="round" />
 
-        <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={134} bodyY={152} eyeY={106} hatTopY={64} />
+        <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={140} bodyY={160} eyeY={108} hatTopY={66} />
       </g>
     </svg>
   );
@@ -192,7 +241,13 @@ function OutfitPiece({
     }
     // hat
     if (outfit.hat === "bow") {
-      parts.push(<g key="bow"><path d={`M${cx - 22} ${hatTopY} l16 -8 v16 z`} fill="#e88ba3" /><path d={`M${cx + 22} ${hatTopY} l-16 -8 v16 z`} fill="#e88ba3" /><circle cx={cx} cy={hatTopY} r="6" fill="#d4708c" /></g>);
+      parts.push(
+        <g key="bow">
+          <path d={`M${cx - 2} ${hatTopY} L${cx - 20} ${hatTopY - 11} Q${cx - 24} ${hatTopY} ${cx - 20} ${hatTopY + 11} Z`} fill="#ef9bb2" />
+          <path d={`M${cx + 2} ${hatTopY} L${cx + 20} ${hatTopY - 11} Q${cx + 24} ${hatTopY} ${cx + 20} ${hatTopY + 11} Z`} fill="#ef9bb2" />
+          <rect x={cx - 5} y={hatTopY - 6} width="10" height="12" rx="4" fill="#d4708c" />
+        </g>
+      );
     } else if (outfit.hat === "crown") {
       parts.push(<path key="cr" d={`M${cx - 20} ${hatTopY + 4} L${cx - 20} ${hatTopY - 10} L${cx - 8} ${hatTopY} L${cx} ${hatTopY - 14} L${cx + 8} ${hatTopY} L${cx + 20} ${hatTopY - 10} L${cx + 20} ${hatTopY + 4} Z`} fill="#e8c25a" stroke="#c79a3a" strokeWidth="1.2" />);
     } else if (outfit.hat === "flower") {

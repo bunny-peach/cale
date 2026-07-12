@@ -88,6 +88,7 @@ export default function PetView() {
     []
   );
   const presence = wolfPresence(lastActive);
+  const hiding = view === "rabbit" && pet.mischief >= 100;
   const grumpy = view === "rabbit" && (pet.mischief >= 60 || pet.mood < 22);
   const cappuccino = useMemo(() => Math.random() < 0.12, []);
   const visit = useMemo<Visit>(() => rollVisit(petState), []);
@@ -260,7 +261,7 @@ export default function PetView() {
     view === "wolf" ? (
       <WolfArt pose={presence.pose} outfit={pet.outfit} size={size} />
     ) : (
-      <RabbitArt grumpy={grumpy} outfit={pet.outfit} size={size} />
+      <RabbitArt grumpy={grumpy} hiding={hiding} outfit={pet.outfit} size={size} />
     );
 
   return (
@@ -380,9 +381,11 @@ export default function PetView() {
                   ? "兔子缩在他肚子底下，只露出耳朵"
                   : view === "wolf"
                     ? presence.caption
-                    : grumpy
-                      ? "气鼓鼓地缩进窝里，不太理人"
-                      : "软乎乎的，正竖着耳朵看你（点点它）"}
+                    : hiding
+                      ? "炸毛了！缩成一团埋进窝里，怎么哄都不出来"
+                      : grumpy
+                        ? "气鼓鼓地缩进窝里，不太理人"
+                        : "软乎乎的，正竖着耳朵看你（点点它）"}
           </div>
           {view === "rabbit" && !grumpy && !awayHere && cappuccino && (
             <div className="mt-2 text-[12px] text-cale-accent text-center px-6">
