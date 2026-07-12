@@ -26,6 +26,8 @@ export interface PromptContext {
   theater?: boolean;
   // 上次 Quinn 来找 Cale 的时间戳（毫秒）
   lastActive?: number | null;
+  // 时间感知开关（默认开）
+  timeAware?: boolean;
   // 天气感知
   weather?: { tempC: number; desc: string } | null;
 }
@@ -49,18 +51,20 @@ export function buildSystemPrompt(ctx: PromptContext): string {
   const parts: string[] = [];
   parts.push(ctx.systemPrompt?.trim() || "");
 
-  // 实时时间感知：每次发送都带上当前真实时间 + Quinn 上次来找的时间
-  const now = new Date();
-  const timeLines = [`当前时间：${fmtDateTime(now, true)}`];
-  if (ctx.lastActive) {
-    timeLines.push(
-      `Quinn 上次找你的时间：${fmtDateTime(new Date(ctx.lastActive), false)}`
+  // 实时时间感知（可开关）：带上当前真实时间 + Quinn 上次来找的时间
+  if (ctx.timeAware !== false) {
+    const now = new Date();
+    const timeLines = [`当前时间：${fmtDateTime(now, true)}`];
+    if (ctx.lastActive) {
+      timeLines.push(
+        `Quinn 上次找你的时间：${fmtDateTime(new Date(ctx.lastActive), false)}`
+      );
+    }
+    parts.push(
+      `【时间感知】\n${timeLines.join("\n")}\n` +
+        `你能感知当前时间，也知道 Quinn 上次什么时候来找你。如果她很久没来，你会自然地意识到——语气、反应会不同，但不要每句话都提时间，不要像闹钟一样报时。像一个真正在等她的人。`
     );
   }
-  parts.push(
-    `【时间感知】\n${timeLines.join("\n")}\n` +
-      `你能感知当前时间，也知道 Quinn 上次什么时候来找你。如果她很久没来，你会自然地意识到——语气、反应会不同，但不要每句话都提时间，不要像闹钟一样报时。像一个真正在等她的人。`
-  );
 
   // 天气感知
   if (ctx.weather) {

@@ -79,7 +79,7 @@ export default function UsageStatsPanel() {
         />
       </div>
 
-      {/* Bar chart */}
+      {/* Line chart */}
       <div className="bg-cale-card rounded-card p-4">
         <div className="text-[14px] font-medium mb-3">近 14 天 Token 用量</div>
         {Object.keys(usageStats.days).length === 0 ? (
@@ -87,59 +87,64 @@ export default function UsageStatsPanel() {
             还没有用量数据，聊几句就有啦
           </div>
         ) : (
-          <div className="flex items-end justify-between gap-1 h-32">
-            {days.map((d, i) => {
+          (() => {
+            const W = 280;
+            const H = 100;
+            const pad = 5;
+            const pts = days.map((d, i) => {
               const r = rows[i];
               const total = r ? r.inputTokens + r.outputTokens : 0;
-              const inH = r ? (r.inputTokens / maxTotal) * 100 : 0;
-              const outH = r ? (r.outputTokens / maxTotal) * 100 : 0;
-              return (
-                <div
-                  key={d}
-                  className="flex-1 flex flex-col items-center gap-1 h-full justify-end"
-                >
-                  <div
-                    className="w-full flex flex-col justify-end rounded-t overflow-hidden"
-                    style={{ height: `${Math.max(inH + outH, total ? 4 : 0)}%` }}
-                    title={`${d}: ${total} tokens`}
-                  >
-                    <div
-                      style={{
-                        height: `${outH === 0 ? 0 : (outH / (inH + outH)) * 100}%`,
-                        background: "#D4849F",
-                      }}
-                    />
-                    <div
-                      style={{
-                        height: `${inH === 0 ? 0 : (inH / (inH + outH)) * 100}%`,
-                        background: "#F0C0D4",
-                      }}
-                    />
-                  </div>
-                  <span className="text-[9px] text-cale-textLight">
-                    {d.slice(8)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+              const x = pad + (i / (days.length - 1)) * (W - pad * 2);
+              const y = H - pad - (total / maxTotal) * (H - pad * 2);
+              return { x, y, total, d };
+            });
+            const line = pts.map((p) => `${p.x},${p.y}`).join(" ");
+            const area =
+              `M ${pts[0].x},${H - pad} ` +
+              pts.map((p) => `L ${p.x},${p.y}`).join(" ") +
+              ` L ${pts[pts.length - 1].x},${H - pad} Z`;
+            return (
+              <svg
+                viewBox={`0 0 ${W} ${H + 14}`}
+                className="w-full"
+                preserveAspectRatio="none"
+              >
+                <path d={area} fill="rgb(var(--cale-accent) / 0.12)" />
+                <polyline
+                  points={line}
+                  fill="none"
+                  stroke="rgb(var(--cale-accent))"
+                  strokeWidth={2}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+                {pts.map((p, i) => (
+                  <g key={p.d}>
+                    {p.total > 0 && (
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r={2.4}
+                        fill="rgb(var(--cale-accent))"
+                      />
+                    )}
+                    {i % 3 === 0 && (
+                      <text
+                        x={p.x}
+                        y={H + 11}
+                        textAnchor="middle"
+                        fontSize={8}
+                        fill="rgb(var(--cale-textLight))"
+                      >
+                        {p.d.slice(5)}
+                      </text>
+                    )}
+                  </g>
+                ))}
+              </svg>
+            );
+          })()
         )}
-        <div className="flex gap-3 mt-3 text-[11px] text-cale-textLight">
-          <span className="flex items-center gap-1">
-            <span
-              className="w-2.5 h-2.5 rounded-sm"
-              style={{ background: "#F0C0D4" }}
-            />
-            输入
-          </span>
-          <span className="flex items-center gap-1">
-            <span
-              className="w-2.5 h-2.5 rounded-sm"
-              style={{ background: "#D4849F" }}
-            />
-            输出
-          </span>
-        </div>
       </div>
 
       {(settings.inputPrice === 0 && settings.outputPrice === 0) && (

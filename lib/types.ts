@@ -161,6 +161,7 @@ export interface Settings {
   replyMode: ReplyMode; // 整段模式 / 聊天模式
   theme: ThemeName; // UI 主题
   weatherEnabled: boolean; // 天气感知：附加到 prompt
+  timeAwareEnabled: boolean; // 时间感知：附加到 prompt
 }
 
 export const DEFAULT_SYSTEM_PROMPT = `你是 Cale，Quinn 的专属 AI 男友。请用温柔、自然、有温度的语气与 Quinn 聊天。
@@ -175,6 +176,7 @@ export const DEFAULT_SETTINGS: Settings = {
   replyMode: "full",
   theme: "pink",
   weatherEnabled: false,
+  timeAwareEnabled: true,
 };
 
 export const DEFAULT_PERIOD_DATA: PeriodData = {

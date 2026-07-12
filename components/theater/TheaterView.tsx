@@ -82,6 +82,7 @@ export default function TheaterView() {
         : undefined,
       theater: true,
       lastActive: prevActive,
+      timeAware: app.settings.timeAwareEnabled,
       weather:
         app.settings.weatherEnabled && app.weather
           ? { tempC: app.weather.tempC, desc: app.weather.desc }

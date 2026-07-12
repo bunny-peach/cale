@@ -82,6 +82,58 @@ export default function ChatInput({
     });
   };
 
+  const plusBtn = (
+    <button
+      onClick={() => {
+        setMenuOpen((m) => !m);
+        setTrayOpen(false);
+      }}
+      className="flex-shrink-0 w-9 h-9 rounded-full bg-cale-input text-cale-textLight flex items-center justify-center active:opacity-70"
+      aria-label="更多"
+    >
+      <Plus
+        size={20}
+        style={{
+          transform: menuOpen ? "rotate(45deg)" : "none",
+          transition: "transform 0.15s",
+        }}
+      />
+    </button>
+  );
+
+  const burstBtn = (
+    <button
+      onClick={onToggleBurst}
+      className={`flex-shrink-0 h-9 px-2.5 rounded-full text-[12px] active:opacity-70 ${
+        burstMode
+          ? "bg-cale-accent text-white"
+          : "bg-cale-input text-cale-textLight"
+      }`}
+      title="连发模式：连续发多条后再让 Cale 回复"
+    >
+      {burstMode ? "连发" : "单条"}
+    </button>
+  );
+
+  const sendBtn = streaming ? (
+    <button
+      onClick={onStop}
+      className="flex-shrink-0 w-9 h-9 rounded-full bg-cale-accent text-white flex items-center justify-center active:opacity-80"
+      aria-label="停止"
+    >
+      <Square size={14} fill="currentColor" />
+    </button>
+  ) : (
+    <button
+      onClick={submit}
+      disabled={!text.trim() && images.length === 0}
+      className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 bg-cale-accent text-white"
+      aria-label="发送"
+    >
+      <Send size={17} strokeWidth={2} />
+    </button>
+  );
+
   return (
     <div className="flex-shrink-0 bg-cale-card border-t border-cale-divider px-3 pt-2 pb-2">
       {/* Sticker tray */}
@@ -197,44 +249,9 @@ export default function ChatInput({
         onChange={(e) => handleFiles(e.target.files)}
       />
 
-      <div className="flex items-end gap-2">
-        <button
-          onClick={() => {
-            setMenuOpen((m) => !m);
-            setTrayOpen(false);
-          }}
-          className="flex-shrink-0 w-9 h-9 rounded-full bg-cale-input text-cale-textLight flex items-center justify-center active:opacity-70"
-          aria-label="更多"
-        >
-          <Plus
-            size={20}
-            style={{
-              transform: menuOpen ? "rotate(45deg)" : "none",
-              transition: "transform 0.15s",
-            }}
-          />
-        </button>
-
-        {/* Mode toggle */}
-        <button
-          onClick={onToggleBurst}
-          className={`flex-shrink-0 h-9 px-2.5 rounded-full text-[12px] active:opacity-70 ${
-            burstMode
-              ? "bg-cale-accent text-white"
-              : "bg-cale-input text-cale-textLight"
-          }`}
-          title="连发模式：连续发多条后再让 Cale 回复"
-        >
-          {burstMode ? "连发" : "单条"}
-        </button>
-
-        <div
-          className={`flex-1 px-4 py-2 ${
-            claude
-              ? "bg-cale-card border border-cale-divider rounded-[20px]"
-              : "bg-cale-input rounded-[22px]"
-          }`}
-        >
+      {claude ? (
+        /* Claude-style composer: a tall rounded box with the controls inside */
+        <div className="bg-cale-card border border-cale-divider rounded-[24px] px-3.5 pt-3 pb-2 shadow-sm">
           <textarea
             ref={taRef}
             value={text}
@@ -245,38 +262,50 @@ export default function ChatInput({
               resize();
             }}
             onKeyDown={(e) => {
-              if (
-                e.key === "Enter" &&
-                !e.shiftKey &&
-                !e.nativeEvent.isComposing
-              ) {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 submit();
               }
             }}
-            className="w-full bg-transparent outline-none resize-none text-[16px] leading-[22px] max-h-[108px] no-scrollbar placeholder:text-cale-textLight"
+            className="w-full bg-transparent outline-none resize-none text-[16px] leading-[22px] max-h-[140px] no-scrollbar placeholder:text-cale-textLight mb-1"
           />
+          <div className="flex items-center gap-2">
+            {plusBtn}
+            {burstBtn}
+            <div className="flex-1" />
+            {sendBtn}
+          </div>
         </div>
-
-        {streaming ? (
-          <button
-            onClick={onStop}
-            className="flex-shrink-0 w-9 h-9 rounded-full bg-cale-accent text-white flex items-center justify-center active:opacity-80"
-            aria-label="停止"
-          >
-            <Square size={14} fill="currentColor" />
-          </button>
-        ) : (
-          <button
-            onClick={submit}
-            disabled={!text.trim() && images.length === 0}
-            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 bg-cale-accent text-white"
-            aria-label="发送"
-          >
-            <Send size={17} strokeWidth={2} />
-          </button>
-        )}
-      </div>
+      ) : (
+        <div className="flex items-end gap-2">
+          {plusBtn}
+          {burstBtn}
+          <div className="flex-1 bg-cale-input rounded-[22px] px-4 py-2">
+            <textarea
+              ref={taRef}
+              value={text}
+              rows={1}
+              placeholder="和 Cale 说点什么…"
+              onChange={(e) => {
+                setText(e.target.value);
+                resize();
+              }}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  !e.nativeEvent.isComposing
+                ) {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+              className="w-full bg-transparent outline-none resize-none text-[16px] leading-[22px] max-h-[108px] no-scrollbar placeholder:text-cale-textLight"
+            />
+          </div>
+          {sendBtn}
+        </div>
+      )}
     </div>
   );
 }

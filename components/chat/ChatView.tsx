@@ -197,6 +197,7 @@ export default function ChatView({
         ? { mood: app.todayMood.mood, note: app.todayMood.note }
         : undefined,
       lastActive: prevActive,
+      timeAware: app.settings.timeAwareEnabled,
       weather:
         app.settings.weatherEnabled && app.weather
           ? { tempC: app.weather.tempC, desc: app.weather.desc }
