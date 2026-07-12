@@ -70,13 +70,13 @@ export default function Home() {
       <TabBar active={tab} onChange={setTab} />
 
       {stickerOpen && (
-        <div className="absolute inset-0 z-50 bg-cale-bg">
+        <div className="absolute inset-0 z-50 app-bg">
           <StickerManager onBack={() => setStickerOpen(false)} />
         </div>
       )}
 
       {theaterOpen && (
-        <div className="absolute inset-0 z-50 bg-cale-bg">
+        <div className="absolute inset-0 z-50 app-bg">
           <TheaterView onClose={() => setTheaterOpen(false)} />
         </div>
       )}

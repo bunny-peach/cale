@@ -13,6 +13,8 @@ import {
   Ban,
   Droplets,
   Coffee,
+  Star,
+  Music,
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { load, KEYS } from "@/lib/storage";
@@ -60,7 +62,10 @@ export default function PetView() {
   const [toast, setToast] = useState<string | null>(null);
   const [bounce, setBounce] = useState(0);
   const [speech, setSpeech] = useState<string | null>(null);
-  const [foodFx, setFoodFx] = useState<{ type: FoodFx; key: number } | null>(
+  const [stageFx, setStageFx] = useState<{ icon: string; key: number } | null>(
+    null
+  );
+  const [reaction, setReaction] = useState<{ anim: string; key: number } | null>(
     null
   );
   const [posX, setPosX] = useState(0);
@@ -142,17 +147,23 @@ export default function PetView() {
     setToast(t);
     setTimeout(() => setToast(null), 1600);
   };
-  const react = (t: string) => {
-    setBounce((b) => b + 1);
-    showToast(t);
+
+  const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
+  // The pet reacts: a specific animation + a spoken line + an optional floating fx.
+  const react2 = (anim: string, line: string, fxIcon?: string) => {
+    setReaction({ anim, key: Date.now() });
+    setSpeech(line);
+    if (speechTimer.current) clearTimeout(speechTimer.current);
+    speechTimer.current = setTimeout(() => setSpeech(null), 2400);
+    if (fxIcon) {
+      setStageFx({ icon: fxIcon, key: Date.now() });
+      setTimeout(() => setStageFx(null), 1400);
+    }
   };
 
   const speak = () => {
-    const lines = PET_LINES[view];
-    setSpeech(lines[Math.floor(Math.random() * lines.length)]);
-    setBounce((b) => b + 1);
-    if (speechTimer.current) clearTimeout(speechTimer.current);
-    speechTimer.current = setTimeout(() => setSpeech(null), 2600);
+    react2("pet-nod", pick(PET_LINES[view]));
   };
 
   const mutate = (fn: (p: Pet) => Pet) =>
@@ -162,12 +173,8 @@ export default function PetView() {
     const special = foods(view).special[food];
     if (special) {
       setSheet(null);
-      react(special);
       const fx = specialFoodFx(food);
-      if (fx) {
-        setFoodFx({ type: fx, key: Date.now() });
-        setTimeout(() => setFoodFx(null), 1800);
-      }
+      react2(fx === "moon" ? "pet-nod" : "pet-shake", special, fx ?? undefined);
       return;
     }
     const tier = foodTier(view, food);
@@ -181,13 +188,11 @@ export default function PetView() {
       updatedAt: Date.now(),
     }));
     setSheet(null);
-    react(
-      tier === "like"
-        ? `${petName(view)}吃得很开心`
-        : tier === "dislike"
-          ? `${petName(view)}皱着脸推开了`
-          : `${petName(view)}安静地吃完了`
-    );
+    if (tier === "like")
+      react2("pet-jump", pick(["好好吃！", "还要还要～", "（大口吃光）"]), "heart");
+    else if (tier === "dislike")
+      react2("pet-shake", pick(["唔…不喜欢这个", "（皱脸推开）", "才不要吃…"]));
+    else react2("pet-nod", pick(["嗯，吃饱啦", "还行～"]), "note");
   };
 
   const play = (item: string) => {
@@ -198,7 +203,7 @@ export default function PetView() {
       updatedAt: Date.now(),
     }));
     setSheet(null);
-    react(`陪${petName(view)}玩「${item}」，它很喜欢`);
+    react2("pet-jump", `${item}！我最喜欢啦`, "heart");
   };
 
   const giveBad = (item: BadItem) => {
@@ -209,7 +214,7 @@ export default function PetView() {
       updatedAt: Date.now(),
     }));
     setSheet(null);
-    react(`给了「${item.name}」，${petName(view)}明显不高兴了`);
+    react2("pet-shake", pick([`${item.name}？讨厌啦！`, "快拿走——", "（缩成一团）"]));
   };
 
   const mischief = (action: string) => {
@@ -220,7 +225,7 @@ export default function PetView() {
       updatedAt: Date.now(),
     }));
     setSheet(null);
-    react(`你偷偷「${action}」，兔子有点不对劲了…`);
+    react2("pet-shake", pick(["喂——住手！", "（炸毛）", "哼，不理你了！"]));
   };
 
   const headPat = () => {
@@ -230,7 +235,7 @@ export default function PetView() {
       intimacy: p.intimacy + 1,
       updatedAt: Date.now(),
     }));
-    react("摸摸头，它蹭了蹭你");
+    react2("pet-nod", pick(["（眯眼蹭你）好舒服～", "再摸摸嘛", "唔…喜欢"]), "heart");
   };
   const tease = () => {
     mutate((p) => ({
@@ -239,7 +244,7 @@ export default function PetView() {
       intimacy: p.intimacy + 1,
       updatedAt: Date.now(),
     }));
-    react("逗了逗它，它兴奋起来");
+    react2("pet-wiggle", pick(["再来再来！", "嘿嘿，抓不到我～", "（原地转圈）"]), "star");
   };
 
   const equip = (slot: OutfitSlot, id: string | null) => {
@@ -301,16 +306,23 @@ export default function PetView() {
             </div>
           )}
 
-          {/* special-food fx */}
-          {foodFx && !awayHere && (
+          {/* floating fx (special foods + interaction feedback) */}
+          {stageFx && !awayHere && (
             <div
-              key={foodFx.key}
-              className="absolute top-3 left-1/2 -translate-x-1/2 z-20 gift-float text-cale-accent"
+              key={stageFx.key}
+              className="absolute top-4 left-1/2 -translate-x-1/2 z-20 gift-float text-cale-accent"
             >
-              {foodFx.type === "moon" && <Moon size={40} />}
-              {foodFx.type === "choco" && <Ban size={40} />}
-              {foodFx.type === "spicy" && <Droplets size={40} />}
-              {foodFx.type === "coffee" && <Coffee size={40} />}
+              {stageFx.icon === "moon" && <Moon size={40} />}
+              {stageFx.icon === "choco" && <Ban size={40} />}
+              {stageFx.icon === "spicy" && <Droplets size={40} />}
+              {stageFx.icon === "coffee" && <Coffee size={40} />}
+              {stageFx.icon === "heart" && (
+                <Heart size={38} fill="rgb(var(--cale-accent))" />
+              )}
+              {stageFx.icon === "star" && (
+                <Star size={38} fill="rgb(var(--cale-accent))" />
+              )}
+              {stageFx.icon === "note" && <Music size={36} />}
             </div>
           )}
 
@@ -338,8 +350,10 @@ export default function PetView() {
                   className="cale-pop"
                   style={{ animationDuration: "0.35s" }}
                 >
-                  <div style={{ transform: `scaleX(${facing})` }}>
-                    <PetSprite />
+                  <div key={reaction?.key} className={reaction?.anim}>
+                    <div style={{ transform: `scaleX(${facing})` }}>
+                      <PetSprite />
+                    </div>
                   </div>
                 </div>
               </button>

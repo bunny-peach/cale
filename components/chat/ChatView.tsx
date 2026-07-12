@@ -1036,7 +1036,7 @@ export default function ChatView({
 
       {/* Search panel */}
       {searchOpen && (
-        <div className="absolute inset-0 z-40 flex flex-col bg-cale-bg">
+        <div className="absolute inset-0 z-40 flex flex-col app-bg">
           <div
             className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center gap-2 px-3 h-12"
             style={{ paddingTop: "var(--safe-top)" }}

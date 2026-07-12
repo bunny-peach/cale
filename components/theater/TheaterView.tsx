@@ -341,7 +341,7 @@ export default function TheaterView({ onClose }: { onClose?: () => void }) {
 
       {/* History list */}
       {listOpen && (
-        <div className="absolute inset-0 z-30 flex flex-col bg-cale-bg">
+        <div className="absolute inset-0 z-30 flex flex-col app-bg">
           <header
             className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
             style={{ paddingTop: "var(--safe-top)" }}
