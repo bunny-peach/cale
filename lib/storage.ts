@@ -23,6 +23,7 @@ export const KEYS = {
   transactions: "cale_transactions",
   lastActive: "cale_last_active",
   weather: "cale_weather",
+  msgCount: "cale_msg_count",
 } as const;
 
 export function load<T>(key: string, fallback: T): T {
