@@ -8,8 +8,10 @@ import {
   QuotaWindow,
 } from "@/lib/quota";
 
+// "ok" follows the active theme accent so the indicator matches the UI;
+// warn / full stay semantic amber / red.
 const DOT: Record<"ok" | "warn" | "full", string> = {
-  ok: "#5C9E7A",
+  ok: "rgb(var(--cale-accent))",
   warn: "#E0A63C",
   full: "#C46B6B",
 };

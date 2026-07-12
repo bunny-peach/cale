@@ -22,9 +22,13 @@ import {
   MoodEntry,
   Mood,
   Sticker,
+  Wallet,
+  Transaction,
+  Party,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_SETTINGS,
   DEFAULT_PERIOD_DATA,
+  DEFAULT_WALLET,
 } from "@/lib/types";
 
 interface AppState {
@@ -49,6 +53,13 @@ interface AppState {
 
   quotaEvents: QuotaEvent[];
   recordQuota: (input: number, output: number) => void;
+
+  // 虚拟货币系统
+  wallet: Wallet;
+  setWallet: (w: Wallet) => void;
+  transactions: Transaction[];
+  applyTransfer: (amount: number) => boolean;
+  applyGift: (from: Party, giftName: string, price: number) => boolean;
 
   diary: DiaryEntry[];
   setDiary: React.Dispatch<React.SetStateAction<DiaryEntry[]>>;
@@ -131,6 +142,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     null
   );
   const [quotaEvents, setQuotaEvents] = useState<QuotaEvent[]>([]);
+  const [wallet, setWalletState] = useState<Wallet>(DEFAULT_WALLET);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [diary, setDiary] = useState<DiaryEntry[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [wishlist, setWishlist] = useState<WishItem[]>([]);
@@ -153,6 +166,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTheaterConversations(load(KEYS.theaterConversations, []));
     setTheaterCurrentIdState(load<string | null>(KEYS.theaterCurrent, null));
     setQuotaEvents(pruneEvents(load<QuotaEvent[]>(KEYS.quota, [])));
+    setWalletState(load<Wallet>(KEYS.wallet, DEFAULT_WALLET));
+    setTransactions(load<Transaction[]>(KEYS.transactions, []));
     setDiary(load(KEYS.diary, []));
     // Migrate older memory records that lack the new fields
     const rawMemories = load<Memory[]>(KEYS.memories, []);
@@ -238,6 +253,72 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (hydrated) save(KEYS.quota, quotaEvents);
   }, [quotaEvents, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(KEYS.transactions, transactions);
+  }, [transactions, hydrated]);
+
+  const setWallet = useCallback((w: Wallet) => {
+    setWalletState(w);
+    save(KEYS.wallet, w);
+  }, []);
+
+  // Quinn transfers money to Cale.
+  const applyTransfer = useCallback((amount: number): boolean => {
+    if (amount <= 0) return false;
+    let ok = false;
+    setWalletState((prev) => {
+      if (prev.quinn < amount) return prev;
+      ok = true;
+      const next = { quinn: prev.quinn - amount, cale: prev.cale + amount };
+      save(KEYS.wallet, next);
+      return next;
+    });
+    if (ok) {
+      setTransactions((prev) => [
+        {
+          id: uid(),
+          kind: "transfer",
+          from: "quinn",
+          to: "cale",
+          amount,
+          createdAt: Date.now(),
+        },
+        ...prev,
+      ]);
+    }
+    return ok;
+  }, []);
+
+  // A gift: the sender pays the price; the receiver gets the item (no balance change).
+  const applyGift = useCallback(
+    (from: Party, giftName: string, price: number): boolean => {
+      const to: Party = from === "quinn" ? "cale" : "quinn";
+      let ok = false;
+      setWalletState((prev) => {
+        if (prev[from] < price) return prev;
+        ok = true;
+        const next = { ...prev, [from]: prev[from] - price } as Wallet;
+        save(KEYS.wallet, next);
+        return next;
+      });
+      if (ok) {
+        setTransactions((prev) => [
+          {
+            id: uid(),
+            kind: "gift",
+            from,
+            to,
+            amount: price,
+            giftName,
+            createdAt: Date.now(),
+          },
+          ...prev,
+        ]);
+      }
+      return ok;
+    },
+    []
+  );
   useEffect(() => {
     if (hydrated) save(KEYS.diary, diary);
   }, [diary, hydrated]);
@@ -389,6 +470,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTheaterCurrentId,
     quotaEvents,
     recordQuota,
+    wallet,
+    setWallet,
+    transactions,
+    applyTransfer,
+    applyGift,
     diary,
     setDiary,
     memories,

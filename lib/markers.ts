@@ -9,17 +9,19 @@ export interface ParsedMarkers {
   songAdds: string[];
   bookAdds: string[];
   moodNotes: string[];
+  giftSends: string[];
   diaryAdds: DiaryAdd[];
 }
 
 const SIMPLE_PATTERNS: Record<
-  "mcpAdds" | "songAdds" | "bookAdds" | "moodNotes",
+  "mcpAdds" | "songAdds" | "bookAdds" | "moodNotes" | "giftSends",
   RegExp
 > = {
   mcpAdds: /\[MCP_ADD:\s*([^\]]+)\]/g,
   songAdds: /\[SONG_ADD:\s*([^\]]+)\]/g,
   bookAdds: /\[BOOK_ADD:\s*([^\]]+)\]/g,
   moodNotes: /\[MOOD_NOTE:\s*([^\]]+)\]/g,
+  giftSends: /\[GIFT_SEND:\s*([^\]]+)\]/g,
 };
 
 // [DIARY_ADD: 标题|||正文]  (content may span multiple lines)
@@ -36,6 +38,7 @@ export function parseMarkers(text: string): ParsedMarkers {
     songAdds: [],
     bookAdds: [],
     moodNotes: [],
+    giftSends: [],
     diaryAdds: [],
   };
 

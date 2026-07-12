@@ -5,12 +5,16 @@ import { MessageCircle, Drama, BookOpen, Calendar, Settings } from "lucide-react
 export type Tab = "chat" | "theater" | "diary" | "calendar" | "settings";
 
 const TABS: { key: Tab; label: string; Icon: typeof MessageCircle }[] = [
-  { key: "chat", label: "聊天", Icon: MessageCircle },
-  { key: "theater", label: "剧场", Icon: Drama },
-  { key: "diary", label: "日记", Icon: BookOpen },
-  { key: "calendar", label: "日历", Icon: Calendar },
-  { key: "settings", label: "设置", Icon: Settings },
+  { key: "chat", label: "Chat", Icon: MessageCircle },
+  { key: "theater", label: "Stories", Icon: Drama },
+  { key: "diary", label: "Diary", Icon: BookOpen },
+  { key: "calendar", label: "Calendar", Icon: Calendar },
+  { key: "settings", label: "Settings", Icon: Settings },
 ];
+
+// Elegant script/cursive stack — reads as premium on iOS (Snell Roundhand).
+const SCRIPT_FONT =
+  '"Snell Roundhand", "Apple Chancery", "Segoe Script", "Brush Script MT", cursive';
 
 export default function TabBar({
   active,
@@ -36,7 +40,10 @@ export default function TabBar({
               }`}
             >
               <Icon size={22} strokeWidth={on ? 2.2 : 1.8} />
-              <span className="text-[11px] leading-none tracking-wide">
+              <span
+                className="text-[15px] leading-none"
+                style={{ fontFamily: SCRIPT_FONT }}
+              >
                 {label}
               </span>
             </button>

@@ -1,7 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Plus, Send, Square, Image as ImageIcon, Smile, X } from "lucide-react";
+import {
+  Plus,
+  Send,
+  Square,
+  Image as ImageIcon,
+  Smile,
+  X,
+  Wallet,
+  Gift,
+} from "lucide-react";
 import { ChatImage, Sticker } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
 
@@ -17,6 +26,8 @@ export default function ChatInput({
   onToggleBurst,
   stickers,
   onManageStickers,
+  onTransfer,
+  onGift,
 }: {
   onSubmit: (text: string, images: ChatImage[]) => void;
   onSendSticker: (s: Sticker) => void;
@@ -26,8 +37,11 @@ export default function ChatInput({
   onToggleBurst: () => void;
   stickers: Sticker[];
   onManageStickers: () => void;
+  onTransfer: () => void;
+  onGift: () => void;
 }) {
-  const claude = useApp().settings.theme === "claude";
+  const { settings, wallet } = useApp();
+  const claude = settings.theme === "claude";
   const [text, setText] = useState("");
   const [images, setImages] = useState<ChatImage[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -107,28 +121,48 @@ export default function ChatInput({
 
       {/* "+" action menu */}
       {menuOpen && (
-        <div className="flex gap-3 mb-2 px-1">
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="flex flex-col items-center gap-1 active:opacity-70"
-          >
-            <span className="w-12 h-12 rounded-[14px] bg-cale-input flex items-center justify-center text-cale-accent">
-              <ImageIcon size={22} strokeWidth={1.8} />
+        <div className="mb-2 px-1">
+          <div className="flex items-center justify-center gap-3 mb-2 text-[12px] text-cale-textLight">
+            <span>
+              你 <span className="text-cale-accent font-medium">¥{wallet.quinn}</span>
             </span>
-            <span className="text-[11px] text-cale-textLight">照片</span>
-          </button>
-          <button
-            onClick={() => {
-              setTrayOpen((t) => !t);
-              setMenuOpen(false);
-            }}
-            className="flex flex-col items-center gap-1 active:opacity-70"
-          >
-            <span className="w-12 h-12 rounded-[14px] bg-cale-input flex items-center justify-center text-cale-accent">
-              <Smile size={22} strokeWidth={1.8} />
+            <span className="opacity-50">·</span>
+            <span>
+              Cale{" "}
+              <span className="text-cale-accent font-medium">¥{wallet.cale}</span>
             </span>
-            <span className="text-[11px] text-cale-textLight">表情包</span>
-          </button>
+          </div>
+          <div className="flex gap-3">
+            <MenuItem
+              icon={<ImageIcon size={22} strokeWidth={1.8} />}
+              label="照片"
+              onClick={() => fileRef.current?.click()}
+            />
+            <MenuItem
+              icon={<Smile size={22} strokeWidth={1.8} />}
+              label="表情包"
+              onClick={() => {
+                setTrayOpen((t) => !t);
+                setMenuOpen(false);
+              }}
+            />
+            <MenuItem
+              icon={<Wallet size={22} strokeWidth={1.8} />}
+              label="转账"
+              onClick={() => {
+                setMenuOpen(false);
+                onTransfer();
+              }}
+            />
+            <MenuItem
+              icon={<Gift size={22} strokeWidth={1.8} />}
+              label="礼物"
+              onClick={() => {
+                setMenuOpen(false);
+                onGift();
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -244,5 +278,27 @@ export default function ChatInput({
         )}
       </div>
     </div>
+  );
+}
+
+function MenuItem({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-1 active:opacity-70"
+    >
+      <span className="w-12 h-12 rounded-[14px] bg-cale-input flex items-center justify-center text-cale-accent">
+        {icon}
+      </span>
+      <span className="text-[11px] text-cale-textLight">{label}</span>
+    </button>
   );
 }
