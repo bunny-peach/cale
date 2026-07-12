@@ -3,6 +3,8 @@
 
 export type PetKind = "wolf" | "rabbit";
 
+export type OutfitSlot = "hat" | "scarf" | "clothes" | "accessory";
+
 export interface Pet {
   mood: number; // 0-100
   fullness: number; // 0-100
@@ -11,6 +13,8 @@ export interface Pet {
   updatedAt: number; // for idle decay
   // background pranks the other side left behind (shown when you open the view)
   surprise?: string;
+  // equipped outfit item ids per slot
+  outfit?: Partial<Record<OutfitSlot, string>>;
 }
 
 export interface PetState {
@@ -146,6 +150,95 @@ export function wolfPresence(lastActive: number | null, now = Date.now()): {
     return { pose: "waiting", caption: "叼着拖鞋，蹲在门口等你回来" };
   if (days >= 1) return { pose: "droopy", caption: "趴着，耳朵耷拉下来" };
   return { pose: "happy", caption: "精神很好，尾巴摇个不停" };
+}
+
+// Click-to-speak lines.
+export const PET_LINES: Record<PetKind, string[]> = {
+  wolf: [
+    "汪！",
+    "（用鼻子蹭蹭你的手）",
+    "陪我玩会儿嘛…",
+    "今天也在想 Quinn",
+    "有肉干吗？",
+    "（把拖鞋叼给你）",
+    "唔…有点困了",
+    "别走呀——",
+    "（尾巴摇成了螺旋桨）",
+  ],
+  rabbit: [
+    "（竖起耳朵看你）",
+    "有桃子吗？",
+    "哼，才不理你呢",
+    "（原地蹦跶两下）",
+    "鼻子动了动",
+    "想被摸摸头…",
+    "（把自己缩成一团）",
+    "偷偷看你一眼",
+    "要吃草莓！",
+  ],
+};
+
+// Idle activities the pet cycles through on its own.
+export type Activity = "idle" | "walk" | "sleep" | "play";
+
+// Outfit catalog (unlocks by intimacy; higher = later).
+export interface OutfitItem {
+  id: string;
+  name: string;
+  slot: OutfitSlot;
+  unlock: number;
+}
+export const WOLF_OUTFITS: OutfitItem[] = [
+  { id: "bow", name: "蝴蝶结", slot: "hat", unlock: 0 },
+  { id: "crown", name: "小皇冠", slot: "hat", unlock: 25 },
+  { id: "flower", name: "花冠", slot: "hat", unlock: 50 },
+  { id: "bunnyEars", name: "兔耳头饰", slot: "hat", unlock: 90 },
+  { id: "redScarf", name: "红领巾", slot: "scarf", unlock: 0 },
+  { id: "knit", name: "针织围脖", slot: "scarf", unlock: 30 },
+  { id: "vest", name: "小背心", slot: "clothes", unlock: 40 },
+  { id: "collar", name: "铃铛项圈", slot: "accessory", unlock: 0 },
+  { id: "glasses", name: "墨镜", slot: "accessory", unlock: 60 },
+];
+export const RABBIT_OUTFITS: OutfitItem[] = [
+  { id: "bow", name: "粉蝴蝶结", slot: "hat", unlock: 0 },
+  { id: "crown", name: "小皇冠", slot: "hat", unlock: 25 },
+  { id: "flower", name: "干花花冠", slot: "hat", unlock: 50 },
+  { id: "redScarf", name: "小围巾", slot: "scarf", unlock: 0 },
+  { id: "knit", name: "针织围脖", slot: "scarf", unlock: 30 },
+  { id: "vest", name: "小马甲", slot: "clothes", unlock: 40 },
+  { id: "collar", name: "铃铛项圈", slot: "accessory", unlock: 0 },
+  { id: "glasses", name: "圆眼镜", slot: "accessory", unlock: 60 },
+];
+export function outfitCatalog(kind: PetKind): OutfitItem[] {
+  return kind === "wolf" ? WOLF_OUTFITS : RABBIT_OUTFITS;
+}
+export const OUTFIT_SLOTS: { slot: OutfitSlot; label: string }[] = [
+  { slot: "hat", label: "帽子" },
+  { slot: "scarf", label: "围脖" },
+  { slot: "clothes", label: "衣服" },
+  { slot: "accessory", label: "配饰" },
+];
+
+// Special-food visual effects.
+export type FoodFx = "moon" | "choco" | "spicy" | "coffee";
+export function specialFoodFx(food: string): FoodFx | null {
+  if (food === "月亮") return "moon";
+  if (food === "巧克力") return "choco";
+  if (food === "辣椒") return "spicy";
+  if (food === "卡布奇诺") return "coffee";
+  return null;
+}
+
+// 串门 random visit: occasionally one pet is off visiting the other.
+export type Visit = "wolf2rabbit" | "rabbit2wolf" | "both" | null;
+export function rollVisit(state: PetState): Visit {
+  // needs some intimacy on both sides; then a small chance.
+  if (state.wolf.intimacy < 15 || state.rabbit.intimacy < 15) return null;
+  const r = Math.random();
+  if (r < 0.04) return "both";
+  if (r < 0.14) return "wolf2rabbit";
+  if (r < 0.24) return "rabbit2wolf";
+  return null;
 }
 
 // A short status line for the system prompt so Cale can mention it occasionally.
