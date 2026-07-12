@@ -7,13 +7,16 @@ import { load, KEYS } from "@/lib/storage";
 import {
   PetKind,
   Pet,
+  BadItem,
   foods,
   goodItems,
+  badItems,
   mischiefItems,
   foodTier,
   applyDecay,
   petName,
   wolfPresence,
+  FOOD_INTIMACY_PENALTY,
 } from "@/lib/pets";
 import { WolfArt, RabbitArt } from "./PetArt";
 
@@ -23,7 +26,10 @@ export default function PetView() {
   const { petState, setPetState } = useApp();
   const [view, setView] = useState<PetKind>("wolf");
   const [sheet, setSheet] = useState<null | "food" | "item" | "mischief">(null);
-  const [foodTab, setFoodTab] = useState<"like" | "normal" | "dislike">("like");
+  const [foodTab, setFoodTab] = useState<
+    "like" | "normal" | "dislike" | "special"
+  >("like");
+  const [itemTab, setItemTab] = useState<"good" | "bad">("good");
   const [toast, setToast] = useState<string | null>(null);
   const [bounce, setBounce] = useState(0);
 
@@ -44,6 +50,8 @@ export default function PetView() {
   );
   const presence = wolfPresence(lastActive);
   const grumpy = view === "rabbit" && (pet.mischief >= 60 || pet.mood < 22);
+  // Hidden egg: occasionally a mystery cappuccino appears by Cale's rabbit.
+  const cappuccino = useMemo(() => Math.random() < 0.12, []);
 
   const showToast = (t: string) => {
     setToast(t);
@@ -58,13 +66,21 @@ export default function PetView() {
     setPetState((prev) => ({ ...prev, [view]: fn(prev[view]) }));
 
   const feed = (food: string) => {
+    // Special foods trigger a reaction only — no stat change.
+    const special = foods(view).special[food];
+    if (special) {
+      setSheet(null);
+      react(special);
+      return;
+    }
     const tier = foodTier(view, food);
+    const penalty = FOOD_INTIMACY_PENALTY.has(food);
     mutate((p) => ({
       ...p,
       fullness: clamp(p.fullness + 15),
       mood: clamp(p.mood + (tier === "like" ? 8 : tier === "dislike" ? -10 : 0)),
       mischief: clamp(p.mischief + (tier === "dislike" && !isOwn ? 8 : 0)),
-      intimacy: p.intimacy + 2,
+      intimacy: Math.max(0, p.intimacy + (penalty ? -2 : 2)),
       updatedAt: Date.now(),
     }));
     setSheet(null);
@@ -72,7 +88,7 @@ export default function PetView() {
       tier === "like"
         ? `${petName(view)}吃得很开心`
         : tier === "dislike"
-          ? `${petName(view)}皱着脸咽了下去`
+          ? `${petName(view)}皱着脸推开了`
           : `${petName(view)}安静地吃完了`
     );
   };
@@ -86,6 +102,17 @@ export default function PetView() {
     }));
     setSheet(null);
     react(`陪${petName(view)}玩「${item}」，它很喜欢`);
+  };
+
+  const giveBad = (item: BadItem) => {
+    mutate((p) => ({
+      ...p,
+      mood: clamp(p.mood - 9),
+      intimacy: item.dropIntimacy ? Math.max(0, p.intimacy - 3) : p.intimacy,
+      updatedAt: Date.now(),
+    }));
+    setSheet(null);
+    react(`给了「${item.name}」，${petName(view)}明显不高兴了`);
   };
 
   const mischief = (action: string) => {
@@ -175,6 +202,11 @@ export default function PetView() {
               咦？它身上多了：{pet.surprise}
             </div>
           )}
+          {view === "rabbit" && !grumpy && cappuccino && (
+            <div className="mt-2 text-[12px] text-cale-accent">
+              她面前不知谁放了一杯卡布奇诺，正喝得眯起眼…
+            </div>
+          )}
         </div>
 
         {/* Stats */}
@@ -255,7 +287,7 @@ export default function PetView() {
                 {sheet === "food"
                   ? "喂点什么"
                   : sheet === "item"
-                    ? "陪它玩"
+                    ? "拿点东西给它"
                     : "搞点小动作"}
               </span>
               <button onClick={() => setSheet(null)} className="text-cale-textLight">
@@ -266,25 +298,67 @@ export default function PetView() {
             {sheet === "food" && (
               <>
                 <div className="flex bg-cale-input rounded-full p-0.5 text-[13px] mb-3">
-                  {(["like", "normal", "dislike"] as const).map((t) => (
+                  {(["like", "normal", "dislike", "special"] as const).map(
+                    (t) => (
+                      <button
+                        key={t}
+                        onClick={() => setFoodTab(t)}
+                        className={`flex-1 py-1.5 rounded-full ${
+                          foodTab === t
+                            ? "bg-cale-card text-cale-accent font-medium"
+                            : "text-cale-textLight"
+                        }`}
+                      >
+                        {t === "like"
+                          ? "喜欢"
+                          : t === "normal"
+                            ? "普通"
+                            : t === "dislike"
+                              ? "讨厌"
+                              : "特别"}
+                      </button>
+                    )
+                  )}
+                </div>
+                <ChipGrid
+                  items={
+                    foodTab === "special"
+                      ? Object.keys(foods(view).special)
+                      : foods(view)[foodTab]
+                  }
+                  onPick={feed}
+                />
+              </>
+            )}
+            {sheet === "item" && (
+              <>
+                <div className="flex bg-cale-input rounded-full p-0.5 text-[13px] mb-3">
+                  {(["good", "bad"] as const).map((t) => (
                     <button
                       key={t}
-                      onClick={() => setFoodTab(t)}
+                      onClick={() => setItemTab(t)}
                       className={`flex-1 py-1.5 rounded-full ${
-                        foodTab === t
+                        itemTab === t
                           ? "bg-cale-card text-cale-accent font-medium"
                           : "text-cale-textLight"
                       }`}
                     >
-                      {t === "like" ? "喜欢" : t === "normal" ? "普通" : "讨厌"}
+                      {t === "good" ? "好感" : "讨厌"}
                     </button>
                   ))}
                 </div>
-                <ChipGrid items={foods(view)[foodTab]} onPick={feed} />
+                {itemTab === "good" ? (
+                  <ChipGrid items={goodItems(view)} onPick={play} />
+                ) : (
+                  <ChipGrid
+                    items={badItems(view).map((b) => b.name)}
+                    onPick={(name) => {
+                      const b = badItems(view).find((x) => x.name === name);
+                      if (b) giveBad(b);
+                    }}
+                  />
+                )}
               </>
-            )}
-            {sheet === "item" && (
-              <ChipGrid items={goodItems(view)} onPick={play} />
             )}
             {sheet === "mischief" && (
               <ChipGrid items={mischiefItems(view)} onPick={mischief} />

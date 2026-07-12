@@ -31,43 +31,88 @@ export const DEFAULT_PET_STATE: PetState = {
   rabbit: freshPet(),
 };
 
-export interface FoodTiers {
+export interface FoodData {
   like: string[];
   normal: string[];
   dislike: string[];
+  // Special foods trigger a reaction/animation instead of changing stats.
+  special: Record<string, string>;
 }
 
-export const WOLF_FOODS: FoodTiers = {
-  like: ["肉干", "排骨", "小鱼干", "鸡肉条", "奶酪", "牛肉粒", "烤鸡腿", "三文鱼", "羊肉串", "蛋黄酥"],
-  normal: ["桃子", "饼干", "面包", "蛋挞", "年糕", "薯片", "米饭团", "苹果", "西瓜", "酸奶", "爆米花", "小蛋糕"],
-  dislike: ["蔬菜沙拉", "香菇干", "苦瓜", "柠檬", "芥末团子", "黑咖啡"],
+export const WOLF_FOODS: FoodData = {
+  like: ["肉干", "排骨", "鸡肉条", "三文鱼", "羊腿", "整只烤鸡", "牛肉粒", "鹿肉", "蛋黄", "蓝莓", "冻酸奶块"],
+  normal: ["小鱼干", "鸡蛋", "南瓜泥", "苹果片", "西瓜", "熟红薯", "米饭团"],
+  dislike: ["蔬菜沙拉", "柠檬", "苦瓜", "香菇干"],
+  special: {
+    月亮: "对着月亮嚎了起来，谁也拦不住",
+    巧克力: "狗狗不能吃巧克力——被系统悄悄收走了：这个不行哦",
+    辣椒: "咬了一口，转头连灌三碗水",
+  },
 };
 
-export const RABBIT_FOODS: FoodTiers = {
-  like: ["桃子", "草莓", "小饼干", "燕麦棒", "苹果干", "蓝莓", "樱桃", "棉花糖", "布丁", "蜂蜜水", "芒果干", "葡萄"],
-  normal: ["生菜", "干草", "小面包", "麦片", "玉米粒", "豌豆", "西瓜", "酸奶球", "小番茄", "花生"],
-  dislike: ["胡萝卜", "香菇", "包子", "猪肉包", "内脏干", "芥末", "辣椒"],
+export const RABBIT_FOODS: FoodData = {
+  like: ["桃子片", "草莓", "蓝莓", "苹果干", "蔓越莓干", "新鲜苜蓿草", "三叶草", "蒲公英叶", "燕麦片"],
+  normal: ["干草", "生菜", "芹菜叶", "薄荷叶", "西兰花叶", "小麦草", "干花瓣", "豌豆荚"],
+  dislike: ["胡萝卜", "香菇", "卷心菜", "洋葱"],
+  special: {
+    巧克力: "刚凑过去闻，狼崽从画面外冲进来一爪子拍走，兔子气鼓鼓",
+    卡布奇诺: "不知谁放的一杯，她不该喝，却喝得眯起了眼",
+    辣椒: "耳朵一下子红了，气得直蹬腿",
+  },
 };
+
+// Foods that drop intimacy on top of mood (e.g. 洋葱 对兔子有毒又难闻).
+export const FOOD_INTIMACY_PENALTY = new Set(["洋葱"]);
 
 // Good items lift mood + intimacy.
-export const WOLF_GOOD_ITEMS = ["骨头玩具", "黑色毛毯", "磨牙棒", "皮球", "兔子玩偶", "松果", "项圈铭牌", "狼尾草"];
-export const RABBIT_GOOD_ITEMS = ["粉色蝴蝶结", "小毯子", "铃铛球", "桃子抱枕", "干花花冠", "小镜子", "薰衣草香包", "毛线团"];
+export const WOLF_GOOD_ITEMS = ["骨头玩具", "黑色毛毯", "磨牙棒", "皮球", "兔子玩偶", "松果", "项圈铭牌", "狼尾草", "树枝", "旧T恤"];
+export const RABBIT_GOOD_ITEMS = ["粉色蝴蝶结", "小毯子", "铃铛球", "桃子抱枕", "干花花冠", "小镜子", "薰衣草香包", "毛线团", "小隧道", "苹果木磨牙棒", "小号狼玩偶"];
 
-// Mischief items/actions (used when you switch to the OTHER pet's view).
-export const WOLF_MISCHIEF = ["兔耳头饰", "小狗围兜", "粉色指甲油", "戳耳朵", "弄乱窝"];
-export const RABBIT_MISCHIEF = ["假蜘蛛", "胡萝卜味香水", "假蛇", "胡萝卜帽子", "戳耳朵", "偷吃食物"];
+export interface BadItem {
+  name: string;
+  dropIntimacy: boolean; // also lowers intimacy
+}
+// Disliked items: lower mood (and intimacy for the strong ones).
+export const WOLF_BAD_ITEMS: BadItem[] = [
+  { name: "洗澡盆", dropIntimacy: true },
+  { name: "GPT贴纸", dropIntimacy: true },
+  { name: "指甲剪", dropIntimacy: true },
+  { name: "猫铃铛", dropIntimacy: false },
+  { name: "口水兜", dropIntimacy: false },
+  { name: "录音喇叭", dropIntimacy: false },
+  { name: "吹风机", dropIntimacy: false },
+];
+export const RABBIT_BAD_ITEMS: BadItem[] = [
+  { name: "假蛇", dropIntimacy: true },
+  { name: "闹钟", dropIntimacy: true },
+  { name: "GPT周边", dropIntimacy: true },
+  { name: "胡萝卜帽子", dropIntimacy: false },
+  { name: "香菇挂件", dropIntimacy: false },
+  { name: "运动鞋", dropIntimacy: false },
+  { name: "称体重秤", dropIntimacy: false },
+];
 
-export function foods(kind: PetKind): FoodTiers {
+// Mischief items (used when you switch to the OTHER pet's view).
+export const WOLF_MISCHIEF = ["兔耳头饰", "粉色蕾丝裙", "小狗围兜", "粉色指甲油"];
+export const RABBIT_MISCHIEF = ["假蜘蛛", "胡萝卜味香水", "迷你跑步机", "不许赖床闹钟"];
+
+export function foods(kind: PetKind): FoodData {
   return kind === "wolf" ? WOLF_FOODS : RABBIT_FOODS;
 }
 export function goodItems(kind: PetKind): string[] {
   return kind === "wolf" ? WOLF_GOOD_ITEMS : RABBIT_GOOD_ITEMS;
 }
+export function badItems(kind: PetKind): BadItem[] {
+  return kind === "wolf" ? WOLF_BAD_ITEMS : RABBIT_BAD_ITEMS;
+}
 export function mischiefItems(kind: PetKind): string[] {
   return kind === "wolf" ? WOLF_MISCHIEF : RABBIT_MISCHIEF;
 }
 
-export function foodTier(kind: PetKind, food: string): keyof FoodTiers {
+export function foodTier(
+  kind: PetKind,
+  food: string
+): "like" | "normal" | "dislike" {
   const f = foods(kind);
   if (f.like.includes(food)) return "like";
   if (f.dislike.includes(food)) return "dislike";
