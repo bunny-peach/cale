@@ -93,8 +93,8 @@ export default function MessageBubble({
   // card so turn-taking stays clear.
   const bubbleClass = claude
     ? isUser
-      ? "bg-cale-userBubble rounded-[14px] px-3.5 py-2 text-[15px]"
-      : "px-0.5 py-1 text-[15.5px] leading-[1.7]"
+      ? "bg-cale-userBubble rounded-[18px] px-4 py-2.5 text-[15px]"
+      : "px-0.5 py-0.5 text-[16px] leading-[1.8]"
     : `${isUser ? "bg-cale-userBubble" : "bg-cale-card"} px-3 py-1.5 text-[14.5px]`;
 
   return (
@@ -108,7 +108,9 @@ export default function MessageBubble({
       <div
         className={`flex items-center gap-1.5 ${
           isUser ? "flex-row-reverse" : ""
-        } ${claude && !isUser ? "w-full" : "max-w-[70%]"}`}
+        } ${
+          claude ? (isUser ? "max-w-[85%]" : "w-full") : "max-w-[70%]"
+        }`}
       >
         <div
           className={`relative min-w-0 ${claude && !isUser ? "flex-1" : ""}`}
@@ -204,21 +206,23 @@ export default function MessageBubble({
           </div>
         </div>
 
-        {/* Like heart button beside the message */}
-        <button
-          onClick={() => onLike(message)}
-          className="flex-shrink-0 p-1 active:opacity-60"
-          aria-label="点赞"
-        >
-          <Heart
-            size={15}
-            strokeWidth={1.8}
-            className={
-              message.liked ? "text-cale-accent" : "text-cale-textLight"
-            }
-            fill={message.liked ? "rgb(var(--cale-accent))" : "none"}
-          />
-        </button>
+        {/* Like heart button beside the message (hidden in Claude layout) */}
+        {!claude && (
+          <button
+            onClick={() => onLike(message)}
+            className="flex-shrink-0 p-1 active:opacity-60"
+            aria-label="点赞"
+          >
+            <Heart
+              size={15}
+              strokeWidth={1.8}
+              className={
+                message.liked ? "text-cale-accent" : "text-cale-textLight"
+              }
+              fill={message.liked ? "rgb(var(--cale-accent))" : "none"}
+            />
+          </button>
+        )}
       </div>
 
       {/* Regenerate (Cale replies only, when not streaming) */}

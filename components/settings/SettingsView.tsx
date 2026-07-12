@@ -32,7 +32,7 @@ const THEMES: {
   swatchBg: string;
   swatchDot: string;
 }[] = [
-  { key: "pink", label: "粉色", swatchBg: "#F8F5F1", swatchDot: "#D4A0A0" },
+  { key: "pink", label: "粉色", swatchBg: "#FDFBF8", swatchDot: "#CE8D9B" },
   {
     key: "glass",
     label: "液态玻璃",

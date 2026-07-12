@@ -12,7 +12,7 @@ import StickerManager from "@/components/stickers/StickerManager";
 import WelcomeView from "@/components/WelcomeView";
 
 export default function Home() {
-  const { hydrated, apiConfig, conversations } = useApp();
+  const { hydrated, apiConfig } = useApp();
   const [tab, setTab] = useState<Tab>("chat");
   const [guided, setGuided] = useState(false);
   const [entered, setEntered] = useState(false);
@@ -26,8 +26,8 @@ export default function Home() {
     }
   }, [hydrated, entered, apiConfig.baseURL, guided]);
 
-  // Welcome page: only on first open / when there are no conversations yet
-  const showWelcome = hydrated && !entered && conversations.length === 0;
+  // Welcome page shows on every app open, until the user taps Enter this session
+  const showWelcome = hydrated && !entered;
 
   if (!hydrated) {
     return (
