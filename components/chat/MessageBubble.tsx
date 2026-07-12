@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Heart, RotateCcw } from "lucide-react";
+import { Heart, RotateCcw, Copy, MoreHorizontal } from "lucide-react";
 import { Message } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
 import Markdown from "@/components/Markdown";
@@ -51,6 +51,10 @@ export default function MessageBubble({
   const clearPress = () => {
     if (pressTimer.current) clearTimeout(pressTimer.current);
     pressTimer.current = null;
+  };
+
+  const copy = () => {
+    navigator.clipboard?.writeText(message.content).catch(() => {});
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -233,15 +237,54 @@ export default function MessageBubble({
         )}
       </div>
 
-      {/* Regenerate (Cale replies only, when not streaming) */}
-      {!isUser && onRegenerate && !streaming && message.content && (
-        <button
-          onClick={() => onRegenerate(message)}
-          className="mt-1 ml-1 flex items-center gap-1 text-[12px] text-cale-textLight active:opacity-60"
-        >
-          <RotateCcw size={12} strokeWidth={1.8} />
-          重新回复
-        </button>
+      {/* Cale reply action row */}
+      {!isUser && !isPayload && !streaming && message.content && (
+        claude ? (
+          // Claude-style icon action row
+          <div className="flex items-center gap-4 mt-1.5 ml-0.5 text-cale-textLight">
+            <button onClick={copy} className="active:opacity-60" aria-label="复制">
+              <Copy size={15} strokeWidth={1.7} />
+            </button>
+            {onRegenerate && (
+              <button
+                onClick={() => onRegenerate(message)}
+                className="active:opacity-60"
+                aria-label="重新回复"
+              >
+                <RotateCcw size={15} strokeWidth={1.7} />
+              </button>
+            )}
+            <button
+              onClick={() => onLike(message)}
+              className="active:opacity-60"
+              aria-label="点赞"
+            >
+              <Heart
+                size={15}
+                strokeWidth={1.7}
+                className={message.liked ? "text-cale-accent" : ""}
+                fill={message.liked ? "rgb(var(--cale-accent))" : "none"}
+              />
+            </button>
+            <button
+              onClick={() => onAction(message)}
+              className="active:opacity-60"
+              aria-label="更多"
+            >
+              <MoreHorizontal size={16} strokeWidth={1.7} />
+            </button>
+          </div>
+        ) : (
+          onRegenerate && (
+            <button
+              onClick={() => onRegenerate(message)}
+              className="mt-1 ml-1 flex items-center gap-1 text-[12px] text-cale-textLight active:opacity-60"
+            >
+              <RotateCcw size={12} strokeWidth={1.8} />
+              重新回复
+            </button>
+          )
+        )
       )}
     </div>
   );

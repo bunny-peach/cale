@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Menu, Plus, Check, X, Quote, Search, Gift } from "lucide-react";
+import { Menu, Plus, Check, X, Quote, Search, Gift, Asterisk } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid, load, save, KEYS } from "@/lib/storage";
 import {
@@ -136,13 +136,15 @@ export default function ChatView({
     return conv.id;
   };
 
-  // ---- Auto memory summary (idle / hidden) ----
-  const runSummary = async (cid: string) => {
+  // ---- Auto memory summary (idle / hidden / every 50 messages) ----
+  // addMemory already de-dupes by exact content, so repeated entries are dropped.
+  const runSummary = async (cid: string, force = false) => {
     if (apiConfig.provider === "proxy" && !apiConfig.baseURL) return;
     const conv = conversations.find((c) => c.id === cid);
     if (!conv) return;
     const done = summarizedLen.current[cid] ?? 0;
-    if (conv.messages.length <= done || conv.messages.length < 2) return;
+    if (conv.messages.length < 2) return;
+    if (!force && conv.messages.length <= done) return;
     summarizedLen.current[cid] = conv.messages.length;
     try {
       const raw = await summarizeConversation(
@@ -161,17 +163,33 @@ export default function ChatView({
     }
   };
 
+  // Every 50 user messages, fire a hidden summary and reset the counter.
+  const bumpMsgCount = (cid: string) => {
+    const next = (load<number>(KEYS.msgCount, 0) || 0) + 1;
+    if (next >= 50) {
+      save(KEYS.msgCount, 0);
+      void runSummary(cid, true);
+    } else {
+      save(KEYS.msgCount, next);
+    }
+  };
+
   const scheduleIdleSummary = (cid: string) => {
     if (idleTimer.current) clearTimeout(idleTimer.current);
     idleTimer.current = setTimeout(() => runSummary(cid), 10 * 60 * 1000);
   };
 
+  // Summarize when the page is hidden / closed (session timeout too).
   useEffect(() => {
     const onHide = () => {
       if (document.visibilityState === "hidden" && currentId) runSummary(currentId);
     };
     document.addEventListener("visibilitychange", onHide);
-    return () => document.removeEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentId, conversations, apiConfig]);
 
@@ -391,6 +409,7 @@ export default function ChatView({
       updatedAt: Date.now(),
     }));
     setPendingQuote(null);
+    bumpMsgCount(cid);
     return userMsg;
   };
 
@@ -486,6 +505,7 @@ export default function ChatView({
       messages: [...c.messages, userMsg],
       updatedAt: Date.now(),
     }));
+    bumpMsgCount(cid);
     scrollToBottom();
     const apiReady =
       apiConfig.provider === "claude-code" || !!apiConfig.baseURL;
@@ -833,6 +853,20 @@ export default function ChatView({
               </div>
             );
           })}
+
+          {/* Claude-style footer: Cale mark + disclaimer */}
+          {claudeTheme && messages.length > 0 && !streaming && (
+            <div className="flex items-start gap-2 pt-1 text-cale-textLight">
+              <Asterisk
+                size={20}
+                strokeWidth={2}
+                className="text-cale-accent flex-shrink-0 mt-0.5"
+              />
+              <span className="text-[12px] leading-relaxed">
+                {displayName} 也是 AI，可能会出错，重要的事记得自己确认一下。
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
