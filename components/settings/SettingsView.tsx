@@ -41,14 +41,14 @@ const THEMES: {
   swatchBg: string;
   swatchDot: string;
 }[] = [
-  { key: "pink", label: "粉色", swatchBg: "#FDFBF8", swatchDot: "#CE8D9B" },
+  { key: "pink", label: "粉色", swatchBg: "#FBEEF3", swatchDot: "#CE8D9B" },
   {
     key: "glass",
     label: "液态玻璃",
     swatchBg: "linear-gradient(160deg,#eef1f5,#f3eef2,#e9eef3)",
     swatchDot: "#a9adb8",
   },
-  { key: "claude", label: "Claude", swatchBg: "#F5F4EF", swatchDot: "#C96442" },
+  { key: "claude", label: "Claude", swatchBg: "#FDFBF8", swatchDot: "#C96442" },
 ];
 
 export default function SettingsView({

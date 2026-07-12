@@ -22,14 +22,19 @@ import { WolfArt, RabbitArt } from "./PetArt";
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export default function PetView() {
   const { petState, setPetState } = useApp();
   const [view, setView] = useState<PetKind>("wolf");
   const [sheet, setSheet] = useState<null | "food" | "item" | "mischief">(null);
-  const [foodTab, setFoodTab] = useState<
-    "like" | "normal" | "dislike" | "special"
-  >("like");
-  const [itemTab, setItemTab] = useState<"good" | "bad">("good");
   const [toast, setToast] = useState<string | null>(null);
   const [bounce, setBounce] = useState(0);
 
@@ -52,6 +57,21 @@ export default function PetView() {
   const grumpy = view === "rabbit" && (pet.mischief >= 60 || pet.mood < 22);
   // Hidden egg: occasionally a mystery cappuccino appears by Cale's rabbit.
   const cappuccino = useMemo(() => Math.random() < 0.12, []);
+
+  // Mixed food / item lists — no like/dislike labels, it's a discovery.
+  const allFoods = useMemo(() => {
+    const f = foods(view);
+    return shuffle([
+      ...f.like,
+      ...f.normal,
+      ...f.dislike,
+      ...Object.keys(f.special),
+    ]);
+  }, [view]);
+  const allItems = useMemo(
+    () => shuffle([...goodItems(view), ...badItems(view).map((b) => b.name)]),
+    [view]
+  );
 
   const showToast = (t: string) => {
     setToast(t);
@@ -229,10 +249,7 @@ export default function PetView() {
           <Action
             icon={<Utensils size={20} />}
             label="喂食"
-            onClick={() => {
-              setFoodTab("like");
-              setSheet("food");
-            }}
+            onClick={() => setSheet("food")}
           />
           {isOwn ? (
             <>
@@ -297,67 +314,28 @@ export default function PetView() {
 
             {sheet === "food" && (
               <>
-                <div className="flex bg-cale-input rounded-full p-0.5 text-[13px] mb-3">
-                  {(["like", "normal", "dislike", "special"] as const).map(
-                    (t) => (
-                      <button
-                        key={t}
-                        onClick={() => setFoodTab(t)}
-                        className={`flex-1 py-1.5 rounded-full ${
-                          foodTab === t
-                            ? "bg-cale-card text-cale-accent font-medium"
-                            : "text-cale-textLight"
-                        }`}
-                      >
-                        {t === "like"
-                          ? "喜欢"
-                          : t === "normal"
-                            ? "普通"
-                            : t === "dislike"
-                              ? "讨厌"
-                              : "特别"}
-                      </button>
-                    )
-                  )}
-                </div>
-                <ChipGrid
-                  items={
-                    foodTab === "special"
-                      ? Object.keys(foods(view).special)
-                      : foods(view)[foodTab]
-                  }
-                  onPick={feed}
-                />
+                <p className="text-[12px] text-cale-textLight mb-2">
+                  它喜不喜欢，喂了才知道～
+                </p>
+                <ChipGrid items={allFoods} onPick={feed} />
               </>
             )}
             {sheet === "item" && (
               <>
-                <div className="flex bg-cale-input rounded-full p-0.5 text-[13px] mb-3">
-                  {(["good", "bad"] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setItemTab(t)}
-                      className={`flex-1 py-1.5 rounded-full ${
-                        itemTab === t
-                          ? "bg-cale-card text-cale-accent font-medium"
-                          : "text-cale-textLight"
-                      }`}
-                    >
-                      {t === "good" ? "好感" : "讨厌"}
-                    </button>
-                  ))}
-                </div>
-                {itemTab === "good" ? (
-                  <ChipGrid items={goodItems(view)} onPick={play} />
-                ) : (
-                  <ChipGrid
-                    items={badItems(view).map((b) => b.name)}
-                    onPick={(name) => {
+                <p className="text-[12px] text-cale-textLight mb-2">
+                  拿点东西逗逗它，反应各不相同～
+                </p>
+                <ChipGrid
+                  items={allItems}
+                  onPick={(name) => {
+                    if (goodItems(view).includes(name)) {
+                      play(name);
+                    } else {
                       const b = badItems(view).find((x) => x.name === name);
                       if (b) giveBad(b);
-                    }}
-                  />
-                )}
+                    }
+                  }}
+                />
               </>
             )}
             {sheet === "mischief" && (

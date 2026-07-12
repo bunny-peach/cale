@@ -13,7 +13,7 @@
 
 :root,
 :root[data-theme="pink"] {
-  --cale-bg: 253 251 248;
+  --cale-bg: 251 238 242;
   --cale-card: 255 255 255;
   --cale-primary: 206 141 155;
   --cale-accent: 206 141 155;
@@ -39,7 +39,7 @@
 }
 
 :root[data-theme="claude"] {
-  --cale-bg: 245 244 239;
+  --cale-bg: 253 251 248;
   --cale-card: 255 255 255;
   --cale-primary: 201 100 66;
   --cale-accent: 201 100 66;
@@ -138,6 +138,43 @@ body {
 }
 :root[data-theme="glass"] .bg-cale-bg {
   background-color: transparent;
+}
+
+/*
+ * Pink theme: soft light-pink gradient behind frosted-glass chrome/cards.
+ * Message bubbles opt out of the frosting via .no-glass so they stay solid.
+ */
+:root[data-theme="pink"] body {
+  background-image: linear-gradient(160deg, #fbeef3 0%, #f6e6ee 48%, #fcecf1 100%);
+  background-attachment: fixed;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="pink"] body {
+    background-image: linear-gradient(160deg, #201a1c 0%, #1a1517 50%, #221b1e 100%);
+  }
+}
+:root[data-theme="pink"] .bg-cale-bg {
+  background-color: transparent;
+}
+:root[data-theme="pink"] .bg-cale-card:not(.no-glass) {
+  background-color: rgb(255 255 255 / 0.6);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4);
+}
+:root[data-theme="pink"] .bg-cale-input {
+  background-color: rgb(var(--cale-input) / 0.55);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="pink"] .bg-cale-card:not(.no-glass) {
+    background-color: rgb(42 38 37 / 0.62);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+  :root[data-theme="pink"] .bg-cale-input {
+    background-color: rgb(35 32 32 / 0.6);
+  }
 }
 
 /* Prevent iOS zoom on input focus (font-size >= 16px on inputs) */
@@ -324,6 +361,64 @@ mark {
 }
 .heart-burst {
   animation: heart-burst 0.9s ease-out forwards;
+}
+
+/* ---- Live pet idle animations ---- */
+@keyframes pet-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes pet-blink {
+  0%,
+  88%,
+  100% {
+    transform: scaleY(1);
+  }
+  93% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes tail-wag {
+  0%,
+  100% {
+    transform: rotate(8deg);
+  }
+  50% {
+    transform: rotate(-16deg);
+  }
+}
+@keyframes ear-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+.pet-bob {
+  animation: pet-bob 2.8s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+.pet-blink {
+  animation: pet-blink 4.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.tail-wag {
+  animation: tail-wag 0.7s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: bottom left;
+}
+.ear-sway {
+  animation: ear-sway 3.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: top center;
 }
 
 /* Transfer / gift card pop-in */

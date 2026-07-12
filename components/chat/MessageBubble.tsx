@@ -103,7 +103,7 @@ export default function MessageBubble({
       ? isUser
         ? "bg-cale-userBubble rounded-[18px] px-4 py-2.5 text-[15px]"
         : "px-0.5 py-0.5 text-[16px] leading-[1.8]"
-      : `${isUser ? "bg-cale-userBubble" : "bg-cale-card"} px-3 py-1.5 text-[14.5px]`;
+      : `${isUser ? "bg-cale-userBubble" : "bg-cale-card no-glass"} px-3 py-1.5 text-[14.5px]`;
 
   return (
     <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
@@ -174,7 +174,7 @@ export default function MessageBubble({
           {!claude && !glass && !isPayload && (
             <span
               className={`absolute bottom-0 w-3 h-3 ${
-                isUser ? "bg-cale-userBubble" : "bg-cale-card"
+                isUser ? "bg-cale-userBubble" : "bg-cale-card no-glass"
               }`}
               style={{
                 right: isUser ? -5 : undefined,
