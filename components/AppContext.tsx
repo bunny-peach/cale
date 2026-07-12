@@ -11,6 +11,7 @@ import React, {
 import { KEYS, load, save, uid, todayKey } from "@/lib/storage";
 import { QuotaEvent, pruneEvents } from "@/lib/quota";
 import { WeatherData, fetchWeather } from "@/lib/weather";
+import { PetState, DEFAULT_PET_STATE } from "@/lib/pets";
 import {
   ApiConfig,
   Conversation,
@@ -59,6 +60,10 @@ interface AppState {
   // 天气感知
   weather: WeatherData | null;
   refreshWeather: () => Promise<void>;
+
+  // 宠物系统
+  petState: PetState;
+  setPetState: React.Dispatch<React.SetStateAction<PetState>>;
 
   // 虚拟货币系统
   wallet: Wallet;
@@ -151,6 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [wallet, setWalletState] = useState<Wallet>(DEFAULT_WALLET);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [petState, setPetState] = useState<PetState>(DEFAULT_PET_STATE);
   const [diary, setDiary] = useState<DiaryEntry[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [wishlist, setWishlist] = useState<WishItem[]>([]);
@@ -176,6 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWalletState(load<Wallet>(KEYS.wallet, DEFAULT_WALLET));
     setTransactions(load<Transaction[]>(KEYS.transactions, []));
     setWeather(load<WeatherData | null>(KEYS.weather, null));
+    setPetState(load<PetState>(KEYS.pets, DEFAULT_PET_STATE));
     setDiary(load(KEYS.diary, []));
     // Migrate older memory records that lack the new fields
     const rawMemories = load<Memory[]>(KEYS.memories, []);
@@ -279,6 +286,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (hydrated) save(KEYS.quota, quotaEvents);
   }, [quotaEvents, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(KEYS.pets, petState);
+  }, [petState, hydrated]);
   useEffect(() => {
     if (hydrated) save(KEYS.transactions, transactions);
   }, [transactions, hydrated]);
@@ -498,6 +508,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     recordQuota,
     weather,
     refreshWeather,
+    petState,
+    setPetState,
     wallet,
     setWallet,
     transactions,

@@ -10,6 +10,7 @@ import {
   X,
   Wallet,
   Gift,
+  Drama,
 } from "lucide-react";
 import { ChatImage, Sticker } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
@@ -28,6 +29,7 @@ export default function ChatInput({
   onManageStickers,
   onTransfer,
   onGift,
+  onTheater,
 }: {
   onSubmit: (text: string, images: ChatImage[]) => void;
   onSendSticker: (s: Sticker) => void;
@@ -39,6 +41,7 @@ export default function ChatInput({
   onManageStickers: () => void;
   onTransfer: () => void;
   onGift: () => void;
+  onTheater: () => void;
 }) {
   const { settings, wallet } = useApp();
   const claude = settings.theme === "claude";
@@ -212,6 +215,14 @@ export default function ChatInput({
               onClick={() => {
                 setMenuOpen(false);
                 onGift();
+              }}
+            />
+            <MenuItem
+              icon={<Drama size={22} strokeWidth={1.8} />}
+              label="小剧场"
+              onClick={() => {
+                setMenuOpen(false);
+                onTheater();
               }}
             />
           </div>

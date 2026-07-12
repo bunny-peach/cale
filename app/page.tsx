@@ -5,6 +5,7 @@ import { useApp } from "@/components/AppContext";
 import TabBar, { Tab } from "@/components/TabBar";
 import ChatView from "@/components/chat/ChatView";
 import TheaterView from "@/components/theater/TheaterView";
+import PetView from "@/components/pet/PetView";
 import DiaryView from "@/components/diary/DiaryView";
 import CalendarView from "@/components/calendar/CalendarView";
 import SettingsView from "@/components/settings/SettingsView";
@@ -17,6 +18,7 @@ export default function Home() {
   const [guided, setGuided] = useState(false);
   const [entered, setEntered] = useState(false);
   const [stickerOpen, setStickerOpen] = useState(false);
+  const [theaterOpen, setTheaterOpen] = useState(false);
 
   // First launch with no API config → guide user to settings
   useEffect(() => {
@@ -48,10 +50,13 @@ export default function Home() {
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-cale-bg">
       <div className="flex-1 min-h-0 relative">
         <div className={tab === "chat" ? "h-full" : "hidden"}>
-          <ChatView onManageStickers={() => setStickerOpen(true)} />
+          <ChatView
+            onManageStickers={() => setStickerOpen(true)}
+            onOpenTheater={() => setTheaterOpen(true)}
+          />
         </div>
-        <div className={tab === "theater" ? "h-full" : "hidden"}>
-          <TheaterView />
+        <div className={tab === "pet" ? "h-full" : "hidden"}>
+          <PetView />
         </div>
         {tab === "diary" && <DiaryView />}
         {tab === "calendar" && <CalendarView />}
@@ -67,6 +72,12 @@ export default function Home() {
       {stickerOpen && (
         <div className="absolute inset-0 z-50 bg-cale-bg">
           <StickerManager onBack={() => setStickerOpen(false)} />
+        </div>
+      )}
+
+      {theaterOpen && (
+        <div className="absolute inset-0 z-50 bg-cale-bg">
+          <TheaterView onClose={() => setTheaterOpen(false)} />
         </div>
       )}
     </div>
