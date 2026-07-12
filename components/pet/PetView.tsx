@@ -1,13 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Utensils, Hand, Sparkles, Ghost, Heart } from "lucide-react";
+import {
+  X,
+  Utensils,
+  Hand,
+  Sparkles,
+  Ghost,
+  Heart,
+  Shirt,
+  Moon,
+  Ban,
+  Droplets,
+  Coffee,
+} from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { load, KEYS } from "@/lib/storage";
 import {
   PetKind,
   Pet,
   BadItem,
+  OutfitSlot,
+  FoodFx,
+  Visit,
   foods,
   goodItems,
   badItems,
@@ -17,6 +32,11 @@ import {
   petName,
   wolfPresence,
   FOOD_INTIMACY_PENALTY,
+  PET_LINES,
+  outfitCatalog,
+  OUTFIT_SLOTS,
+  specialFoodFx,
+  rollVisit,
 } from "@/lib/pets";
 import { WolfArt, RabbitArt } from "./PetArt";
 
@@ -34,11 +54,20 @@ function shuffle<T>(arr: T[]): T[] {
 export default function PetView() {
   const { petState, setPetState } = useApp();
   const [view, setView] = useState<PetKind>("wolf");
-  const [sheet, setSheet] = useState<null | "food" | "item" | "mischief">(null);
+  const [sheet, setSheet] = useState<null | "food" | "item" | "mischief" | "outfit">(
+    null
+  );
   const [toast, setToast] = useState<string | null>(null);
   const [bounce, setBounce] = useState(0);
+  const [speech, setSpeech] = useState<string | null>(null);
+  const [foodFx, setFoodFx] = useState<{ type: FoodFx; key: number } | null>(
+    null
+  );
+  const [posX, setPosX] = useState(0);
+  const [facing, setFacing] = useState(1);
+  const posRef = useRef(0);
+  const speechTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Apply idle decay once on mount.
   useEffect(() => {
     setPetState((prev) => ({
       wolf: applyDecay(prev.wolf),
@@ -48,17 +77,28 @@ export default function PetView() {
   }, []);
 
   const pet = petState[view];
-  const isOwn = view === "wolf"; // Quinn 养狼崽；兔子是 Cale 的，可以捣乱
+  const isOwn = view === "wolf";
   const lastActive = useMemo(
     () => load<number | null>(KEYS.lastActive, null),
     []
   );
   const presence = wolfPresence(lastActive);
   const grumpy = view === "rabbit" && (pet.mischief >= 60 || pet.mood < 22);
-  // Hidden egg: occasionally a mystery cappuccino appears by Cale's rabbit.
   const cappuccino = useMemo(() => Math.random() < 0.12, []);
+  const visit = useMemo<Visit>(() => rollVisit(petState), []);
 
-  // Mixed food / item lists — no like/dislike labels, it's a discovery.
+  // 串门 state for the current view
+  const awayHere =
+    (view === "wolf" && visit === "wolf2rabbit") ||
+    (view === "rabbit" && visit === "rabbit2wolf") ||
+    visit === "both";
+  const guestKind: PetKind | null =
+    view === "rabbit" && visit === "wolf2rabbit"
+      ? "wolf"
+      : view === "wolf" && visit === "rabbit2wolf"
+        ? "rabbit"
+        : null;
+
   const allFoods = useMemo(() => {
     const f = foods(view);
     return shuffle([
@@ -73,24 +113,61 @@ export default function PetView() {
     [view]
   );
 
+  // ---- Idle wandering: the pet strolls around on its own ----
+  const canWander =
+    !awayHere && (view === "wolf" ? presence.pose === "happy" : !grumpy);
+  useEffect(() => {
+    if (!canWander) {
+      setPosX(0);
+      posRef.current = 0;
+      return;
+    }
+    const tick = () => {
+      const roll = Math.random();
+      if (roll < 0.6) {
+        const nx = Math.round(Math.random() * 90 - 45);
+        setFacing(nx >= posRef.current ? 1 : -1);
+        posRef.current = nx;
+        setPosX(nx);
+      } else {
+        // stay put and do a little something
+        setBounce((b) => b + 1);
+      }
+    };
+    const id = setInterval(tick, 2600 + Math.random() * 1600);
+    return () => clearInterval(id);
+  }, [canWander, view]);
+
   const showToast = (t: string) => {
     setToast(t);
-    setTimeout(() => setToast(null), 1500);
+    setTimeout(() => setToast(null), 1600);
   };
   const react = (t: string) => {
     setBounce((b) => b + 1);
     showToast(t);
   };
 
+  const speak = () => {
+    const lines = PET_LINES[view];
+    setSpeech(lines[Math.floor(Math.random() * lines.length)]);
+    setBounce((b) => b + 1);
+    if (speechTimer.current) clearTimeout(speechTimer.current);
+    speechTimer.current = setTimeout(() => setSpeech(null), 2600);
+  };
+
   const mutate = (fn: (p: Pet) => Pet) =>
     setPetState((prev) => ({ ...prev, [view]: fn(prev[view]) }));
 
   const feed = (food: string) => {
-    // Special foods trigger a reaction only — no stat change.
     const special = foods(view).special[food];
     if (special) {
       setSheet(null);
       react(special);
+      const fx = specialFoodFx(food);
+      if (fx) {
+        setFoodFx({ type: fx, key: Date.now() });
+        setTimeout(() => setFoodFx(null), 1800);
+      }
       return;
     }
     const tier = foodTier(view, food);
@@ -165,6 +242,22 @@ export default function PetView() {
     react("逗了逗它，它兴奋起来");
   };
 
+  const equip = (slot: OutfitSlot, id: string | null) => {
+    mutate((p) => {
+      const outfit = { ...(p.outfit || {}) };
+      if (id) outfit[slot] = id;
+      else delete outfit[slot];
+      return { ...p, outfit };
+    });
+  };
+
+  const PetSprite = ({ size }: { size?: number }) =>
+    view === "wolf" ? (
+      <WolfArt pose={presence.pose} outfit={pet.outfit} size={size} />
+    ) : (
+      <RabbitArt grumpy={grumpy} outfit={pet.outfit} size={size} />
+    );
+
   return (
     <div className="h-full flex flex-col bg-cale-bg relative overflow-hidden">
       <header
@@ -174,7 +267,6 @@ export default function PetView() {
         <div className="text-[17px] font-semibold">宠物小窝</div>
       </header>
 
-      {/* Viewpoint switch */}
       <div className="flex-shrink-0 px-4 pt-3">
         <div className="flex bg-cale-input rounded-full p-0.5 text-[14px]">
           {(["wolf", "rabbit"] as PetKind[]).map((k) => (
@@ -183,6 +275,7 @@ export default function PetView() {
               onClick={() => {
                 setView(k);
                 setSheet(null);
+                setSpeech(null);
               }}
               className={`flex-1 py-1.5 rounded-full transition-colors ${
                 view === k
@@ -198,32 +291,87 @@ export default function PetView() {
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
         {/* Pet stage */}
-        <div className="bg-cale-card rounded-[18px] py-6 flex flex-col items-center">
-          <div
-            key={bounce}
-            className="cale-pop"
-            style={{ animationDuration: "0.35s" }}
-          >
-            {view === "wolf" ? (
-              <WolfArt pose={presence.pose} />
-            ) : (
-              <RabbitArt grumpy={grumpy} />
-            )}
-          </div>
-          <div className="text-[13px] text-cale-textLight mt-1 px-6 text-center">
-            {view === "wolf"
-              ? presence.caption
-              : grumpy
-                ? "气鼓鼓地缩进窝里，不太理人"
-                : "软乎乎的，正竖着耳朵看你"}
-          </div>
-          {view === "wolf" && pet.surprise && (
-            <div className="mt-2 text-[12px] text-cale-accent">
-              咦？它身上多了：{pet.surprise}
+        <div className="bg-cale-card rounded-[18px] pt-4 pb-5 flex flex-col items-center relative overflow-hidden">
+          {/* speech bubble */}
+          {speech && !awayHere && (
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 cale-pop">
+              <div className="bg-cale-card border border-cale-divider rounded-[14px] px-3 py-1.5 text-[13px] text-cale-textDark shadow max-w-[240px] text-center">
+                {speech}
+              </div>
             </div>
           )}
-          {view === "rabbit" && !grumpy && cappuccino && (
-            <div className="mt-2 text-[12px] text-cale-accent">
+
+          {/* special-food fx */}
+          {foodFx && !awayHere && (
+            <div
+              key={foodFx.key}
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-20 gift-float text-cale-accent"
+            >
+              {foodFx.type === "moon" && <Moon size={40} />}
+              {foodFx.type === "choco" && <Ban size={40} />}
+              {foodFx.type === "spicy" && <Droplets size={40} />}
+              {foodFx.type === "coffee" && <Coffee size={40} />}
+            </div>
+          )}
+
+          <div className="h-[196px] w-full flex items-center justify-center relative">
+            {awayHere ? (
+              <div className="text-center text-cale-textLight text-[13px] px-6">
+                {visit === "both"
+                  ? "两只一起不见了…桌上留下半颗啃过的桃子"
+                  : view === "wolf"
+                    ? "他跑去找兔子了～ 切到兔子那边看看？"
+                    : "她跑去找狼崽了～ 切到狼崽那边看看？"}
+              </div>
+            ) : (
+              <button
+                onClick={speak}
+                className="block"
+                style={{
+                  transform: `translateX(${posX}px)`,
+                  transition: "transform 2.4s ease-in-out",
+                }}
+                aria-label="逗它说话"
+              >
+                <div
+                  key={bounce}
+                  className="cale-pop"
+                  style={{ animationDuration: "0.35s" }}
+                >
+                  <div style={{ transform: `scaleX(${facing})` }}>
+                    <PetSprite />
+                  </div>
+                </div>
+              </button>
+            )}
+
+            {/* guest visitor */}
+            {guestKind && !awayHere && (
+              <div className="absolute bottom-0 right-4 opacity-95">
+                {guestKind === "wolf" ? (
+                  <WolfArt pose="happy" size={78} />
+                ) : (
+                  <RabbitArt size={78} />
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="text-[13px] text-cale-textLight mt-1 px-6 text-center">
+            {awayHere
+              ? "点上面的切换看看另一边～"
+              : guestKind === "wolf"
+                ? "狼崽跑来了，趴在她旁边不肯走"
+                : guestKind === "rabbit"
+                  ? "兔子缩在他肚子底下，只露出耳朵"
+                  : view === "wolf"
+                    ? presence.caption
+                    : grumpy
+                      ? "气鼓鼓地缩进窝里，不太理人"
+                      : "软乎乎的，正竖着耳朵看你（点点它）"}
+          </div>
+          {view === "rabbit" && !grumpy && !awayHere && cappuccino && (
+            <div className="mt-2 text-[12px] text-cale-accent text-center px-6">
               她面前不知谁放了一杯卡布奇诺，正喝得眯起眼…
             </div>
           )}
@@ -239,52 +387,31 @@ export default function PetView() {
               <Heart size={13} fill="rgb(var(--cale-accent))" /> {pet.intimacy}
             </span>
           </div>
-          {!isOwn && (
-            <Stat label="捣乱值" value={pet.mischief} danger />
-          )}
+          {!isOwn && <Stat label="捣乱值" value={pet.mischief} danger />}
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-4 gap-2 mt-3">
-          <Action
-            icon={<Utensils size={20} />}
-            label="喂食"
-            onClick={() => setSheet("food")}
-          />
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Action icon={<Utensils size={20} />} label="喂食" onClick={() => setSheet("food")} />
           {isOwn ? (
             <>
               <Action icon={<Hand size={20} />} label="摸头" onClick={headPat} />
-              <Action
-                icon={<Sparkles size={20} />}
-                label="逗他"
-                onClick={tease}
-              />
-              <Action
-                icon={<Heart size={20} />}
-                label="陪玩"
-                onClick={() => setSheet("item")}
-              />
+              <Action icon={<Sparkles size={20} />} label="逗他" onClick={tease} />
+              <Action icon={<Heart size={20} />} label="陪玩" onClick={() => setSheet("item")} />
             </>
           ) : (
             <>
-              <Action
-                icon={<Ghost size={20} />}
-                label="捣乱"
-                onClick={() => setSheet("mischief")}
-              />
-              <Action
-                icon={<Heart size={20} />}
-                label="陪玩"
-                onClick={() => setSheet("item")}
-              />
+              <Action icon={<Ghost size={20} />} label="捣乱" onClick={() => setSheet("mischief")} />
+              <Action icon={<Heart size={20} />} label="陪玩" onClick={() => setSheet("item")} />
             </>
           )}
+          <Action icon={<Shirt size={20} />} label="换装" onClick={() => setSheet("outfit")} />
         </div>
 
         <p className="text-[12px] text-cale-textLight mt-3 px-1 leading-relaxed">
           {isOwn
-            ? "狼崽的状态会跟着你们聊天的频率变化——常来陪他，他会精神满满。"
-            : "这是 Cale 养的兔子。你可以陪它玩，也可以偷偷捣乱……但搞太多它会生气缩进窝里，Cale 也会在聊天里察觉到异常。"}
+            ? "狼崽会自己在窝里溜达、发呆，点点它还会跟你说话。常来陪他，他会精神满满。"
+            : "这是 Cale 养的兔子。点点它逗它说话，陪它玩，也可以偷偷捣乱……但搞太多它会缩进窝里，Cale 会在聊天里察觉到异常。"}
         </p>
       </div>
 
@@ -305,7 +432,9 @@ export default function PetView() {
                   ? "喂点什么"
                   : sheet === "item"
                     ? "拿点东西给它"
-                    : "搞点小动作"}
+                    : sheet === "outfit"
+                      ? "换装"
+                      : "搞点小动作"}
               </span>
               <button onClick={() => setSheet(null)} className="text-cale-textLight">
                 <X size={20} />
@@ -328,9 +457,8 @@ export default function PetView() {
                 <ChipGrid
                   items={allItems}
                   onPick={(name) => {
-                    if (goodItems(view).includes(name)) {
-                      play(name);
-                    } else {
+                    if (goodItems(view).includes(name)) play(name);
+                    else {
                       const b = badItems(view).find((x) => x.name === name);
                       if (b) giveBad(b);
                     }
@@ -340,6 +468,55 @@ export default function PetView() {
             )}
             {sheet === "mischief" && (
               <ChipGrid items={mischiefItems(view)} onPick={mischief} />
+            )}
+            {sheet === "outfit" && (
+              <div className="max-h-[52vh] overflow-y-auto no-scrollbar space-y-3">
+                {OUTFIT_SLOTS.map(({ slot, label }) => {
+                  const items = outfitCatalog(view).filter((o) => o.slot === slot);
+                  const cur = pet.outfit?.[slot];
+                  return (
+                    <div key={slot}>
+                      <div className="text-[13px] text-cale-textDark mb-1.5">
+                        {label}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => equip(slot, null)}
+                          className={`px-3 py-1.5 rounded-[10px] text-[13px] ${
+                            !cur
+                              ? "bg-cale-accent text-white"
+                              : "bg-cale-input text-cale-textLight"
+                          }`}
+                        >
+                          无
+                        </button>
+                        {items.map((o) => {
+                          const locked = pet.intimacy < o.unlock;
+                          return (
+                            <button
+                              key={o.id}
+                              disabled={locked}
+                              onClick={() => equip(slot, o.id)}
+                              className={`px-3 py-1.5 rounded-[10px] text-[13px] ${
+                                cur === o.id
+                                  ? "bg-cale-accent text-white"
+                                  : "bg-cale-input text-cale-textDark"
+                              } disabled:opacity-40`}
+                            >
+                              {o.name}
+                              {locked && (
+                                <span className="text-[10px] ml-1 opacity-80">
+                                  亲密{o.unlock}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -375,9 +552,7 @@ function Stat({
           className="h-full rounded-full transition-all"
           style={{
             width: `${Math.max(pct, 2)}%`,
-            background: danger
-              ? "#C46B6B"
-              : "rgb(var(--cale-accent))",
+            background: danger ? "#C46B6B" : "rgb(var(--cale-accent))",
           }}
         />
       </div>
@@ -397,7 +572,7 @@ function Action({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-1.5 py-3 rounded-[14px] bg-cale-card active:opacity-70"
+      className="flex-1 min-w-[64px] flex flex-col items-center gap-1.5 py-3 rounded-[14px] bg-cale-card active:opacity-70"
     >
       <span className="text-cale-accent">{icon}</span>
       <span className="text-[12px] text-cale-textDark">{label}</span>
