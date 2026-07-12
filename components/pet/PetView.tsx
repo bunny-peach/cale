@@ -34,7 +34,7 @@ import {
   petName,
   wolfPresence,
   FOOD_INTIMACY_PENALTY,
-  PET_LINES,
+  petLine,
   outfitCatalog,
   OUTFIT_SLOTS,
   specialFoodFx,
@@ -164,7 +164,24 @@ export default function PetView() {
   };
 
   const speak = () => {
-    react2("pet-nod", pick(PET_LINES[view]));
+    // 炸毛缩窝: no matter how you poke it, it won't say a word — just a shiver.
+    if (hiding) {
+      setReaction({ anim: "pet-shake", key: Date.now() });
+      return;
+    }
+    const line = petLine(view, {
+      mood: pet.mood,
+      fullness: pet.fullness,
+      intimacy: pet.intimacy,
+      hiding,
+      grumpy,
+    });
+    if (!line) {
+      setReaction({ anim: "pet-shake", key: Date.now() });
+      return;
+    }
+    // Grumpy pets get a shake, others a gentle nod.
+    react2(grumpy ? "pet-shake" : "pet-nod", line);
   };
 
   const mutate = (fn: (p: Pet) => Pet) =>
@@ -391,6 +408,16 @@ export default function PetView() {
             <div className="mt-2 text-[12px] text-cale-accent text-center px-6">
               她面前不知谁放了一杯卡布奇诺，正喝得眯起眼…
             </div>
+          )}
+          {view === "wolf" && !awayHere && pet.surprise && (
+            <button
+              onClick={() =>
+                mutate((p) => ({ ...p, surprise: undefined, updatedAt: Date.now() }))
+              }
+              className="mt-2 text-[12px] text-cale-accent text-center px-6 active:opacity-60"
+            >
+              咦？狼崽{pet.surprise}——好像是 Cale 干的好事，点一下帮它弄好
+            </button>
           )}
         </div>
 

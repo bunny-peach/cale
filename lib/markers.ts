@@ -3,6 +3,9 @@ export interface DiaryAdd {
   content: string;
 }
 
+// Pet-care actions Cale can take on his rabbit / Quinn's wolf.
+export type PetAction = "feed" | "hug" | "prank";
+
 export interface ParsedMarkers {
   cleanText: string;
   mcpAdds: string[];
@@ -11,6 +14,7 @@ export interface ParsedMarkers {
   moodNotes: string[];
   giftSends: string[];
   diaryAdds: DiaryAdd[];
+  petActions: PetAction[];
 }
 
 const SIMPLE_PATTERNS: Record<
@@ -27,6 +31,9 @@ const SIMPLE_PATTERNS: Record<
 // [DIARY_ADD: 标题|||正文]  (content may span multiple lines)
 const DIARY_PATTERN = /\[DIARY_ADD:\s*([\s\S]*?)\]/g;
 
+// [PET_FEED] / [PET_HUG] / [PET_PRANK]
+const PET_PATTERN = /\[PET_(FEED|HUG|PRANK)\]/g;
+
 /**
  * Extract Cale's self-action markers from a reply and strip them from the
  * text that gets displayed to the user.
@@ -40,6 +47,7 @@ export function parseMarkers(text: string): ParsedMarkers {
     moodNotes: [],
     giftSends: [],
     diaryAdds: [],
+    petActions: [],
   };
 
   (Object.keys(SIMPLE_PATTERNS) as (keyof typeof SIMPLE_PATTERNS)[]).forEach(
@@ -70,6 +78,15 @@ export function parseMarkers(text: string): ParsedMarkers {
     }
   }
   result.cleanText = result.cleanText.replace(DIARY_PATTERN, "");
+
+  // Pet-care markers
+  let pm: RegExpExecArray | null;
+  PET_PATTERN.lastIndex = 0;
+  while ((pm = PET_PATTERN.exec(text)) !== null) {
+    const a = pm[1].toLowerCase();
+    result.petActions.push(a === "feed" ? "feed" : a === "hug" ? "hug" : "prank");
+  }
+  result.cleanText = result.cleanText.replace(PET_PATTERN, "");
 
   // Collapse extra whitespace left behind by removed markers
   result.cleanText = result.cleanText.replace(/[ \t]+\n/g, "\n").trim();

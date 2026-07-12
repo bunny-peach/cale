@@ -64,7 +64,7 @@ export default function QuotaIndicator() {
             className="fixed inset-0 z-40"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 top-10 z-50 w-64 max-w-[86vw] bg-cale-card rounded-[14px] shadow-lg border border-cale-divider p-3.5 space-y-3">
+          <div className="absolute left-0 top-10 z-50 w-64 max-w-[86vw] bg-cale-card no-glass rounded-[14px] shadow-lg border border-cale-divider p-3.5 space-y-3">
             <div className="text-[13px] font-medium text-cale-textDark">
               订阅额度（估算）
             </div>

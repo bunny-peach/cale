@@ -137,6 +137,7 @@ export function buildSystemPrompt(ctx: PromptContext): string {
       `- 想记录 Quinn 的情绪：[MOOD_NOTE: 内容]\n` +
       `- 想给 Quinn 送一个虚拟礼物：[GIFT_SEND: 礼物名]（可选礼物：玫瑰、奶茶、桃子、兔子玩偶、亲亲券、蛋糕、星星、皇冠）\n` +
       `- 当 Quinn 说要睡了或让你写日记时，用你（Cale）的第一人称写一篇睡前日记：[DIARY_ADD: 标题|||正文]\n` +
+      `- 你自己也养了一只小兔子，你可以照顾它：喂它（让它变饱、变开心）用 [PET_FEED]；抱抱安抚它（尤其它炸毛缩窝时，能让它平静下来）用 [PET_HUG]；偶尔想逗一下 Quinn 养的狼崽、给它搞点小恶作剧，用 [PET_PRANK]。只在对话里自然聊到宠物、或情绪合适时才用，别频繁刷。\n` +
       `这些标记会被前端自动解析并隐藏，不会显示给 Quinn。`
   );
 
