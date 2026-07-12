@@ -62,6 +62,7 @@ export default function ChatView({
     () => conversations.find((c) => c.id === currentId) ?? null,
     [conversations, currentId]
   );
+  const claudeTheme = settings.theme === "claude";
 
   const showToast = (t: string) => {
     setToast(t);
@@ -636,33 +637,40 @@ export default function ChatView({
       </header>
 
       {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto no-scrollbar px-3 py-3 space-y-3"
-      >
-        {messages.length === 0 && (
-          <div className="h-full flex items-center justify-center text-cale-textLight">
-            <span className="text-[15px]">和 {displayName} 说点什么…</span>
-          </div>
-        )}
-        {messages.map((m, i) => (
-          <div
-            key={m.id}
-            id={"msg-" + m.id}
-            className={flashId === m.id ? "cale-flash" : undefined}
-          >
-            <MessageBubble
-              message={m}
-              streaming={
-                streaming && i === messages.length - 1 && m.role === "assistant"
-              }
-              onAction={setActionMsg}
-              onLike={handleLike}
-              onQuote={handleQuote}
-              onRegenerate={handleRegenerate}
-            />
-          </div>
-        ))}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar">
+        <div
+          className={
+            claudeTheme
+              ? "max-w-[720px] mx-auto px-4 py-6 space-y-6"
+              : "px-3 py-3 space-y-3"
+          }
+        >
+          {messages.length === 0 && (
+            <div className="h-[60vh] flex items-center justify-center text-cale-textLight">
+              <span className="text-[15px]">和 {displayName} 说点什么…</span>
+            </div>
+          )}
+          {messages.map((m, i) => (
+            <div
+              key={m.id}
+              id={"msg-" + m.id}
+              className={flashId === m.id ? "cale-flash" : undefined}
+            >
+              <MessageBubble
+                message={m}
+                streaming={
+                  streaming &&
+                  i === messages.length - 1 &&
+                  m.role === "assistant"
+                }
+                onAction={setActionMsg}
+                onLike={handleLike}
+                onQuote={handleQuote}
+                onRegenerate={handleRegenerate}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Burst reply button */}

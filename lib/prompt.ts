@@ -34,6 +34,19 @@ export function buildSystemPrompt(ctx: PromptContext): string {
   const parts: string[] = [];
   parts.push(ctx.systemPrompt?.trim() || "");
 
+  // 实时时间感知：每次发送都带上当前真实时间
+  const now = new Date();
+  const timeStr = now.toLocaleString("zh-CN", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  parts.push(`【当前时间】现在是 ${timeStr}（请据此自然地感知时间，如早晚、周末、节日等）。`);
+
   // Cale 备注名
   if (ctx.settings.caleName && ctx.settings.caleName !== "Cale") {
     parts.push(`【Quinn 给 Cale 的备注：${ctx.settings.caleName}】`);

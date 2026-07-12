@@ -118,13 +118,14 @@ export default function CalendarView() {
         {anniversaryDays !== null && anniversaryDays > 0 && (
           <div
             className="rounded-card px-4 py-4 text-center"
-            style={{ background: "linear-gradient(135deg,#FFF0F5,#F5E0EA)" }}
+            style={{ background: "linear-gradient(135deg,#FFF4F8,#FBE7EF)" }}
           >
             <Heart
               size={30}
-              className="heart-pulse mx-auto text-cale-accent"
-              fill="#E8A0BF"
-              strokeWidth={1.5}
+              className="heart-pulse mx-auto"
+              fill="#F8D6E1"
+              strokeWidth={1.6}
+              style={{ color: "#C67E90" }}
             />
             <div className="text-[16px] mt-2 text-cale-textDark">
               和 {settings.caleName || "Cale"} 在一起的第{" "}

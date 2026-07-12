@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Plus, Send, Square, Image as ImageIcon, Smile, X } from "lucide-react";
 import { ChatImage, Sticker } from "@/lib/types";
+import { useApp } from "@/components/AppContext";
 
 const MAX_LINES = 4;
 const LINE_HEIGHT = 22;
@@ -26,6 +27,7 @@ export default function ChatInput({
   stickers: Sticker[];
   onManageStickers: () => void;
 }) {
+  const claude = useApp().settings.theme === "claude";
   const [text, setText] = useState("");
   const [images, setImages] = useState<ChatImage[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -192,7 +194,13 @@ export default function ChatInput({
           {burstMode ? "连发" : "单条"}
         </button>
 
-        <div className="flex-1 bg-cale-input rounded-[22px] px-4 py-2">
+        <div
+          className={`flex-1 px-4 py-2 ${
+            claude
+              ? "bg-cale-card border border-cale-divider rounded-[20px]"
+              : "bg-cale-input rounded-[22px]"
+          }`}
+        >
           <textarea
             ref={taRef}
             value={text}
