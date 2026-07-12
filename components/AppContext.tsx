@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { KEYS, load, save, uid, todayKey } from "@/lib/storage";
 import { QuotaEvent, pruneEvents } from "@/lib/quota";
+import { WeatherData, fetchWeather } from "@/lib/weather";
 import {
   ApiConfig,
   Conversation,
@@ -25,6 +26,7 @@ import {
   Wallet,
   Transaction,
   Party,
+  BookItem,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_SETTINGS,
   DEFAULT_PERIOD_DATA,
@@ -53,6 +55,10 @@ interface AppState {
 
   quotaEvents: QuotaEvent[];
   recordQuota: (input: number, output: number) => void;
+
+  // 天气感知
+  weather: WeatherData | null;
+  refreshWeather: () => Promise<void>;
 
   // 虚拟货币系统
   wallet: Wallet;
@@ -84,8 +90,8 @@ interface AppState {
 
   playlist: string[];
   setPlaylist: React.Dispatch<React.SetStateAction<string[]>>;
-  bookshelf: string[];
-  setBookshelf: React.Dispatch<React.SetStateAction<string[]>>;
+  bookshelf: BookItem[];
+  setBookshelf: React.Dispatch<React.SetStateAction<BookItem[]>>;
 
   stickers: Sticker[];
   setStickers: React.Dispatch<React.SetStateAction<Sticker[]>>;
@@ -144,6 +150,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [quotaEvents, setQuotaEvents] = useState<QuotaEvent[]>([]);
   const [wallet, setWalletState] = useState<Wallet>(DEFAULT_WALLET);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const [diary, setDiary] = useState<DiaryEntry[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [wishlist, setWishlist] = useState<WishItem[]>([]);
@@ -153,7 +160,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<Settings>(DEFAULT_SETTINGS);
   const [moods, setMoods] = useState<MoodEntry[]>([]);
   const [playlist, setPlaylist] = useState<string[]>([]);
-  const [bookshelf, setBookshelf] = useState<string[]>([]);
+  const [bookshelf, setBookshelf] = useState<BookItem[]>([]);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [glassBg, setGlassBgState] = useState<string>("");
 
@@ -168,6 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setQuotaEvents(pruneEvents(load<QuotaEvent[]>(KEYS.quota, [])));
     setWalletState(load<Wallet>(KEYS.wallet, DEFAULT_WALLET));
     setTransactions(load<Transaction[]>(KEYS.transactions, []));
+    setWeather(load<WeatherData | null>(KEYS.weather, null));
     setDiary(load(KEYS.diary, []));
     // Migrate older memory records that lack the new fields
     const rawMemories = load<Memory[]>(KEYS.memories, []);
@@ -184,7 +192,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettingsState({ ...DEFAULT_SETTINGS, ...load(KEYS.settings, {}) });
     setMoods(load(KEYS.moods, []));
     setPlaylist(load(KEYS.playlist, []));
-    setBookshelf(load(KEYS.bookshelf, []));
+    // Migrate old string[] bookshelf to BookItem[]
+    const rawBooks = load<(string | BookItem)[]>(KEYS.bookshelf, []);
+    setBookshelf(
+      rawBooks.map((b) => (typeof b === "string" ? { title: b } : b))
+    );
     setStickers(load(KEYS.stickers, []));
     setGlassBgState(load<string>(KEYS.glassBg, ""));
     setHydrated(true);
@@ -207,6 +219,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTheaterCurrentIdState(id);
     save(KEYS.theaterCurrent, id);
   }, []);
+  const refreshWeather = useCallback(async () => {
+    const w = await fetchWeather();
+    setWeather(w);
+    save(KEYS.weather, w);
+  }, []);
+
   const recordQuota = useCallback((input: number, output: number) => {
     if (!input && !output) return;
     setQuotaEvents((prev) =>
@@ -234,6 +252,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       document.documentElement.dataset.theme = settings.theme;
     }
   }, [settings.theme]);
+
+  // Auto-refresh weather on load when enabled and stale (> 1h). Best-effort.
+  useEffect(() => {
+    if (!hydrated || !settings.weatherEnabled) return;
+    const stale = !weather || Date.now() - weather.updatedAt > 60 * 60 * 1000;
+    if (stale) refreshWeather().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, settings.weatherEnabled]);
 
   // Expose the glass background image to CSS as a custom property.
   useEffect(() => {
@@ -470,6 +496,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTheaterCurrentId,
     quotaEvents,
     recordQuota,
+    weather,
+    refreshWeather,
     wallet,
     setWallet,
     transactions,

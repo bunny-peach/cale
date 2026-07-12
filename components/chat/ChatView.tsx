@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Menu, Plus, Check, X, Quote, Search, Gift } from "lucide-react";
 import { useApp } from "@/components/AppContext";
-import { uid } from "@/lib/storage";
+import { uid, load, save, KEYS } from "@/lib/storage";
 import {
   Conversation,
   Message,
@@ -179,8 +179,14 @@ export default function ChatView({
   const runAssistant = async (
     cid: string,
     apiHistory: Message[],
-    assistantMsgId: string
+    assistantMsgId: string,
+    newTurn = true
   ) => {
+    // Read Quinn's previous visit time for the prompt, then (for a genuinely
+    // new user turn) bump it to now so the next reply sees this gap.
+    const prevActive = load<number | null>(KEYS.lastActive, null);
+    if (newTurn) save(KEYS.lastActive, Date.now());
+
     const system = buildSystemPrompt({
       systemPrompt: app.systemPrompt,
       memories: app.memories,
@@ -190,6 +196,11 @@ export default function ChatView({
       todayMood: app.todayMood
         ? { mood: app.todayMood.mood, note: app.todayMood.note }
         : undefined,
+      lastActive: prevActive,
+      weather:
+        app.settings.weatherEnabled && app.weather
+          ? { tempC: app.weather.tempC, desc: app.weather.desc }
+          : null,
     });
 
     // Inject OFF memories as hidden context on the first user message
@@ -252,7 +263,9 @@ export default function ChatView({
         app.setPlaylist((prev) => (prev.includes(s) ? prev : [...prev, s]))
       );
       parsed.bookAdds.forEach((b) =>
-        app.setBookshelf((prev) => (prev.includes(b) ? prev : [...prev, b]))
+        app.setBookshelf((prev) =>
+          prev.some((x) => x.title === b) ? prev : [...prev, { title: b }]
+        )
       );
       parsed.moodNotes.forEach((n) => app.setTodayMoodNote(n));
       parsed.diaryAdds.forEach((d) => app.addDiary(d.title, d.content));
@@ -551,7 +564,7 @@ export default function ChatView({
       ...c,
       messages: [...c.messages.slice(0, idx), fresh],
     }));
-    runAssistant(cid, history, fresh.id);
+    runAssistant(cid, history, fresh.id, false);
   };
 
   const handleUndo = (m: Message) => {

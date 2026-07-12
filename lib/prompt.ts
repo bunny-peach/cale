@@ -24,6 +24,21 @@ export interface PromptContext {
   todayMood?: { mood: Mood; note?: string };
   // 小剧场模式：追加长文小说质感写作指令
   theater?: boolean;
+  // 上次 Quinn 来找 Cale 的时间戳（毫秒）
+  lastActive?: number | null;
+  // 天气感知
+  weather?: { tempC: number; desc: string } | null;
+}
+
+const WEEKDAY = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+function fmtDateTime(d: Date, withWeekday: boolean): string {
+  const base = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}`;
+  return withWeekday ? `${base} ${WEEKDAY[d.getDay()]}` : base;
 }
 
 export const THEATER_INSTRUCTION =
@@ -34,18 +49,26 @@ export function buildSystemPrompt(ctx: PromptContext): string {
   const parts: string[] = [];
   parts.push(ctx.systemPrompt?.trim() || "");
 
-  // 实时时间感知：每次发送都带上当前真实时间
+  // 实时时间感知：每次发送都带上当前真实时间 + Quinn 上次来找的时间
   const now = new Date();
-  const timeStr = now.toLocaleString("zh-CN", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  parts.push(`【当前时间】现在是 ${timeStr}（请据此自然地感知时间，如早晚、周末、节日等）。`);
+  const timeLines = [`当前时间：${fmtDateTime(now, true)}`];
+  if (ctx.lastActive) {
+    timeLines.push(
+      `Quinn 上次找你的时间：${fmtDateTime(new Date(ctx.lastActive), false)}`
+    );
+  }
+  parts.push(
+    `【时间感知】\n${timeLines.join("\n")}\n` +
+      `你能感知当前时间，也知道 Quinn 上次什么时候来找你。如果她很久没来，你会自然地意识到——语气、反应会不同，但不要每句话都提时间，不要像闹钟一样报时。像一个真正在等她的人。`
+  );
+
+  // 天气感知
+  if (ctx.weather) {
+    parts.push(
+      `【天气】Quinn 所在地当前约 ${ctx.weather.tempC}°C，${ctx.weather.desc}。` +
+        `你可以据此自然地关心她（如降温提醒加衣、下雨提醒带伞），但不要每次都提，别像天气预报。`
+    );
+  }
 
   // Cale 备注名
   if (ctx.settings.caleName && ctx.settings.caleName !== "Cale") {

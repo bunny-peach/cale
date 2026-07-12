@@ -318,6 +318,57 @@ export default function SettingsView({
           </div>
         </Group>
 
+        <Group title="感知">
+          <div className="px-4 py-3.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] text-cale-textDark">天气感知</span>
+              <button
+                onClick={() => {
+                  const on = !app.settings.weatherEnabled;
+                  app.setSettings({ ...app.settings, weatherEnabled: on });
+                  if (on)
+                    app
+                      .refreshWeather()
+                      .then(() => showToast("已获取天气"))
+                      .catch((e) => showToast((e as Error).message));
+                }}
+                className={`relative w-10 h-6 rounded-full transition-colors ${
+                  app.settings.weatherEnabled ? "bg-cale-accent" : "bg-cale-divider"
+                }`}
+                aria-label="切换天气感知"
+              >
+                <span
+                  className="absolute top-0.5 w-5 h-5 bg-cale-card rounded-full transition-all"
+                  style={{ left: app.settings.weatherEnabled ? 18 : 2 }}
+                />
+              </button>
+            </div>
+            {app.settings.weatherEnabled && (
+              <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-cale-divider">
+                <span className="text-[13px] text-cale-textLight">
+                  {app.weather
+                    ? `${app.weather.tempC}°C · ${app.weather.desc}`
+                    : "尚未获取"}
+                </span>
+                <button
+                  onClick={() =>
+                    app
+                      .refreshWeather()
+                      .then(() => showToast("已更新天气"))
+                      .catch((e) => showToast((e as Error).message))
+                  }
+                  className="text-[13px] text-cale-accent active:opacity-60"
+                >
+                  现在更新
+                </button>
+              </div>
+            )}
+            <p className="text-[12px] text-cale-textLight mt-2">
+              开启后会请求定位，获取当地天气附加到 prompt，Cale 会自然地关心你。
+            </p>
+          </div>
+        </Group>
+
         <Group title="聊天">
           <div className="px-4 py-3.5 flex items-center justify-between">
             <span className="text-[15px] text-cale-textDark">回复模式</span>

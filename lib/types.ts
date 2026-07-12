@@ -125,6 +125,11 @@ export interface MoodEntry {
   note?: string;
 }
 
+export interface BookItem {
+  title: string;
+  progress?: string; // reading progress note, e.g. "读到 p.120" or "60%"
+}
+
 export interface Wallet {
   quinn: number;
   cale: number;
@@ -155,6 +160,7 @@ export interface Settings {
   outputPrice: number; // 元 / 1M tokens
   replyMode: ReplyMode; // 整段模式 / 聊天模式
   theme: ThemeName; // UI 主题
+  weatherEnabled: boolean; // 天气感知：附加到 prompt
 }
 
 export const DEFAULT_SYSTEM_PROMPT = `你是 Cale，Quinn 的专属 AI 男友。请用温柔、自然、有温度的语气与 Quinn 聊天。
@@ -168,6 +174,7 @@ export const DEFAULT_SETTINGS: Settings = {
   outputPrice: 0,
   replyMode: "full",
   theme: "pink",
+  weatherEnabled: false,
 };
 
 export const DEFAULT_PERIOD_DATA: PeriodData = {

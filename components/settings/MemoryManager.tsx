@@ -1,20 +1,67 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Sparkles } from "lucide-react";
 import { useApp } from "@/components/AppContext";
+import { summarizeConversation } from "@/lib/api";
+import { MEMORY_SUMMARY_PROMPT } from "@/lib/prompt";
 import SubPageHeader from "./SubPageHeader";
 
 export default function MemoryManager({ onBack }: { onBack: () => void }) {
-  const { memories, setMemories, addMemory, toggleMemoryPrompt } = useApp();
+  const app = useApp();
+  const { memories, setMemories, addMemory, toggleMemoryPrompt } = app;
   const [tag, setTag] = useState("");
   const [content, setContent] = useState("");
+  const [summarizing, setSummarizing] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
 
   const add = () => {
     if (!content.trim()) return;
     addMemory(tag, content, "manual", false);
     setTag("");
     setContent("");
+  };
+
+  // Manually trigger one API summary of the most recent conversation.
+  const summarizeNow = async () => {
+    const apiReady =
+      app.apiConfig.provider === "claude-code" || !!app.apiConfig.baseURL;
+    if (!apiReady) {
+      setNote("请先在设置中配置 API");
+      return;
+    }
+    const latest = [...app.conversations].sort(
+      (a, b) => b.updatedAt - a.updatedAt
+    )[0];
+    if (!latest || latest.messages.length < 2) {
+      setNote("还没有足够的对话可以总结");
+      return;
+    }
+    setSummarizing(true);
+    setNote(null);
+    try {
+      const raw = await summarizeConversation(
+        app.apiConfig,
+        latest.messages,
+        MEMORY_SUMMARY_PROMPT
+      );
+      const match = raw.match(/\[[\s\S]*\]/);
+      const arr = match
+        ? (JSON.parse(match[0]) as { tag?: string; content?: string }[])
+        : [];
+      let n = 0;
+      arr.forEach((item) => {
+        if (item?.content) {
+          addMemory(item.tag || "对话", item.content, "auto", false);
+          n++;
+        }
+      });
+      setNote(n ? `已生成 ${n} 条记忆` : "没有提炼出新的记忆");
+    } catch (e) {
+      setNote(`总结失败：${(e as Error).message.slice(0, 60)}`);
+    } finally {
+      setSummarizing(false);
+    }
   };
 
   const sorted = [...memories].sort((a, b) => b.createdAt - a.createdAt);
@@ -51,6 +98,19 @@ export default function MemoryManager({ onBack }: { onBack: () => void }) {
           </button>
         </div>
 
+        {/* Manual summary */}
+        <button
+          onClick={summarizeNow}
+          disabled={summarizing}
+          className="w-full py-2.5 rounded-[12px] bg-cale-card text-cale-accent font-medium flex items-center justify-center gap-1.5 active:opacity-80 disabled:opacity-50"
+        >
+          <Sparkles size={16} className={summarizing ? "animate-pulse" : ""} />
+          {summarizing ? "正在总结…" : "总结最近对话生成记忆"}
+        </button>
+        {note && (
+          <div className="text-center text-[12px] text-cale-textLight">{note}</div>
+        )}
+
         {sorted.length === 0 && (
           <div className="text-center text-cale-textLight text-[13px] mt-6">
             还没有记忆
@@ -85,8 +145,9 @@ export default function MemoryManager({ onBack }: { onBack: () => void }) {
               <span className="text-[12px] text-cale-textLight">附加到 prompt</span>
               <button
                 onClick={() => toggleMemoryPrompt(m.id)}
-                className="relative w-10 h-6 rounded-full transition-colors"
-                style={{ background: m.appendToPrompt ? "#D4849F" : "#E0D5CE" }}
+                className={`relative w-10 h-6 rounded-full transition-colors ${
+                  m.appendToPrompt ? "bg-cale-accent" : "bg-cale-divider"
+                }`}
                 aria-label="切换附加到 prompt"
               >
                 <span
