@@ -319,6 +319,33 @@ export default function SettingsView({
         </Group>
 
         <Group title="感知">
+          <div className="px-4 py-3.5 border-b border-cale-divider">
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] text-cale-textDark">时间感知</span>
+              <button
+                onClick={() =>
+                  app.setSettings({
+                    ...app.settings,
+                    timeAwareEnabled: !app.settings.timeAwareEnabled,
+                  })
+                }
+                className={`relative w-10 h-6 rounded-full transition-colors ${
+                  app.settings.timeAwareEnabled
+                    ? "bg-cale-accent"
+                    : "bg-cale-divider"
+                }`}
+                aria-label="切换时间感知"
+              >
+                <span
+                  className="absolute top-0.5 w-5 h-5 bg-cale-card rounded-full transition-all"
+                  style={{ left: app.settings.timeAwareEnabled ? 18 : 2 }}
+                />
+              </button>
+            </div>
+            <p className="text-[12px] text-cale-textLight mt-2">
+              让 Cale 感知当前时间，以及你上次找他的时间。
+            </p>
+          </div>
           <div className="px-4 py-3.5">
             <div className="flex items-center justify-between">
               <span className="text-[15px] text-cale-textDark">天气感知</span>
