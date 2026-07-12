@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { List, Plus, Square, Send, Trash2, X } from "lucide-react";
+import { List, Plus, Square, Send, Trash2, X, ChevronLeft } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid, load, save, KEYS } from "@/lib/storage";
 import { Conversation, Message } from "@/lib/types";
 import { streamChat } from "@/lib/api";
 import { buildSystemPrompt, buildMemoryContext } from "@/lib/prompt";
+import { petPromptSummary } from "@/lib/pets";
 import { parseMarkers } from "@/lib/markers";
 import Markdown from "@/components/Markdown";
 import ThinkingBlock from "@/components/chat/ThinkingBlock";
@@ -14,7 +15,7 @@ import ThinkingBlock from "@/components/chat/ThinkingBlock";
 // Theater mode pushes the model to write long-form; ask for the max we can.
 const THEATER_MAX_TOKENS = 65536;
 
-export default function TheaterView() {
+export default function TheaterView({ onClose }: { onClose?: () => void }) {
   const app = useApp();
   const {
     apiConfig,
@@ -87,6 +88,7 @@ export default function TheaterView() {
         app.settings.weatherEnabled && app.weather
           ? { tempC: app.weather.tempC, desc: app.weather.desc }
           : null,
+      petSummary: petPromptSummary(app.petState),
     });
 
     // Inject OFF memories as hidden context on the first user message (shared lib)
@@ -220,6 +222,15 @@ export default function TheaterView() {
         className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
         style={{ paddingTop: "var(--safe-top)" }}
       >
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
+            aria-label="返回聊天"
+          >
+            <ChevronLeft size={24} strokeWidth={1.8} />
+          </button>
+        )}
         <button
           onClick={() => setListOpen(true)}
           className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"

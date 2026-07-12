@@ -19,6 +19,7 @@ import {
 } from "@/lib/prompt";
 import { parseMarkers, splitMessageBreaks } from "@/lib/markers";
 import { findGift, Gift as GiftType } from "@/lib/gifts";
+import { petPromptSummary } from "@/lib/pets";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 import TransferSheet from "./TransferSheet";
@@ -54,8 +55,10 @@ function formatStamp(ts: number): string {
 
 export default function ChatView({
   onManageStickers,
+  onOpenTheater,
 }: {
   onManageStickers: () => void;
+  onOpenTheater: () => void;
 }) {
   const app = useApp();
   const {
@@ -220,6 +223,7 @@ export default function ChatView({
         app.settings.weatherEnabled && app.weather
           ? { tempC: app.weather.tempC, desc: app.weather.desc }
           : null,
+      petSummary: petPromptSummary(app.petState),
     });
 
     // Inject OFF memories as hidden context on the first user message
@@ -908,6 +912,7 @@ export default function ChatView({
         onManageStickers={onManageStickers}
         onTransfer={() => setTransferOpen(true)}
         onGift={() => setGiftOpen(true)}
+        onTheater={onOpenTheater}
       />
 
       <ConversationSidebar

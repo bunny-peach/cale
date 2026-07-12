@@ -30,6 +30,8 @@ export interface PromptContext {
   timeAware?: boolean;
   // 天气感知
   weather?: { tempC: number; desc: string } | null;
+  // 宠物状态摘要（已格式化）
+  petSummary?: string | null;
 }
 
 const WEEKDAY = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
@@ -72,6 +74,11 @@ export function buildSystemPrompt(ctx: PromptContext): string {
       `【天气】Quinn 所在地当前约 ${ctx.weather.tempC}°C，${ctx.weather.desc}。` +
         `你可以据此自然地关心她（如降温提醒加衣、下雨提醒带伞），但不要每次都提，别像天气预报。`
     );
+  }
+
+  // 宠物状态
+  if (ctx.petSummary) {
+    parts.push(ctx.petSummary);
   }
 
   // Cale 备注名
