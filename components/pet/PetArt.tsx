@@ -61,7 +61,7 @@ export function WolfArt({
         )}
 
         {/* clothes drawn under the head, over the body */}
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={137} bodyY={150} eyeY={94} petKind="wolf" topW={36} hemW={40} topY={148} hemY={180} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={137} bodyY={150} eyeY={94} petKind="wolf" topW={39} hemW={37} topY={148} hemY={180} />
 
         <circle cx="100" cy="96" r="48" fill="#4a4a55" />
         <ellipse cx="64" cy="108" rx="14" ry="12" fill="#565661" />
@@ -169,7 +169,7 @@ export function RabbitArt({
         <ellipse cx="82" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
         <ellipse cx="118" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
 
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={150} bodyY={156} eyeY={113} petKind="rabbit" topW={23} hemW={35} topY={153} hemY={179} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={150} bodyY={156} eyeY={113} petKind="rabbit" topW={25} hemW={31} topY={153} hemY={179} />
 
         {/* soft rounded face — a gentle oval between too-flat and too-round */}
         <ellipse cx="100" cy="108" rx="52" ry="41" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
@@ -365,13 +365,12 @@ function OutfitPiece({
       dress: { f: "#f6c6d8", s: "#e6a6bf" },
       cape: { f: "#ec9a9a", s: "#d97f7f" },
     };
-    // A body panel: narrow rounded shoulders that flare out along gently
-    // curved (bell-shaped) sides to a soft rounded hem.
-    const mid = T + (B - T) * 0.62;
+    // A body panel with clean straight-tapered sides and a soft rounded hem.
+    // topW≈hemW → a normal straight top; hemW>topW → a gentle A-line.
     const aline = (f: string, s: string, key: string) => (
       <path
         key={key}
-        d={`M${cx - TW} ${T} Q${cx} ${T + 12} ${cx + TW} ${T} Q${cx + HW} ${mid} ${cx + HW} ${B - 6} Q${cx} ${B + 9} ${cx - HW} ${B - 6} Q${cx - HW} ${mid} ${cx - TW} ${T} Z`}
+        d={`M${cx - TW} ${T} Q${cx} ${T + 12} ${cx + TW} ${T} L${cx + HW} ${B - 6} Q${cx} ${B + 8} ${cx - HW} ${B - 6} Z`}
         fill={f}
         stroke={s}
         strokeWidth="1.6"
@@ -393,7 +392,7 @@ function OutfitPiece({
       parts.push(
         <g key="dress">
           <path
-            d={`M${cx - TW} ${T} Q${cx} ${T + 12} ${cx + TW} ${T} L${cx + TW + 2} ${waist} Q${cx + HW + 8} ${B - 8} ${cx + HW + 8} ${B} Q${cx} ${B + 11} ${cx - HW - 8} ${B} Q${cx - HW - 8} ${B - 8} ${cx - TW - 2} ${waist} Z`}
+            d={`M${cx - TW} ${T} Q${cx} ${T + 12} ${cx + TW} ${T} L${cx + TW} ${waist} L${cx + HW + 3} ${B} Q${cx} ${B + 8} ${cx - HW - 3} ${B} L${cx - TW} ${waist} Z`}
             fill={C.dress.f}
             stroke={C.dress.s}
             strokeWidth="1.6"
@@ -418,7 +417,7 @@ function OutfitPiece({
       const bibTop = T + 6;
       parts.push(
         <g key="ov">
-          <path d={`M${cx - TW} ${bibTop} L${cx + TW} ${bibTop} Q${cx + HW} ${mid} ${cx + HW} ${B - 6} Q${cx} ${B + 9} ${cx - HW} ${B - 6} Q${cx - HW} ${mid} ${cx - TW} ${bibTop} Z`} fill={C.overalls.f} stroke={C.overalls.s} strokeWidth="1.6" />
+          <path d={`M${cx - TW} ${bibTop} L${cx + TW} ${bibTop} L${cx + HW} ${B - 6} Q${cx} ${B + 8} ${cx - HW} ${B - 6} Z`} fill={C.overalls.f} stroke={C.overalls.s} strokeWidth="1.6" />
           <path d={`M${cx - TW * 0.5} ${bibTop + 2} L${cx - TW * 0.55} ${T - 8}`} stroke={C.overalls.f} strokeWidth="5" strokeLinecap="round" />
           <path d={`M${cx + TW * 0.5} ${bibTop + 2} L${cx + TW * 0.55} ${T - 8}`} stroke={C.overalls.f} strokeWidth="5" strokeLinecap="round" />
           <circle cx={cx - TW * 0.5} cy={bibTop + 6} r="2.6" fill="#f2d489" />
