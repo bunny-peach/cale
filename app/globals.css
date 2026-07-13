@@ -575,6 +575,51 @@ mark {
   animation: gift-float 1.4s ease-out forwards;
 }
 
+/* Sleeping "z z Z" float */
+@keyframes sleep-z {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+.sleep-z {
+  animation: sleep-z 2.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Seasonal falling particles (petals / leaves / snow) over the pet stage */
+@keyframes pet-fall {
+  0% {
+    transform: translateY(-24px) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(230px) translateX(18px) rotate(220deg);
+    opacity: 0;
+  }
+}
+.pet-particle {
+  position: absolute;
+  top: -16px;
+  pointer-events: none;
+  animation: pet-fall linear infinite;
+  will-change: transform;
+}
+
 /* Flash a message when jumped to from search */
 @keyframes cale-flash {
   0%,
