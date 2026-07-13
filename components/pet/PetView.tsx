@@ -49,6 +49,14 @@ import {
   specialFoodFx,
   rollVisit,
 } from "@/lib/pets";
+import {
+  daypart as getDaypart,
+  season as getSeason,
+  holiday as getHoliday,
+  weatherKind as getWeatherKind,
+  seasonParticle,
+  ambientCaption,
+} from "@/lib/petAmbient";
 import { WolfArt, RabbitArt } from "./PetArt";
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
@@ -63,7 +71,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default function PetView() {
-  const { petState, setPetState } = useApp();
+  const { petState, setPetState, weather, todayMood } = useApp();
   const [view, setView] = useState<PetKind>("wolf");
   const [sheet, setSheet] = useState<null | "food" | "item" | "mischief" | "outfit">(
     null
@@ -130,6 +138,25 @@ export default function PetView() {
   const presence = wolfPresence(lastActive);
   const hiding = view === "rabbit" && pet.mischief >= 100;
   const grumpy = view === "rabbit" && (pet.mischief >= 60 || pet.mood < 22);
+
+  // ---- Ambient context: time of day / weather / season / holiday / mood ----
+  const daypart = useMemo(() => getDaypart(), []);
+  const seasonNow = useMemo(() => getSeason(), []);
+  const holidayNow = useMemo(() => getHoliday(), []);
+  const wKind = useMemo(
+    () => getWeatherKind(weather?.desc),
+    [weather?.desc]
+  );
+  const particle = seasonParticle(seasonNow, wKind);
+  const sleeping = daypart === "night" && !grumpy && !hiding;
+  const ambient = ambientCaption({
+    kind: view,
+    daypart,
+    season: seasonNow,
+    weather: wKind,
+    holiday: holidayNow,
+    mood: todayMood?.mood,
+  });
   const cappuccino = useMemo(() => Math.random() < 0.12, []);
   const visit = useMemo<Visit>(() => rollVisit(petState), []);
 
@@ -163,6 +190,7 @@ export default function PetView() {
   // prop (holds a plushie, nibbles a snack, …) instead of pacing around. ----
   const canAct =
     !awayHere &&
+    !sleeping &&
     (view === "wolf" ? presence.pose === "happy" : !grumpy && !hiding);
   useEffect(() => {
     setPosX(0);
@@ -205,6 +233,15 @@ export default function PetView() {
   };
 
   const speak = () => {
+    // Fast asleep at night: a poke just makes it roll over, doesn't wake it.
+    if (sleeping) {
+      setActivity(null);
+      setReaction({ anim: "pet-nod", key: Date.now() });
+      setSpeech(view === "wolf" ? "（翻了个身，没醒）" : "（动了动耳朵，睡得正香）");
+      if (speechTimer.current) clearTimeout(speechTimer.current);
+      speechTimer.current = setTimeout(() => setSpeech(null), 2000);
+      return;
+    }
     // 炸毛缩窝: no matter how you poke it, it won't say a word — just a shiver.
     if (hiding) {
       setReaction({ anim: "pet-shake", key: Date.now() });
@@ -320,12 +357,19 @@ export default function PetView() {
 
   const PetSprite = ({ size }: { size?: number }) =>
     view === "wolf" ? (
-      <WolfArt pose={presence.pose} outfit={pet.outfit} hold={activity?.prop} size={size} />
+      <WolfArt
+        pose={presence.pose}
+        outfit={pet.outfit}
+        hold={activity?.prop}
+        sleeping={sleeping}
+        size={size}
+      />
     ) : (
       <RabbitArt
         grumpy={grumpy}
         hiding={hiding}
         happy={pet.mood >= 85}
+        sleeping={sleeping}
         outfit={pet.outfit}
         hold={activity?.prop}
         size={size}
@@ -370,6 +414,48 @@ export default function PetView() {
       <div className="px-4 py-4">
         {/* Pet stage */}
         <div className="bg-cale-card rounded-[18px] pt-4 pb-5 flex flex-col items-center relative overflow-hidden">
+          {/* seasonal falling particles (petals / leaves / snow) */}
+          {particle && (
+            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+              {Array.from({ length: 11 }).map((_, i) => (
+                <span
+                  key={i}
+                  className="pet-particle"
+                  style={{
+                    left: `${(i * 8.7 + 3) % 95}%`,
+                    fontSize: particle === "snow" ? 12 : 15,
+                    animationDuration: `${5 + (i % 4)}s`,
+                    // negative delay → already mid-fall on mount, so particles
+                    // are always spread across the stage instead of bunched up.
+                    animationDelay: `-${(i * 0.9).toFixed(1)}s`,
+                  }}
+                >
+                  {particle === "petal" ? "🌸" : particle === "leaf" ? "🍂" : "❄️"}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* holiday banner + little decoration */}
+          {holidayNow && (
+            <div className="absolute top-2 left-2 z-20 text-[11px] bg-cale-accent/15 text-cale-accent rounded-full px-2 py-0.5 font-medium">
+              🎉 {holidayNow.name}
+            </div>
+          )}
+          {holidayNow && !awayHere && (
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-20 text-[26px] pointer-events-none">
+              {holidayNow.key === "birthday"
+                ? "🎂"
+                : holidayNow.key === "valentine"
+                  ? "🍑"
+                  : holidayNow.key === "christmas"
+                    ? "🎄"
+                    : holidayNow.key === "newyear"
+                      ? "🎆"
+                      : "🎃"}
+            </div>
+          )}
+
           {/* speech bubble */}
           {speech && !awayHere && (
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 cale-pop">
@@ -451,13 +537,15 @@ export default function PetView() {
                 ? "狼崽跑来了，趴在她旁边不肯走"
                 : guestKind === "rabbit"
                   ? "兔子缩在他肚子底下，只露出耳朵"
-                  : view === "wolf"
-                    ? activity?.caption ?? presence.caption
-                    : hiding
-                      ? "炸毛了！缩成一团埋进窝里，怎么哄都不出来"
-                      : grumpy
-                        ? "气鼓鼓地缩进窝里，不太理人"
-                        : activity?.caption ?? "软乎乎的，正竖着耳朵看你（点点它）"}
+                  : hiding
+                    ? "炸毛了！缩成一团埋进窝里，怎么哄都不出来"
+                    : grumpy
+                      ? "气鼓鼓地缩进窝里，不太理人"
+                      : ambient ??
+                        (view === "wolf"
+                          ? activity?.caption ?? presence.caption
+                          : activity?.caption ??
+                            "软乎乎的，正竖着耳朵看你（点点它）")}
           </div>
           {view === "rabbit" && !grumpy && !awayHere && cappuccino && (
             <div className="mt-2 text-[12px] text-cale-accent text-center px-6">

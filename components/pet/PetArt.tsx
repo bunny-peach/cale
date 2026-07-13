@@ -11,14 +11,16 @@ export function WolfArt({
   pose = "happy",
   outfit,
   hold,
+  sleeping = false,
   size = 190,
 }: {
   pose?: "happy" | "droopy" | "waiting";
   outfit?: Outfit;
   hold?: PropKind;
+  sleeping?: boolean;
   size?: number;
 }) {
-  const earDown = pose !== "happy";
+  const earDown = pose !== "happy" || sleeping;
   return (
     <svg viewBox="0 0 200 200" width={size} height={size} style={{ overflow: "visible" }}>
       <g className="pet-bob">
@@ -69,7 +71,12 @@ export function WolfArt({
         <circle cx="66" cy="112" r="7" fill="#e79aa6" opacity="0.5" />
         <circle cx="134" cy="112" r="7" fill="#e79aa6" opacity="0.5" />
 
-        {pose === "waiting" ? (
+        {sleeping ? (
+          <>
+            <path d="M74 94 q8 7 16 0" stroke="#17171c" strokeWidth="3.4" fill="none" strokeLinecap="round" />
+            <path d="M110 94 q8 7 16 0" stroke="#17171c" strokeWidth="3.4" fill="none" strokeLinecap="round" />
+          </>
+        ) : pose === "waiting" ? (
           <>
             <path d="M76 96 q8 -8 16 0" stroke="#15151a" strokeWidth="4" fill="none" strokeLinecap="round" />
             <path d="M108 96 q8 -8 16 0" stroke="#15151a" strokeWidth="4" fill="none" strokeLinecap="round" />
@@ -82,6 +89,7 @@ export function WolfArt({
             <circle cx="121" cy="90" r="2.6" fill="#fff" />
           </g>
         )}
+        {sleeping && <SleepZ cx={140} cy={70} />}
 
         <ellipse cx="100" cy="116" rx="17" ry="12" fill="#61616c" />
         <ellipse cx="100" cy="110" rx="6" ry="4.5" fill="#17171c" />
@@ -102,6 +110,7 @@ export function RabbitArt({
   grumpy = false,
   hiding = false,
   happy = false,
+  sleeping = false,
   outfit,
   hold,
   size = 190,
@@ -109,6 +118,7 @@ export function RabbitArt({
   grumpy?: boolean;
   hiding?: boolean;
   happy?: boolean;
+  sleeping?: boolean;
   outfit?: Outfit;
   hold?: PropKind;
   size?: number;
@@ -194,14 +204,23 @@ export function RabbitArt({
           <>
             <ellipse cx="67" cy="122" rx="12" ry="8" fill="#fbd0dd" />
             <ellipse cx="133" cy="122" rx="12" ry="8" fill="#fbd0dd" />
-            {/* tiny "ii" marks above the nose — the signature blank-cute look */}
-            <path d="M95 90 v7 M105 90 v7" stroke="#c3ada2" strokeWidth="2.4" strokeLinecap="round" />
-            <g className="pet-blink">
-              <circle cx="81" cy="113" r="9" fill="#3a3237" />
-              <circle cx="119" cy="113" r="9" fill="#3a3237" />
-              <circle cx="84" cy="109.5" r="2.8" fill="#fff" />
-              <circle cx="122" cy="109.5" r="2.8" fill="#fff" />
-            </g>
+            {!sleeping && (
+              /* tiny "ii" marks above the nose — the signature blank-cute look */
+              <path d="M95 90 v7 M105 90 v7" stroke="#c3ada2" strokeWidth="2.4" strokeLinecap="round" />
+            )}
+            {sleeping ? (
+              <>
+                <path d="M73 113 q8 7 16 0" stroke="#3a3237" strokeWidth="3" fill="none" strokeLinecap="round" />
+                <path d="M111 113 q8 7 16 0" stroke="#3a3237" strokeWidth="3" fill="none" strokeLinecap="round" />
+              </>
+            ) : (
+              <g className="pet-blink">
+                <circle cx="81" cy="113" r="9" fill="#3a3237" />
+                <circle cx="119" cy="113" r="9" fill="#3a3237" />
+                <circle cx="84" cy="109.5" r="2.8" fill="#fff" />
+                <circle cx="122" cy="109.5" r="2.8" fill="#fff" />
+              </g>
+            )}
             {happy ? (
               <>
                 {/* happiest: tiny nose + rounded cat mouth (ω / 猫猫嘴) */}
@@ -220,6 +239,7 @@ export function RabbitArt({
 
         {/* a little something the rabbit is playing with */}
         {hold && <HeldProp kind={hold} cx={100} y={172} pawColor="#ffffff" />}
+        {sleeping && <SleepZ cx={138} cy={80} />}
       </g>
     </svg>
   );
@@ -301,6 +321,17 @@ function HeldProp({
       {/* little paws hugging the prop */}
       <ellipse cx={cx - 13} cy={y + 8} rx="6" ry="5" fill={pawColor} stroke="#e4ddd6" strokeWidth="1.4" />
       <ellipse cx={cx + 13} cy={y + 8} rx="6" ry="5" fill={pawColor} stroke="#e4ddd6" strokeWidth="1.4" />
+    </g>
+  );
+}
+
+// Floating "z z Z" while the pet sleeps.
+function SleepZ({ cx, cy }: { cx: number; cy: number }) {
+  return (
+    <g className="sleep-z" fill="#a6abc8" fontFamily="ui-sans-serif, sans-serif" fontWeight={700}>
+      <text x={cx} y={cy} fontSize="10">z</text>
+      <text x={cx + 7} y={cy - 10} fontSize="13">z</text>
+      <text x={cx + 16} y={cy - 22} fontSize="17">Z</text>
     </g>
   );
 }
