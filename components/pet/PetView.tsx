@@ -15,9 +15,10 @@ import {
   Coffee,
   Star,
   Music,
+  Ticket,
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
-import { load, KEYS } from "@/lib/storage";
+import { load, save, KEYS, todayKey } from "@/lib/storage";
 import {
   PetKind,
   Pet,
@@ -35,6 +36,12 @@ import {
   wolfPresence,
   FOOD_INTIMACY_PENALTY,
   petLine,
+  CouponState,
+  freshCoupons,
+  refillCoupons,
+  COUPON_MAX,
+  FEED_COST,
+  PLAY_COST,
   outfitCatalog,
   OUTFIT_SLOTS,
   specialFoodFx,
@@ -73,13 +80,43 @@ export default function PetView() {
   const posRef = useRef(0);
   const speechTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [coupons, setCoupons] = useState<CouponState>(() =>
+    freshCoupons(todayKey())
+  );
+
   useEffect(() => {
     setPetState((prev) => ({
       wolf: applyDecay(prev.wolf),
       rabbit: applyDecay(prev.rabbit),
     }));
+    // Load + daily-refill the snack coupons.
+    const today = todayKey();
+    const loaded = refillCoupons(
+      load<CouponState>(KEYS.petCoupons, freshCoupons(today)),
+      today
+    );
+    setCoupons(loaded);
+    save(KEYS.petCoupons, loaded);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const updateCoupons = (n: number) => {
+    const next = { n: Math.max(0, Math.min(COUPON_MAX, n)), date: todayKey() };
+    setCoupons(next);
+    save(KEYS.petCoupons, next);
+  };
+  // Try to spend `cost` coupons; returns false (and warns) when short.
+  const spendCoupons = (cost: number): boolean => {
+    if (coupons.n < cost) {
+      showToast("零食券不够啦，摸摸它或明天再来～");
+      return false;
+    }
+    updateCoupons(coupons.n - cost);
+    return true;
+  };
+  const earnCoupon = () => {
+    if (coupons.n < COUPON_MAX) updateCoupons(coupons.n + 1);
+  };
 
   const pet = petState[view];
   const isOwn = view === "wolf";
@@ -188,6 +225,7 @@ export default function PetView() {
     setPetState((prev) => ({ ...prev, [view]: fn(prev[view]) }));
 
   const feed = (food: string) => {
+    if (!spendCoupons(FEED_COST)) return;
     const special = foods(view).special[food];
     if (special) {
       setSheet(null);
@@ -253,6 +291,7 @@ export default function PetView() {
       intimacy: p.intimacy + 1,
       updatedAt: Date.now(),
     }));
+    earnCoupon();
     react2("pet-nod", pick(["（眯眼蹭你）好舒服～", "再摸摸嘛", "唔…喜欢"]), "heart");
   };
   const tease = () => {
@@ -262,6 +301,7 @@ export default function PetView() {
       intimacy: p.intimacy + 1,
       updatedAt: Date.now(),
     }));
+    earnCoupon();
     react2("pet-wiggle", pick(["再来再来！", "嘿嘿，抓不到我～", "（原地转圈）"]), "star");
   };
 
@@ -438,6 +478,14 @@ export default function PetView() {
           {!isOwn && <Stat label="捣乱值" value={pet.mischief} danger />}
         </div>
 
+        {/* Snack coupons — a daily budget so food & toys aren't unlimited */}
+        <div className="flex items-center justify-center gap-1.5 mt-3 text-[12px] text-cale-textLight">
+          <Ticket size={14} className="text-cale-accent" />
+          今日零食券
+          <span className="text-cale-accent font-semibold">{coupons.n}</span>
+          <span className="opacity-70">· 喂食/陪玩各 1，摸头逗它可回补</span>
+        </div>
+
         {/* Actions */}
         <div className="flex flex-wrap gap-2 mt-3">
           <Action icon={<Utensils size={20} />} label="喂食" onClick={() => setSheet("food")} />
@@ -506,6 +554,7 @@ export default function PetView() {
                 <ChipGrid
                   items={allItems}
                   onPick={(name) => {
+                    if (!spendCoupons(PLAY_COST)) return;
                     if (goodItems(view).includes(name)) play(name);
                     else {
                       const b = badItems(view).find((x) => x.name === name);
