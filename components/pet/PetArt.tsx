@@ -61,7 +61,7 @@ export function WolfArt({
         )}
 
         {/* clothes drawn under the head, over the body */}
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={137} bodyY={150} eyeY={94} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={137} bodyY={150} eyeY={94} bodyW={46} topY={142} hemY={185} />
 
         <circle cx="100" cy="96" r="48" fill="#4a4a55" />
         <ellipse cx="64" cy="108" rx="14" ry="12" fill="#565661" />
@@ -169,7 +169,7 @@ export function RabbitArt({
         <ellipse cx="82" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
         <ellipse cx="118" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
 
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={150} bodyY={156} eyeY={113} cscale={0.8} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={150} bodyY={156} eyeY={113} bodyW={33} topY={150} hemY={181} />
 
         {/* soft rounded face — a gentle oval between too-flat and too-round */}
         <ellipse cx="100" cy="108" rx="52" ry="41" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
@@ -326,7 +326,9 @@ function OutfitPiece({
   bodyY,
   eyeY,
   hatTopY = 50,
-  cscale = 1,
+  bodyW = 46,
+  topY = 146,
+  hemY = 184,
 }: {
   outfit?: Outfit;
   layer: "clothes" | "top";
@@ -335,61 +337,75 @@ function OutfitPiece({
   bodyY: number;
   eyeY: number;
   hatTopY?: number;
-  cscale?: number; // scale the body clothes so they fit smaller pets
+  // Torso geometry so clothes actually cover the body: half-width, the
+  // shoulder line (top, tucked under the chin) and the hem (bottom).
+  bodyW?: number;
+  topY?: number;
+  hemY?: number;
 }) {
   if (!outfit) return null;
   const parts: React.ReactNode[] = [];
 
   if (layer === "clothes") {
+    const W = bodyW;
+    const T = topY;
+    const B = hemY;
     if (outfit.clothes === "vest") {
+      // a simple top covering the torso (scoop neckline → rounded hem)
       parts.push(
-        <path key="vest" d={`M${cx - 40} ${bodyY} Q${cx} ${bodyY + 34} ${cx + 40} ${bodyY} L${cx + 34} ${bodyY + 30} Q${cx} ${bodyY + 40} ${cx - 34} ${bodyY + 30} Z`} fill="#e6bccb" stroke="#d09fb1" strokeWidth="1.6" />
+        <path
+          key="vest"
+          d={`M${cx - W} ${T} Q${cx} ${T + 12} ${cx + W} ${T} L${cx + W} ${B - 8} Q${cx} ${B + 7} ${cx - W} ${B - 8} Z`}
+          fill="#e6bccb"
+          stroke="#d09fb1"
+          strokeWidth="1.6"
+        />
       );
     } else if (outfit.clothes === "cape") {
-      // wolf-only hero cape flowing behind
+      // wolf-only hero cape draped behind the shoulders
       parts.push(
         <g key="cape">
-          <path d={`M${cx - 34} ${bodyY - 8} Q${cx} ${bodyY + 44} ${cx + 34} ${bodyY - 8} L${cx + 46} ${bodyY + 44} Q${cx} ${bodyY + 30} ${cx - 46} ${bodyY + 44} Z`} fill="#bcaee6" stroke="#a493d4" strokeWidth="1.6" />
-          <rect x={cx - 30} y={bodyY - 14} width="60" height="10" rx="5" fill="#a493d4" />
+          <path d={`M${cx - W * 0.75} ${T} Q${cx} ${B + 6} ${cx + W * 0.75} ${T} L${cx + W + 4} ${B + 10} Q${cx} ${B - 2} ${cx - W - 4} ${B + 10} Z`} fill="#bcaee6" stroke="#a493d4" strokeWidth="1.6" />
+          <rect x={cx - W * 0.7} y={T - 5} width={W * 1.4} height="10" rx="5" fill="#a493d4" />
         </g>
       );
     } else if (outfit.clothes === "dress") {
-      // rabbit-only floral dress
+      // fitted bodice + flared skirt
+      const waist = T + (B - T) * 0.42;
       parts.push(
         <g key="dress">
-          <path d={`M${cx - 30} ${bodyY} Q${cx} ${bodyY + 20} ${cx + 30} ${bodyY} L${cx + 44} ${bodyY + 40} Q${cx} ${bodyY + 52} ${cx - 44} ${bodyY + 40} Z`} fill="#f6c6d8" stroke="#e6a6bf" strokeWidth="1.6" />
-          <circle cx={cx - 16} cy={bodyY + 24} r="3" fill="#fff" />
-          <circle cx={cx + 6} cy={bodyY + 32} r="3" fill="#fff" />
-          <circle cx={cx + 22} cy={bodyY + 20} r="3" fill="#fff" />
-          <circle cx={cx - 4} cy={bodyY + 14} r="3" fill="#fff" />
+          <path
+            d={`M${cx - W} ${T} Q${cx} ${T + 12} ${cx + W} ${T} L${cx + W} ${waist} L${cx + W + 16} ${B} Q${cx} ${B + 11} ${cx - W - 16} ${B} L${cx - W} ${waist} Z`}
+            fill="#f6c6d8"
+            stroke="#e6a6bf"
+            strokeWidth="1.6"
+          />
+          <circle cx={cx - 14} cy={waist + 10} r="2.8" fill="#fff" />
+          <circle cx={cx + 8} cy={waist + 18} r="2.8" fill="#fff" />
+          <circle cx={cx + 18} cy={waist + 6} r="2.8" fill="#fff" />
+          <circle cx={cx - 4} cy={waist + 22} r="2.8" fill="#fff" />
         </g>
       );
     } else if (outfit.clothes === "hoodie") {
-      // cosy hoodie: body panel + kangaroo pocket + hood collar
+      // cosy hoodie: torso panel + hood collar + kangaroo pocket
+      const pocketY = T + (B - T) * 0.55;
       parts.push(
         <g key="hoodie">
-          <path d={`M${cx - 38} ${bodyY - 2} Q${cx} ${bodyY + 30} ${cx + 38} ${bodyY - 2} L${cx + 34} ${bodyY + 34} Q${cx} ${bodyY + 44} ${cx - 34} ${bodyY + 34} Z`} fill="#aecbda" stroke="#93b4c7" strokeWidth="1.6" />
-          <path d={`M${cx - 18} ${bodyY + 16} h36 v11 q${-18} 7 ${-36} 0 Z`} fill="#99bccd" />
-          <path d={`M${cx - 26} ${bodyY - 4} Q${cx} ${bodyY + 12} ${cx + 26} ${bodyY - 4}`} stroke="#89aec2" strokeWidth="6" fill="none" strokeLinecap="round" />
+          <path d={`M${cx - W} ${T} Q${cx} ${T + 12} ${cx + W} ${T} L${cx + W} ${B - 8} Q${cx} ${B + 7} ${cx - W} ${B - 8} Z`} fill="#aecbda" stroke="#93b4c7" strokeWidth="1.6" />
+          <path d={`M${cx - W * 0.6} ${T} Q${cx} ${T + 16} ${cx + W * 0.6} ${T}`} stroke="#89aec2" strokeWidth="5" fill="none" strokeLinecap="round" />
+          <path d={`M${cx - W * 0.42} ${pocketY} h${W * 0.84} v11 q${-W * 0.42} 7 ${-W * 0.84} 0 Z`} fill="#99bccd" />
         </g>
       );
     } else if (outfit.clothes === "overalls") {
-      // denim overalls: panel + two straps + button
+      // denim overalls: bib panel + shoulder straps + buttons
+      const bibTop = T + 8;
       parts.push(
         <g key="ov">
-          <path d={`M${cx - 26} ${bodyY + 6} Q${cx} ${bodyY + 16} ${cx + 26} ${bodyY + 6} L${cx + 30} ${bodyY + 36} Q${cx} ${bodyY + 46} ${cx - 30} ${bodyY + 36} Z`} fill="#b6cbe6" stroke="#9db6d6" strokeWidth="1.6" />
-          <path d={`M${cx - 18} ${bodyY + 4} L${cx - 12} ${neckY + 6}`} stroke="#b6cbe6" strokeWidth="5" strokeLinecap="round" />
-          <path d={`M${cx + 18} ${bodyY + 4} L${cx + 12} ${neckY + 6}`} stroke="#b6cbe6" strokeWidth="5" strokeLinecap="round" />
-          <circle cx={cx - 8} cy={bodyY + 16} r="2.6" fill="#f2d489" />
-          <circle cx={cx + 8} cy={bodyY + 16} r="2.6" fill="#f2d489" />
-        </g>
-      );
-    }
-    // Scale the clothes around their top edge so they hug smaller bodies.
-    if (cscale !== 1 && parts.length) {
-      return (
-        <g transform={`translate(${cx} ${bodyY}) scale(${cscale}) translate(${-cx} ${-bodyY})`}>
-          {parts}
+          <path d={`M${cx - W} ${bibTop} L${cx + W} ${bibTop} L${cx + W} ${B - 8} Q${cx} ${B + 7} ${cx - W} ${B - 8} Z`} fill="#b6cbe6" stroke="#9db6d6" strokeWidth="1.6" />
+          <path d={`M${cx - W * 0.45} ${bibTop + 2} L${cx - W * 0.5} ${T - 8}`} stroke="#b6cbe6" strokeWidth="5" strokeLinecap="round" />
+          <path d={`M${cx + W * 0.45} ${bibTop + 2} L${cx + W * 0.5} ${T - 8}`} stroke="#b6cbe6" strokeWidth="5" strokeLinecap="round" />
+          <circle cx={cx - W * 0.45} cy={bibTop + 6} r="2.6" fill="#f2d489" />
+          <circle cx={cx + W * 0.45} cy={bibTop + 6} r="2.6" fill="#f2d489" />
         </g>
       );
     }
