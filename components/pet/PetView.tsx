@@ -318,7 +318,13 @@ export default function PetView() {
     view === "wolf" ? (
       <WolfArt pose={presence.pose} outfit={pet.outfit} size={size} />
     ) : (
-      <RabbitArt grumpy={grumpy} hiding={hiding} outfit={pet.outfit} size={size} />
+      <RabbitArt
+        grumpy={grumpy}
+        hiding={hiding}
+        happy={pet.mood >= 85}
+        outfit={pet.outfit}
+        size={size}
+      />
     );
 
   return (

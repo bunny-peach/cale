@@ -96,11 +96,13 @@ export function WolfArt({
 export function RabbitArt({
   grumpy = false,
   hiding = false,
+  happy = false,
   outfit,
   size = 190,
 }: {
   grumpy?: boolean;
   hiding?: boolean;
+  happy?: boolean;
   outfit?: Outfit;
   size?: number;
 }) {
@@ -160,7 +162,7 @@ export function RabbitArt({
         <ellipse cx="82" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
         <ellipse cx="118" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
 
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={150} bodyY={158} eyeY={113} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={150} bodyY={156} eyeY={113} cscale={0.8} />
 
         {/* soft rounded face — a gentle oval between too-flat and too-round */}
         <ellipse cx="100" cy="108" rx="52" ry="41" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
@@ -193,8 +195,16 @@ export function RabbitArt({
               <circle cx="84" cy="109.5" r="2.8" fill="#fff" />
               <circle cx="122" cy="109.5" r="2.8" fill="#fff" />
             </g>
-            {/* little symmetric pink crown mouth (centred on x=100) */}
-            <path d="M93 123 L96.5 118 L100 123 L103.5 118 L107 123 Q107 131 100 132 Q93 131 93 123 Z" fill="#f2a0bb" stroke="#e485a6" strokeWidth="1" />
+            {happy ? (
+              <>
+                {/* happiest: tiny nose + rounded cat mouth (ω / 猫猫嘴) */}
+                <path d="M96 119 L104 119 L100 124 Z" fill="#f2a0bb" />
+                <path d="M91 125 Q95.5 132 100 126 Q104.5 132 109 125" stroke="#e08aa0" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+              </>
+            ) : (
+              /* little symmetric pink crown mouth (centred on x=100) */
+              <path d="M93 123 L96.5 118 L100 123 L103.5 118 L107 123 Q107 131 100 132 Q93 131 93 123 Z" fill="#f2a0bb" stroke="#e485a6" strokeWidth="1" />
+            )}
           </>
         )}
         <path d="M53 118 h-13 M55 124 h-13 M147 118 h13 M145 124 h13" stroke="#e2dcd8" strokeWidth="1.5" strokeLinecap="round" />
@@ -226,6 +236,7 @@ function OutfitPiece({
   bodyY,
   eyeY,
   hatTopY = 50,
+  cscale = 1,
 }: {
   outfit?: Outfit;
   layer: "clothes" | "top";
@@ -234,6 +245,7 @@ function OutfitPiece({
   bodyY: number;
   eyeY: number;
   hatTopY?: number;
+  cscale?: number; // scale the body clothes so they fit smaller pets
 }) {
   if (!outfit) return null;
   const parts: React.ReactNode[] = [];
@@ -280,6 +292,14 @@ function OutfitPiece({
           <path d={`M${cx + 18} ${bodyY + 4} L${cx + 12} ${neckY + 6}`} stroke="#9fb6d8" strokeWidth="5" strokeLinecap="round" />
           <circle cx={cx - 8} cy={bodyY + 16} r="2.6" fill="#f0d27a" />
           <circle cx={cx + 8} cy={bodyY + 16} r="2.6" fill="#f0d27a" />
+        </g>
+      );
+    }
+    // Scale the clothes around their top edge so they hug smaller bodies.
+    if (cscale !== 1 && parts.length) {
+      return (
+        <g transform={`translate(${cx} ${bodyY}) scale(${cscale}) translate(${-cx} ${-bodyY})`}>
+          {parts}
         </g>
       );
     }
