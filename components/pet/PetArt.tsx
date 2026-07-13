@@ -59,7 +59,7 @@ export function WolfArt({
         )}
 
         {/* clothes drawn under the head, over the body */}
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={128} bodyY={150} eyeY={94} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={137} bodyY={150} eyeY={94} />
 
         <circle cx="100" cy="96" r="48" fill="#4a4a55" />
         <ellipse cx="64" cy="108" rx="14" ry="12" fill="#565661" />
@@ -87,7 +87,7 @@ export function WolfArt({
         <path d="M100 121 q-6 5 -12 3 M100 121 q6 5 12 3" stroke="#2c2c33" strokeWidth="2" fill="none" strokeLinecap="round" />
 
         {/* accessories/hat/scarf on top */}
-        <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={128} bodyY={150} eyeY={94} hatTopY={50} />
+        <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={137} bodyY={150} eyeY={94} hatTopY={50} />
       </g>
     </svg>
   );
@@ -160,7 +160,7 @@ export function RabbitArt({
         <ellipse cx="82" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
         <ellipse cx="118" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
 
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={148} bodyY={160} eyeY={113} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={150} bodyY={158} eyeY={113} />
 
         {/* soft rounded face — a gentle oval between too-flat and too-round */}
         <ellipse cx="100" cy="108" rx="52" ry="41" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
@@ -199,7 +199,7 @@ export function RabbitArt({
         )}
         <path d="M53 118 h-13 M55 124 h-13 M147 118 h13 M145 124 h13" stroke="#e2dcd8" strokeWidth="1.5" strokeLinecap="round" />
 
-        <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={148} bodyY={160} eyeY={113} hatTopY={60} />
+        <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={150} bodyY={158} eyeY={113} hatTopY={64} />
       </g>
     </svg>
   );
@@ -307,7 +307,7 @@ function OutfitPiece({
           <rect x={cx - 30} y={neckY - 3} width="60" height="17" rx="7" fill="#cf8f86" />
           <path d={`M${cx - 30} ${neckY + 2} h60 M${cx - 30} ${neckY + 9} h60`} stroke="#f0ded8" strokeWidth="1.6" opacity="0.8" />
           <path d={`M${cx - 16} ${neckY - 3} v17 M${cx} ${neckY - 3} v17 M${cx + 16} ${neckY - 3} v17`} stroke="#f0ded8" strokeWidth="1.6" opacity="0.8" />
-          <rect x={cx + 6} y={neckY + 12} width="12" height="20" rx="4" fill="#cf8f86" />
+          <rect x={cx + 7} y={neckY + 11} width="10" height="11" rx="4" fill="#cf8f86" />
         </g>
       );
     }
@@ -372,13 +372,13 @@ function OutfitPiece({
         <polygon key="st" points={starPoints(cx, hatTopY - 1, 13, 5.5)} fill="#f6c85a" stroke="#dba838" strokeWidth="1" />
       );
     } else if (outfit.hat === "strawberry") {
-      // rabbit-only strawberry beanie
+      // rabbit-only strawberry beanie, capping the top of the head
       parts.push(
         <g key="sb">
-          <path d={`M${cx - 18} ${hatTopY + 2} Q${cx} ${hatTopY - 18} ${cx + 18} ${hatTopY + 2} Q${cx} ${hatTopY + 12} ${cx - 18} ${hatTopY + 2} Z`} fill="#e05560" />
-          <path d={`M${cx - 9} ${hatTopY - 10} L${cx} ${hatTopY - 17} L${cx + 9} ${hatTopY - 10} Q${cx} ${hatTopY - 6} ${cx - 9} ${hatTopY - 10} Z`} fill="#6cbf6c" />
-          {[-9, 0, 9, -5, 5].map((dx, i) => (
-            <circle key={i} cx={cx + dx} cy={hatTopY - (i < 3 ? 1 : -5)} r="1.4" fill="#ffe6a0" />
+          <path d={`M${cx - 21} ${hatTopY + 6} Q${cx} ${hatTopY - 15} ${cx + 21} ${hatTopY + 6} Q${cx} ${hatTopY + 18} ${cx - 21} ${hatTopY + 6} Z`} fill="#e0555f" />
+          <path d={`M${cx - 9} ${hatTopY - 8} L${cx} ${hatTopY - 16} L${cx + 9} ${hatTopY - 8} Q${cx} ${hatTopY - 3} ${cx - 9} ${hatTopY - 8} Z`} fill="#6cbf6c" />
+          {[[-10, 4], [0, 2], [10, 4], [-5, 9], [5, 9]].map(([dx, dy], i) => (
+            <circle key={i} cx={cx + dx} cy={hatTopY + dy} r="1.5" fill="#ffe6a0" />
           ))}
         </g>
       );
