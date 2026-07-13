@@ -360,16 +360,18 @@ function OutfitPiece({
     const rab = petKind === "rabbit";
     const C = {
       vest: rab ? { f: "#f2c3d2", s: "#e0a1b5" } : { f: "#a7c6d8", s: "#89aec6" },
-      hoodie: rab ? { f: "#f3ccb9", s: "#e2b099" } : { f: "#a9c4b6", s: "#8caf9d" },
-      overalls: rab ? { f: "#c9b8e6", s: "#b09fd6" } : { f: "#b0c2df", s: "#96abcf" },
+      hoodie: rab ? { f: "#f6cdb6", s: "#e6b096" } : { f: "#a9c4b6", s: "#8caf9d" },
+      overalls: rab ? { f: "#f4d68f", s: "#e3bf6e" } : { f: "#9cbcd8", s: "#82a5c6" },
       dress: { f: "#f6c6d8", s: "#e6a6bf" },
-      cape: { f: "#a9bfe6", s: "#8fa6d4" },
+      cape: { f: "#ec9a9a", s: "#d97f7f" },
     };
-    // A body panel that is narrow at the shoulders and flares out to the hem.
+    // A body panel: narrow rounded shoulders that flare out along gently
+    // curved (bell-shaped) sides to a soft rounded hem.
+    const mid = T + (B - T) * 0.62;
     const aline = (f: string, s: string, key: string) => (
       <path
         key={key}
-        d={`M${cx - TW} ${T} Q${cx} ${T + 11} ${cx + TW} ${T} L${cx + HW} ${B - 8} Q${cx} ${B + 7} ${cx - HW} ${B - 8} Z`}
+        d={`M${cx - TW} ${T} Q${cx} ${T + 12} ${cx + TW} ${T} Q${cx + HW} ${mid} ${cx + HW} ${B - 6} Q${cx} ${B + 9} ${cx - HW} ${B - 6} Q${cx - HW} ${mid} ${cx - TW} ${T} Z`}
         fill={f}
         stroke={s}
         strokeWidth="1.6"
@@ -391,7 +393,7 @@ function OutfitPiece({
       parts.push(
         <g key="dress">
           <path
-            d={`M${cx - TW} ${T} Q${cx} ${T + 11} ${cx + TW} ${T} L${cx + TW + 3} ${waist} L${cx + HW + 8} ${B} Q${cx} ${B + 11} ${cx - HW - 8} ${B} L${cx - TW - 3} ${waist} Z`}
+            d={`M${cx - TW} ${T} Q${cx} ${T + 12} ${cx + TW} ${T} L${cx + TW + 2} ${waist} Q${cx + HW + 8} ${B - 8} ${cx + HW + 8} ${B} Q${cx} ${B + 11} ${cx - HW - 8} ${B} Q${cx - HW - 8} ${B - 8} ${cx - TW - 2} ${waist} Z`}
             fill={C.dress.f}
             stroke={C.dress.s}
             strokeWidth="1.6"
@@ -416,7 +418,7 @@ function OutfitPiece({
       const bibTop = T + 6;
       parts.push(
         <g key="ov">
-          <path d={`M${cx - TW} ${bibTop} L${cx + TW} ${bibTop} L${cx + HW} ${B - 8} Q${cx} ${B + 7} ${cx - HW} ${B - 8} Z`} fill={C.overalls.f} stroke={C.overalls.s} strokeWidth="1.6" />
+          <path d={`M${cx - TW} ${bibTop} L${cx + TW} ${bibTop} Q${cx + HW} ${mid} ${cx + HW} ${B - 6} Q${cx} ${B + 9} ${cx - HW} ${B - 6} Q${cx - HW} ${mid} ${cx - TW} ${bibTop} Z`} fill={C.overalls.f} stroke={C.overalls.s} strokeWidth="1.6" />
           <path d={`M${cx - TW * 0.5} ${bibTop + 2} L${cx - TW * 0.55} ${T - 8}`} stroke={C.overalls.f} strokeWidth="5" strokeLinecap="round" />
           <path d={`M${cx + TW * 0.5} ${bibTop + 2} L${cx + TW * 0.55} ${T - 8}`} stroke={C.overalls.f} strokeWidth="5" strokeLinecap="round" />
           <circle cx={cx - TW * 0.5} cy={bibTop + 6} r="2.6" fill="#f2d489" />
