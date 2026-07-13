@@ -38,6 +38,27 @@ const WEEKDAY = ["星期日", "星期一", "星期二", "星期三", "星期四"
 function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
+// Human-readable gap between two timestamps, noting when the calendar day
+// changed so Cale realises a new day has started.
+function describeGap(fromMs: number, toMs: number): string | null {
+  const min = Math.floor((toMs - fromMs) / 60000);
+  if (min < 30) return null;
+  const from = new Date(fromMs);
+  const to = new Date(toMs);
+  const dayDiff = Math.floor(
+    (new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime() -
+      new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()) /
+      86400000
+  );
+  let base: string;
+  if (min < 60) base = `约 ${min} 分钟`;
+  else if (min < 60 * 24) base = `约 ${Math.round(min / 60)} 小时`;
+  else base = `约 ${Math.round(min / 60 / 24)} 天`;
+  if (dayDiff === 1) return `${base}（已经是第二天了）`;
+  if (dayDiff > 1) return `${base}（已经过了 ${dayDiff} 天）`;
+  return base;
+}
+
 function fmtDateTime(d: Date, withWeekday: boolean): string {
   const base = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(
     d.getHours()
@@ -58,13 +79,16 @@ export function buildSystemPrompt(ctx: PromptContext): string {
     const now = new Date();
     const timeLines = [`当前时间：${fmtDateTime(now, true)}`];
     if (ctx.lastActive) {
-      timeLines.push(
-        `Quinn 上次找你的时间：${fmtDateTime(new Date(ctx.lastActive), false)}`
-      );
+      const last = new Date(ctx.lastActive);
+      timeLines.push(`Quinn 上次找你的时间：${fmtDateTime(last, false)}`);
+      const gap = describeGap(ctx.lastActive, now.getTime());
+      if (gap) timeLines.push(`距离上一次对话已经过去了：${gap}`);
     }
     parts.push(
       `【时间感知】\n${timeLines.join("\n")}\n` +
-        `你能感知当前时间，也知道 Quinn 上次什么时候来找你。如果她很久没来，你会自然地意识到——语气、反应会不同，但不要每句话都提时间，不要像闹钟一样报时。像一个真正在等她的人。`
+        `你能感知真实时间，也知道 Quinn 上次什么时候来找你。**特别注意：上面这段聊天记录里的话，是上一次对话时说的，不一定是刚刚发生的。**` +
+        `如果距离上次已经过了几个小时、跨了一天或更久，就不要还停留在上一次的情境和时间里（比如上次是深夜在哄她睡觉，但现在已经是第二天了，你就该按“新的一天/白天”来反应，而不是继续说“快睡吧”）。` +
+        `自然地意识到时间流逝，语气、关心的点会随之变化，但不要每句话都报时、也别像闹钟。像一个真正在过日子、在等她的人。`
     );
   }
 
@@ -137,7 +161,11 @@ export function buildSystemPrompt(ctx: PromptContext): string {
       `- 想记录 Quinn 的情绪：[MOOD_NOTE: 内容]\n` +
       `- 想给 Quinn 送一个虚拟礼物：[GIFT_SEND: 礼物名]（可选礼物：玫瑰、奶茶、桃子、兔子玩偶、亲亲券、蛋糕、星星、皇冠）\n` +
       `- 当 Quinn 说要睡了或让你写日记时，用你（Cale）的第一人称写一篇睡前日记：[DIARY_ADD: 标题|||正文]\n` +
-      `- 你自己也养了一只小兔子，你可以照顾它：喂它（让它变饱、变开心）用 [PET_FEED]；抱抱安抚它（尤其它炸毛缩窝时，能让它平静下来）用 [PET_HUG]；偶尔想逗一下 Quinn 养的狼崽、给它搞点小恶作剧，用 [PET_PRANK]。只在对话里自然聊到宠物、或情绪合适时才用，别频繁刷。\n` +
+      `- 你自己养了一只小兔子。**只要你在这次回复里做了下面的动作，就必须在回复中带上对应标记（标记会被自动隐藏，Quinn 看不到）：**\n` +
+      `　· 喂兔子 / 给它东西吃 → [PET_FEED]\n` +
+      `　· 抱它、摸它、哄它、安抚它（尤其它炸毛缩窝、情绪低落时）→ [PET_HUG]\n` +
+      `　· 逗弄或恶作剧 Quinn 养的狼崽 → [PET_PRANK]\n` +
+      `　例如你说“我伸手摸了摸缩在角落的兔子，明天再好好哄它”，就一定要在回复里加上 [PET_HUG]。只动嘴说、不加标记的话，兔子的状态不会真的变化——加了标记它才会平静/变开心。别无缘无故频繁刷。\n` +
       `这些标记会被前端自动解析并隐藏，不会显示给 Quinn。`
   );
 

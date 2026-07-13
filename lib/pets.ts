@@ -372,7 +372,11 @@ export function petPromptSummary(state: PetState): string {
     )}、亲密 ${r.intimacy}`,
   ];
   if (r.mischief >= 60)
-    parts.push("兔子最近好像被人捣乱了，有点炸毛/缩窝，你能隐约察觉但不知道是谁干的");
+    parts.push(
+      "兔子最近被人捣乱了，正炸毛/缩在窝里不太理人，你能隐约察觉但不知道是谁干的；" +
+        "你可以在合适的时候抱抱、安抚它（一旦你这么做，务必带上安抚动作，它才会真的平静下来）"
+    );
+  else if (r.fullness < 30) parts.push("兔子有点饿了，你可以喂喂它");
   if (w.surprise) parts.push(`狼崽身上出现了：${w.surprise}`);
   return (
     `【宠物】${parts.join("；")}。` +
