@@ -307,8 +307,38 @@ export function petLine(kind: PetKind, v: PetVitals): string | null {
   return pickLine(table[key]);
 }
 
-// Idle activities the pet cycles through on its own.
-export type Activity = "idle" | "walk" | "sleep" | "play";
+// Idle activities the pet cycles through on its own — it mostly stays put and
+// plays with a little prop (holds a plushie, nibbles a snack, …) rather than
+// pacing around. Each activity shows a held prop + a caption.
+export type PropKind =
+  | "plush"
+  | "ball"
+  | "balloon"
+  | "book"
+  | "carrot"
+  | "bone";
+
+export interface PetActivity {
+  prop: PropKind;
+  caption: string;
+}
+export const WOLF_ACTIVITIES: PetActivity[] = [
+  { prop: "bone", caption: "抱着大骨头啃个不停" },
+  { prop: "ball", caption: "扒着皮球滚来滚去" },
+  { prop: "plush", caption: "把小玩偶搂在怀里" },
+  { prop: "balloon", caption: "叼着气球线不肯撒手" },
+  { prop: "book", caption: "盯着绘本发呆" },
+];
+export const RABBIT_ACTIVITIES: PetActivity[] = [
+  { prop: "plush", caption: "抱着小玩偶蹭啊蹭" },
+  { prop: "carrot", caption: "捧着胡萝卜小口啃" },
+  { prop: "ball", caption: "扒拉着铃铛球玩" },
+  { prop: "balloon", caption: "牵着气球晃悠悠" },
+  { prop: "book", caption: "翻着小画册出神" },
+];
+export function petActivities(kind: PetKind): PetActivity[] {
+  return kind === "wolf" ? WOLF_ACTIVITIES : RABBIT_ACTIVITIES;
+}
 
 // Outfit catalog (unlocks by intimacy; higher = later).
 export interface OutfitItem {

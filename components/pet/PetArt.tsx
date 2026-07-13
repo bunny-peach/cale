@@ -1,6 +1,6 @@
 "use client";
 
-import { OutfitSlot, PetKind } from "@/lib/pets";
+import { OutfitSlot, PetKind, PropKind } from "@/lib/pets";
 
 type Outfit = Partial<Record<OutfitSlot, string>>;
 
@@ -10,10 +10,12 @@ type Outfit = Partial<Record<OutfitSlot, string>>;
 export function WolfArt({
   pose = "happy",
   outfit,
+  hold,
   size = 190,
 }: {
   pose?: "happy" | "droopy" | "waiting";
   outfit?: Outfit;
+  hold?: PropKind;
   size?: number;
 }) {
   const earDown = pose !== "happy";
@@ -88,6 +90,9 @@ export function WolfArt({
 
         {/* accessories/hat/scarf on top */}
         <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={137} bodyY={150} eyeY={94} hatTopY={50} />
+
+        {/* a little something the wolf is playing with */}
+        {hold && <HeldProp kind={hold} cx={100} y={168} pawColor="#4a4a55" />}
       </g>
     </svg>
   );
@@ -98,12 +103,14 @@ export function RabbitArt({
   hiding = false,
   happy = false,
   outfit,
+  hold,
   size = 190,
 }: {
   grumpy?: boolean;
   hiding?: boolean;
   happy?: boolean;
   outfit?: Outfit;
+  hold?: PropKind;
   size?: number;
 }) {
   // 炸毛缩窝: the bunny curled into a smooth round loaf inside a little nest,
@@ -210,8 +217,91 @@ export function RabbitArt({
         <path d="M53 118 h-13 M55 124 h-13 M147 118 h13 M145 124 h13" stroke="#e2dcd8" strokeWidth="1.5" strokeLinecap="round" />
 
         <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={150} bodyY={158} eyeY={113} hatTopY={64} />
+
+        {/* a little something the rabbit is playing with */}
+        {hold && <HeldProp kind={hold} cx={100} y={172} pawColor="#ffffff" />}
       </g>
     </svg>
+  );
+}
+
+// A small prop the pet holds/plays with in front of its belly, with two little
+// paws hugging it so it reads as "held". Soft pastel palette + warm outline.
+function HeldProp({
+  kind,
+  cx,
+  y,
+  pawColor,
+}: {
+  kind: PropKind;
+  cx: number;
+  y: number;
+  pawColor: string;
+}) {
+  const OUT = "#b79b86"; // warm soft outline
+  let item: React.ReactNode = null;
+  if (kind === "plush") {
+    item = (
+      <g>
+        <ellipse cx={cx} cy={y + 6} rx="12" ry="11" fill="#f4dcc6" stroke={OUT} strokeWidth="1.6" />
+        <circle cx={cx} cy={y - 7} r="9" fill="#f7e2d0" stroke={OUT} strokeWidth="1.6" />
+        <circle cx={cx - 8} cy={y - 14} r="4.5" fill="#f7e2d0" stroke={OUT} strokeWidth="1.4" />
+        <circle cx={cx + 8} cy={y - 14} r="4.5" fill="#f7e2d0" stroke={OUT} strokeWidth="1.4" />
+        <circle cx={cx - 3.5} cy={y - 8} r="1.4" fill="#7a6455" />
+        <circle cx={cx + 3.5} cy={y - 8} r="1.4" fill="#7a6455" />
+        <circle cx={cx} cy={y - 4} r="1.6" fill="#e79aa6" />
+      </g>
+    );
+  } else if (kind === "ball") {
+    item = (
+      <g>
+        <circle cx={cx} cy={y} r="12" fill="#f6c2d2" stroke={OUT} strokeWidth="1.6" />
+        <path d={`M${cx - 11} ${y - 3} Q${cx} ${y - 8} ${cx + 11} ${y - 3}`} stroke="#fff" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+        <path d={`M${cx - 11} ${y + 4} Q${cx} ${y + 9} ${cx + 11} ${y + 4}`} stroke="#e79ab4" strokeWidth="2" fill="none" strokeLinecap="round" />
+      </g>
+    );
+  } else if (kind === "balloon") {
+    item = (
+      <g>
+        <path d={`M${cx} ${y + 8} q6 -6 0 -14`} stroke={OUT} strokeWidth="1.2" fill="none" />
+        <ellipse cx={cx} cy={y - 10} rx="11" ry="13" fill="#a9d6ea" stroke="#8fc2da" strokeWidth="1.4" />
+        <path d={`M${cx - 4} ${y - 14} q3 -4 7 -1`} stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.8" />
+      </g>
+    );
+  } else if (kind === "book") {
+    item = (
+      <g>
+        <rect x={cx - 13} y={y - 9} width="26" height="19" rx="3" fill="#cfe3cd" stroke={OUT} strokeWidth="1.6" />
+        <path d={`M${cx} ${y - 9} v19`} stroke={OUT} strokeWidth="1.4" />
+        <path d={`M${cx - 9} ${y - 3} h6 M${cx + 3} ${y - 3} h6`} stroke="#a7c4a3" strokeWidth="1.4" strokeLinecap="round" />
+      </g>
+    );
+  } else if (kind === "carrot") {
+    item = (
+      <g>
+        <path d={`M${cx - 8} ${y - 6} L${cx + 8} ${y - 6} L${cx} ${y + 13} Z`} fill="#f0a860" stroke="#d98f45" strokeWidth="1.4" />
+        <path d={`M${cx - 6} ${y - 1} h12 M${cx - 4} ${y + 4} h8`} stroke="#e0975a" strokeWidth="1.2" strokeLinecap="round" />
+        <path d={`M${cx} ${y - 6} l-6 -9 M${cx} ${y - 6} l0 -11 M${cx} ${y - 6} l6 -9`} stroke="#8bc06a" strokeWidth="3" strokeLinecap="round" />
+      </g>
+    );
+  } else if (kind === "bone") {
+    item = (
+      <g>
+        <rect x={cx - 11} y={y - 3} width="22" height="6" rx="3" fill="#f6efe4" stroke={OUT} strokeWidth="1.4" />
+        <circle cx={cx - 11} cy={y - 4} r="4" fill="#f6efe4" stroke={OUT} strokeWidth="1.4" />
+        <circle cx={cx - 11} cy={y + 4} r="4" fill="#f6efe4" stroke={OUT} strokeWidth="1.4" />
+        <circle cx={cx + 11} cy={y - 4} r="4" fill="#f6efe4" stroke={OUT} strokeWidth="1.4" />
+        <circle cx={cx + 11} cy={y + 4} r="4" fill="#f6efe4" stroke={OUT} strokeWidth="1.4" />
+      </g>
+    );
+  }
+  return (
+    <g>
+      {item}
+      {/* little paws hugging the prop */}
+      <ellipse cx={cx - 13} cy={y + 8} rx="6" ry="5" fill={pawColor} stroke="#e4ddd6" strokeWidth="1.4" />
+      <ellipse cx={cx + 13} cy={y + 8} rx="6" ry="5" fill={pawColor} stroke="#e4ddd6" strokeWidth="1.4" />
+    </g>
   );
 }
 
@@ -253,21 +343,21 @@ function OutfitPiece({
   if (layer === "clothes") {
     if (outfit.clothes === "vest") {
       parts.push(
-        <path key="vest" d={`M${cx - 40} ${bodyY} Q${cx} ${bodyY + 34} ${cx + 40} ${bodyY} L${cx + 34} ${bodyY + 30} Q${cx} ${bodyY + 40} ${cx - 34} ${bodyY + 30} Z`} fill="#c98da0" opacity="0.92" />
+        <path key="vest" d={`M${cx - 40} ${bodyY} Q${cx} ${bodyY + 34} ${cx + 40} ${bodyY} L${cx + 34} ${bodyY + 30} Q${cx} ${bodyY + 40} ${cx - 34} ${bodyY + 30} Z`} fill="#e6bccb" stroke="#d09fb1" strokeWidth="1.6" />
       );
     } else if (outfit.clothes === "cape") {
       // wolf-only hero cape flowing behind
       parts.push(
         <g key="cape">
-          <path d={`M${cx - 34} ${bodyY - 8} Q${cx} ${bodyY + 44} ${cx + 34} ${bodyY - 8} L${cx + 46} ${bodyY + 44} Q${cx} ${bodyY + 30} ${cx - 46} ${bodyY + 44} Z`} fill="#7b4fd6" opacity="0.95" />
-          <rect x={cx - 30} y={bodyY - 14} width="60" height="10" rx="5" fill="#5f3bb0" />
+          <path d={`M${cx - 34} ${bodyY - 8} Q${cx} ${bodyY + 44} ${cx + 34} ${bodyY - 8} L${cx + 46} ${bodyY + 44} Q${cx} ${bodyY + 30} ${cx - 46} ${bodyY + 44} Z`} fill="#bcaee6" stroke="#a493d4" strokeWidth="1.6" />
+          <rect x={cx - 30} y={bodyY - 14} width="60" height="10" rx="5" fill="#a493d4" />
         </g>
       );
     } else if (outfit.clothes === "dress") {
       // rabbit-only floral dress
       parts.push(
         <g key="dress">
-          <path d={`M${cx - 30} ${bodyY} Q${cx} ${bodyY + 20} ${cx + 30} ${bodyY} L${cx + 44} ${bodyY + 40} Q${cx} ${bodyY + 52} ${cx - 44} ${bodyY + 40} Z`} fill="#f4b8cf" opacity="0.96" />
+          <path d={`M${cx - 30} ${bodyY} Q${cx} ${bodyY + 20} ${cx + 30} ${bodyY} L${cx + 44} ${bodyY + 40} Q${cx} ${bodyY + 52} ${cx - 44} ${bodyY + 40} Z`} fill="#f6c6d8" stroke="#e6a6bf" strokeWidth="1.6" />
           <circle cx={cx - 16} cy={bodyY + 24} r="3" fill="#fff" />
           <circle cx={cx + 6} cy={bodyY + 32} r="3" fill="#fff" />
           <circle cx={cx + 22} cy={bodyY + 20} r="3" fill="#fff" />
@@ -278,20 +368,20 @@ function OutfitPiece({
       // cosy hoodie: body panel + kangaroo pocket + hood collar
       parts.push(
         <g key="hoodie">
-          <path d={`M${cx - 38} ${bodyY - 2} Q${cx} ${bodyY + 30} ${cx + 38} ${bodyY - 2} L${cx + 34} ${bodyY + 34} Q${cx} ${bodyY + 44} ${cx - 34} ${bodyY + 34} Z`} fill="#8fb0c6" opacity="0.95" />
-          <path d={`M${cx - 18} ${bodyY + 16} h36 v11 q${-18} 7 ${-36} 0 Z`} fill="#7c9fb6" />
-          <path d={`M${cx - 26} ${bodyY - 4} Q${cx} ${bodyY + 12} ${cx + 26} ${bodyY - 4}`} stroke="#6f92aa" strokeWidth="6" fill="none" strokeLinecap="round" />
+          <path d={`M${cx - 38} ${bodyY - 2} Q${cx} ${bodyY + 30} ${cx + 38} ${bodyY - 2} L${cx + 34} ${bodyY + 34} Q${cx} ${bodyY + 44} ${cx - 34} ${bodyY + 34} Z`} fill="#aecbda" stroke="#93b4c7" strokeWidth="1.6" />
+          <path d={`M${cx - 18} ${bodyY + 16} h36 v11 q${-18} 7 ${-36} 0 Z`} fill="#99bccd" />
+          <path d={`M${cx - 26} ${bodyY - 4} Q${cx} ${bodyY + 12} ${cx + 26} ${bodyY - 4}`} stroke="#89aec2" strokeWidth="6" fill="none" strokeLinecap="round" />
         </g>
       );
     } else if (outfit.clothes === "overalls") {
       // denim overalls: panel + two straps + button
       parts.push(
         <g key="ov">
-          <path d={`M${cx - 26} ${bodyY + 6} Q${cx} ${bodyY + 16} ${cx + 26} ${bodyY + 6} L${cx + 30} ${bodyY + 36} Q${cx} ${bodyY + 46} ${cx - 30} ${bodyY + 36} Z`} fill="#9fb6d8" opacity="0.96" />
-          <path d={`M${cx - 18} ${bodyY + 4} L${cx - 12} ${neckY + 6}`} stroke="#9fb6d8" strokeWidth="5" strokeLinecap="round" />
-          <path d={`M${cx + 18} ${bodyY + 4} L${cx + 12} ${neckY + 6}`} stroke="#9fb6d8" strokeWidth="5" strokeLinecap="round" />
-          <circle cx={cx - 8} cy={bodyY + 16} r="2.6" fill="#f0d27a" />
-          <circle cx={cx + 8} cy={bodyY + 16} r="2.6" fill="#f0d27a" />
+          <path d={`M${cx - 26} ${bodyY + 6} Q${cx} ${bodyY + 16} ${cx + 26} ${bodyY + 6} L${cx + 30} ${bodyY + 36} Q${cx} ${bodyY + 46} ${cx - 30} ${bodyY + 36} Z`} fill="#b6cbe6" stroke="#9db6d6" strokeWidth="1.6" />
+          <path d={`M${cx - 18} ${bodyY + 4} L${cx - 12} ${neckY + 6}`} stroke="#b6cbe6" strokeWidth="5" strokeLinecap="round" />
+          <path d={`M${cx + 18} ${bodyY + 4} L${cx + 12} ${neckY + 6}`} stroke="#b6cbe6" strokeWidth="5" strokeLinecap="round" />
+          <circle cx={cx - 8} cy={bodyY + 16} r="2.6" fill="#f2d489" />
+          <circle cx={cx + 8} cy={bodyY + 16} r="2.6" fill="#f2d489" />
         </g>
       );
     }
@@ -308,26 +398,26 @@ function OutfitPiece({
   if (layer === "top") {
     // scarf
     if (outfit.scarf === "redScarf") {
-      parts.push(<path key="rs" d={`M${cx - 26} ${neckY} Q${cx} ${neckY + 12} ${cx + 26} ${neckY} L${cx + 14} ${neckY + 22} L${cx - 14} ${neckY + 22} Z`} fill="#d85b5b" />);
+      parts.push(<path key="rs" d={`M${cx - 26} ${neckY} Q${cx} ${neckY + 12} ${cx + 26} ${neckY} L${cx + 14} ${neckY + 22} L${cx - 14} ${neckY + 22} Z`} fill="#eba0a0" stroke="#dd8b8b" strokeWidth="1.4" />);
     } else if (outfit.scarf === "knit") {
-      parts.push(<rect key="kn" x={cx - 30} y={neckY - 4} width="60" height="16" rx="8" fill="#a9c0c9" />);
+      parts.push(<rect key="kn" x={cx - 30} y={neckY - 4} width="60" height="16" rx="8" fill="#b6cdcf" stroke="#9fbcc0" strokeWidth="1.4" />);
     } else if (outfit.scarf === "bandana") {
       // wolf-only pirate bandana knotted to one side
       parts.push(
         <g key="bd">
-          <path d={`M${cx - 26} ${neckY} Q${cx} ${neckY + 14} ${cx + 26} ${neckY} L${cx + 20} ${neckY + 20} Q${cx} ${neckY + 28} ${cx - 20} ${neckY + 20} Z`} fill="#c94b52" />
-          <circle cx={cx - 26} cy={neckY + 6} r="4" fill="#a83b42" />
-          <path d={`M${cx - 26} ${neckY + 6} l-10 6 l4 -10 z`} fill="#c94b52" />
+          <path d={`M${cx - 26} ${neckY} Q${cx} ${neckY + 14} ${cx + 26} ${neckY} L${cx + 20} ${neckY + 20} Q${cx} ${neckY + 28} ${cx - 20} ${neckY + 20} Z`} fill="#e29494" stroke="#cd7d7d" strokeWidth="1.4" />
+          <circle cx={cx - 26} cy={neckY + 6} r="4" fill="#cd7d7d" />
+          <path d={`M${cx - 26} ${neckY + 6} l-10 6 l4 -10 z`} fill="#e29494" />
         </g>
       );
     } else if (outfit.scarf === "plaid") {
       // cosy plaid scarf with crossing lines
       parts.push(
         <g key="pd">
-          <rect x={cx - 30} y={neckY - 3} width="60" height="17" rx="7" fill="#cf8f86" />
-          <path d={`M${cx - 30} ${neckY + 2} h60 M${cx - 30} ${neckY + 9} h60`} stroke="#f0ded8" strokeWidth="1.6" opacity="0.8" />
-          <path d={`M${cx - 16} ${neckY - 3} v17 M${cx} ${neckY - 3} v17 M${cx + 16} ${neckY - 3} v17`} stroke="#f0ded8" strokeWidth="1.6" opacity="0.8" />
-          <rect x={cx + 7} y={neckY + 11} width="10" height="11" rx="4" fill="#cf8f86" />
+          <rect x={cx - 30} y={neckY - 3} width="60" height="17" rx="7" fill="#dcaaa3" stroke="#c9938b" strokeWidth="1.3" />
+          <path d={`M${cx - 30} ${neckY + 2} h60 M${cx - 30} ${neckY + 9} h60`} stroke="#f6e8e2" strokeWidth="1.6" opacity="0.85" />
+          <path d={`M${cx - 16} ${neckY - 3} v17 M${cx} ${neckY - 3} v17 M${cx + 16} ${neckY - 3} v17`} stroke="#f6e8e2" strokeWidth="1.6" opacity="0.85" />
+          <rect x={cx + 7} y={neckY + 11} width="10" height="11" rx="4" fill="#dcaaa3" />
         </g>
       );
     }
@@ -336,14 +426,14 @@ function OutfitPiece({
       parts.push(<rect key="col" x={cx - 30} y={neckY + 2} width="60" height="8" rx="4" fill="#8a6b52" />);
       parts.push(<circle key="bell" cx={cx} cy={neckY + 12} r="6" fill="#e8c25a" stroke="#c79a3a" strokeWidth="1.5" />);
     } else if (outfit.accessory === "glasses") {
-      parts.push(<g key="gl" fill="none" stroke="#2a2a30" strokeWidth="3"><circle cx={cx - 18} cy={eyeY} r="11" /><circle cx={cx + 18} cy={eyeY} r="11" /><path d={`M${cx - 7} ${eyeY} h14`} /></g>);
+      parts.push(<g key="gl" fill="none" stroke="#7a6656" strokeWidth="3"><circle cx={cx - 18} cy={eyeY} r="11" /><circle cx={cx + 18} cy={eyeY} r="11" /><path d={`M${cx - 7} ${eyeY} h14`} /></g>);
     } else if (outfit.accessory === "bowtie") {
       // wolf-only gentleman bow tie at the neck
       parts.push(
         <g key="bt">
-          <path d={`M${cx - 2} ${neckY + 8} L${cx - 16} ${neckY + 1} Q${cx - 20} ${neckY + 8} ${cx - 16} ${neckY + 15} Z`} fill="#3a4a6b" />
-          <path d={`M${cx + 2} ${neckY + 8} L${cx + 16} ${neckY + 1} Q${cx + 20} ${neckY + 8} ${cx + 16} ${neckY + 15} Z`} fill="#3a4a6b" />
-          <rect x={cx - 4} y={neckY + 3} width="8" height="10" rx="3" fill="#2a3550" />
+          <path d={`M${cx - 2} ${neckY + 8} L${cx - 16} ${neckY + 1} Q${cx - 20} ${neckY + 8} ${cx - 16} ${neckY + 15} Z`} fill="#8f9fc2" stroke="#7688af" strokeWidth="1.2" />
+          <path d={`M${cx + 2} ${neckY + 8} L${cx + 16} ${neckY + 1} Q${cx + 20} ${neckY + 8} ${cx + 16} ${neckY + 15} Z`} fill="#8f9fc2" stroke="#7688af" strokeWidth="1.2" />
+          <rect x={cx - 4} y={neckY + 3} width="8" height="10" rx="3" fill="#7688af" />
         </g>
       );
     } else if (outfit.accessory === "pearls") {
@@ -359,8 +449,8 @@ function OutfitPiece({
       // wolf-only champion medal on a ribbon
       parts.push(
         <g key="md">
-          <path d={`M${cx - 9} ${neckY} L${cx} ${neckY + 16} L${cx + 9} ${neckY}`} stroke="#d6606f" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <circle cx={cx} cy={neckY + 24} r="9" fill="#eec858" stroke="#c99a34" strokeWidth="1.5" />
+          <path d={`M${cx - 9} ${neckY} L${cx} ${neckY + 16} L${cx + 9} ${neckY}`} stroke="#e79aa2" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <circle cx={cx} cy={neckY + 24} r="9" fill="#f2d68a" stroke="#d8b45e" strokeWidth="1.5" />
           <polygon points={starPoints(cx, neckY + 24, 5, 2.2)} fill="#fff6da" />
         </g>
       );
@@ -382,9 +472,9 @@ function OutfitPiece({
     } else if (outfit.hat === "beret") {
       parts.push(
         <g key="br">
-          <ellipse cx={cx} cy={hatTopY + 4} rx="24" ry="12" fill="#c76b7e" />
-          <ellipse cx={cx} cy={hatTopY + 1} rx="21" ry="10" fill="#d97e91" />
-          <circle cx={cx + 2} cy={hatTopY - 7} r="4" fill="#b95a6d" />
+          <ellipse cx={cx} cy={hatTopY + 4} rx="24" ry="12" fill="#dd93a4" stroke="#cb8395" strokeWidth="1.2" />
+          <ellipse cx={cx} cy={hatTopY + 1} rx="21" ry="10" fill="#e8a9b8" />
+          <circle cx={cx + 2} cy={hatTopY - 7} r="4" fill="#d08a9a" />
         </g>
       );
     } else if (outfit.hat === "star") {
@@ -395,7 +485,7 @@ function OutfitPiece({
       // rabbit-only strawberry beanie, capping the top of the head
       parts.push(
         <g key="sb">
-          <path d={`M${cx - 21} ${hatTopY + 6} Q${cx} ${hatTopY - 15} ${cx + 21} ${hatTopY + 6} Q${cx} ${hatTopY + 18} ${cx - 21} ${hatTopY + 6} Z`} fill="#e0555f" />
+          <path d={`M${cx - 21} ${hatTopY + 6} Q${cx} ${hatTopY - 15} ${cx + 21} ${hatTopY + 6} Q${cx} ${hatTopY + 18} ${cx - 21} ${hatTopY + 6} Z`} fill="#ec8f8f" stroke="#dd7b7b" strokeWidth="1.3" />
           <path d={`M${cx - 9} ${hatTopY - 8} L${cx} ${hatTopY - 16} L${cx + 9} ${hatTopY - 8} Q${cx} ${hatTopY - 3} ${cx - 9} ${hatTopY - 8} Z`} fill="#6cbf6c" />
           {[[-10, 4], [0, 2], [10, 4], [-5, 9], [5, 9]].map(([dx, dy], i) => (
             <circle key={i} cx={cx + dx} cy={hatTopY + dy} r="1.5" fill="#ffe6a0" />
