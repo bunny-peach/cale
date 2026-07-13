@@ -36,6 +36,8 @@ import {
   wolfPresence,
   FOOD_INTIMACY_PENALTY,
   petLine,
+  PetActivity,
+  petActivities,
   CouponState,
   freshCoupons,
   refillCoupons,
@@ -76,7 +78,8 @@ export default function PetView() {
     null
   );
   const [posX, setPosX] = useState(0);
-  const [facing, setFacing] = useState(1);
+  const [facing] = useState(1);
+  const [activity, setActivity] = useState<PetActivity | null>(null);
   const posRef = useRef(0);
   const speechTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -156,30 +159,30 @@ export default function PetView() {
     [view]
   );
 
-  // ---- Idle wandering: the pet strolls around on its own ----
-  const canWander =
-    !awayHere && (view === "wolf" ? presence.pose === "happy" : !grumpy);
+  // ---- Idle activities: the pet mostly stays put and plays with a little
+  // prop (holds a plushie, nibbles a snack, …) instead of pacing around. ----
+  const canAct =
+    !awayHere &&
+    (view === "wolf" ? presence.pose === "happy" : !grumpy && !hiding);
   useEffect(() => {
-    if (!canWander) {
-      setPosX(0);
-      posRef.current = 0;
+    setPosX(0);
+    posRef.current = 0;
+    if (!canAct) {
+      setActivity(null);
       return;
     }
+    const acts = petActivities(view);
+    setActivity(acts[Math.floor(Math.random() * acts.length)]);
     const tick = () => {
-      const roll = Math.random();
-      if (roll < 0.6) {
-        const nx = Math.round(Math.random() * 90 - 45);
-        setFacing(nx >= posRef.current ? 1 : -1);
-        posRef.current = nx;
-        setPosX(nx);
-      } else {
-        // stay put and do a little something
-        setBounce((b) => b + 1);
-      }
+      // alternate between playing with something and a plain idle beat
+      setActivity((cur) =>
+        cur ? null : acts[Math.floor(Math.random() * acts.length)]
+      );
+      setBounce((b) => b + 1);
     };
-    const id = setInterval(tick, 2600 + Math.random() * 1600);
+    const id = setInterval(tick, 4200 + Math.random() * 2200);
     return () => clearInterval(id);
-  }, [canWander, view]);
+  }, [canAct, view]);
 
   const showToast = (t: string) => {
     setToast(t);
@@ -190,6 +193,7 @@ export default function PetView() {
 
   // The pet reacts: a specific animation + a spoken line + an optional floating fx.
   const react2 = (anim: string, line: string, fxIcon?: string) => {
+    setActivity(null); // drop whatever it was holding to react to you
     setReaction({ anim, key: Date.now() });
     setSpeech(line);
     if (speechTimer.current) clearTimeout(speechTimer.current);
@@ -316,13 +320,14 @@ export default function PetView() {
 
   const PetSprite = ({ size }: { size?: number }) =>
     view === "wolf" ? (
-      <WolfArt pose={presence.pose} outfit={pet.outfit} size={size} />
+      <WolfArt pose={presence.pose} outfit={pet.outfit} hold={activity?.prop} size={size} />
     ) : (
       <RabbitArt
         grumpy={grumpy}
         hiding={hiding}
         happy={pet.mood >= 85}
         outfit={pet.outfit}
+        hold={activity?.prop}
         size={size}
       />
     );
@@ -447,12 +452,12 @@ export default function PetView() {
                 : guestKind === "rabbit"
                   ? "兔子缩在他肚子底下，只露出耳朵"
                   : view === "wolf"
-                    ? presence.caption
+                    ? activity?.caption ?? presence.caption
                     : hiding
                       ? "炸毛了！缩成一团埋进窝里，怎么哄都不出来"
                       : grumpy
                         ? "气鼓鼓地缩进窝里，不太理人"
-                        : "软乎乎的，正竖着耳朵看你（点点它）"}
+                        : activity?.caption ?? "软乎乎的，正竖着耳朵看你（点点它）"}
           </div>
           {view === "rabbit" && !grumpy && !awayHere && cappuccino && (
             <div className="mt-2 text-[12px] text-cale-accent text-center px-6">
