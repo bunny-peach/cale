@@ -100,6 +100,27 @@ export const RABBIT_BAD_ITEMS: BadItem[] = [
 export const WOLF_MISCHIEF = ["兔耳头饰", "粉色蕾丝裙", "小狗围兜", "粉色指甲油"];
 export const RABBIT_MISCHIEF = ["假蜘蛛", "胡萝卜味香水", "迷你跑步机", "不许赖床闹钟"];
 
+// ---- 零食券 (snack coupons): a daily-refreshing budget so food & toys can't
+// be spammed. Petting/teasing earns a little back, up to a cap. ----
+export const COUPON_DAILY = 8; // topped up to at least this each new day
+export const COUPON_MAX = 12; // the most you can bank
+export const FEED_COST = 1;
+export const PLAY_COST = 1;
+
+export interface CouponState {
+  n: number;
+  date: string; // last daily-refill day key
+}
+export const freshCoupons = (today: string): CouponState => ({
+  n: COUPON_DAILY,
+  date: today,
+});
+// Top up to the daily minimum when the calendar day changes.
+export function refillCoupons(c: CouponState, today: string): CouponState {
+  if (c.date !== today) return { n: Math.max(c.n, COUPON_DAILY), date: today };
+  return c;
+}
+
 export function foods(kind: PetKind): FoodData {
   return kind === "wolf" ? WOLF_FOODS : RABBIT_FOODS;
 }
@@ -301,31 +322,40 @@ export interface OutfitItem {
 // the other side. Everything else is a common (interchangeable) piece.
 export const WOLF_OUTFITS: OutfitItem[] = [
   { id: "bow", name: "蝴蝶结", slot: "hat", unlock: 0 },
-  { id: "crown", name: "小皇冠", slot: "hat", unlock: 25 },
+  { id: "star", name: "星星发饰", slot: "hat", unlock: 20 },
+  { id: "crown", name: "小皇冠", slot: "hat", unlock: 35 },
   { id: "flower", name: "花冠", slot: "hat", unlock: 50 },
   { id: "beret", name: "贝雷帽", slot: "hat", unlock: 70 },
   { id: "bunnyEars", name: "兔耳头饰", slot: "hat", unlock: 90 },
   { id: "redScarf", name: "红领巾", slot: "scarf", unlock: 0 },
   { id: "knit", name: "针织围脖", slot: "scarf", unlock: 30 },
+  { id: "plaid", name: "格子围巾", slot: "scarf", unlock: 45 },
   { id: "bandana", name: "海盗领巾", slot: "scarf", unlock: 55, unique: true },
   { id: "vest", name: "小背心", slot: "clothes", unlock: 40 },
+  { id: "hoodie", name: "连帽卫衣", slot: "clothes", unlock: 55 },
   { id: "cape", name: "英雄小披风", slot: "clothes", unlock: 75, unique: true },
   { id: "collar", name: "铃铛项圈", slot: "accessory", unlock: 0 },
-  { id: "glasses", name: "墨镜", slot: "accessory", unlock: 60 },
   { id: "bowtie", name: "绅士领结", slot: "accessory", unlock: 45, unique: true },
+  { id: "glasses", name: "墨镜", slot: "accessory", unlock: 60 },
+  { id: "medal", name: "冠军奖牌", slot: "accessory", unlock: 85, unique: true },
 ];
 export const RABBIT_OUTFITS: OutfitItem[] = [
   { id: "bow", name: "粉蝴蝶结", slot: "hat", unlock: 0 },
-  { id: "crown", name: "小皇冠", slot: "hat", unlock: 25 },
+  { id: "star", name: "星星发饰", slot: "hat", unlock: 20 },
+  { id: "crown", name: "小皇冠", slot: "hat", unlock: 35 },
   { id: "flower", name: "干花花冠", slot: "hat", unlock: 50 },
+  { id: "strawberry", name: "草莓帽", slot: "hat", unlock: 60, unique: true },
   { id: "beret", name: "毛线贝雷帽", slot: "hat", unlock: 70 },
   { id: "redScarf", name: "小围巾", slot: "scarf", unlock: 0 },
   { id: "knit", name: "针织围脖", slot: "scarf", unlock: 30 },
+  { id: "plaid", name: "格子围巾", slot: "scarf", unlock: 45 },
   { id: "vest", name: "小马甲", slot: "clothes", unlock: 40 },
-  { id: "dress", name: "碎花小裙", slot: "clothes", unlock: 65, unique: true },
+  { id: "hoodie", name: "连帽卫衣", slot: "clothes", unlock: 55 },
+  { id: "overalls", name: "背带裤", slot: "clothes", unlock: 65, unique: true },
+  { id: "dress", name: "碎花小裙", slot: "clothes", unlock: 78, unique: true },
   { id: "collar", name: "铃铛项圈", slot: "accessory", unlock: 0 },
-  { id: "glasses", name: "圆眼镜", slot: "accessory", unlock: 60 },
   { id: "pearls", name: "珍珠项链", slot: "accessory", unlock: 45, unique: true },
+  { id: "glasses", name: "圆眼镜", slot: "accessory", unlock: 60 },
 ];
 export function outfitCatalog(kind: PetKind): OutfitItem[] {
   return kind === "wolf" ? WOLF_OUTFITS : RABBIT_OUTFITS;

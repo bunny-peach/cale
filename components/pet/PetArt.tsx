@@ -162,8 +162,8 @@ export function RabbitArt({
 
         <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={148} bodyY={160} eyeY={113} />
 
-        {/* round, soft face (圆脸) */}
-        <ellipse cx="100" cy="108" rx="49" ry="44" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+        {/* soft rounded face — a gentle oval between too-flat and too-round */}
+        <ellipse cx="100" cy="108" rx="52" ry="41" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
 
         {grumpy ? (
           <>
@@ -203,6 +203,17 @@ export function RabbitArt({
       </g>
     </svg>
   );
+}
+
+// Points string for a 5-pointed star centred at (x, y).
+function starPoints(x: number, y: number, outer: number, inner: number): string {
+  const pts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const r = i % 2 === 0 ? outer : inner;
+    pts.push(`${(x + Math.cos(a) * r).toFixed(1)},${(y + Math.sin(a) * r).toFixed(1)}`);
+  }
+  return pts.join(" ");
 }
 
 // Draws equipped outfit pieces. "clothes" layer sits behind the head; "top"
@@ -251,6 +262,26 @@ function OutfitPiece({
           <circle cx={cx - 4} cy={bodyY + 14} r="3" fill="#fff" />
         </g>
       );
+    } else if (outfit.clothes === "hoodie") {
+      // cosy hoodie: body panel + kangaroo pocket + hood collar
+      parts.push(
+        <g key="hoodie">
+          <path d={`M${cx - 38} ${bodyY - 2} Q${cx} ${bodyY + 30} ${cx + 38} ${bodyY - 2} L${cx + 34} ${bodyY + 34} Q${cx} ${bodyY + 44} ${cx - 34} ${bodyY + 34} Z`} fill="#8fb0c6" opacity="0.95" />
+          <path d={`M${cx - 18} ${bodyY + 16} h36 v11 q${-18} 7 ${-36} 0 Z`} fill="#7c9fb6" />
+          <path d={`M${cx - 26} ${bodyY - 4} Q${cx} ${bodyY + 12} ${cx + 26} ${bodyY - 4}`} stroke="#6f92aa" strokeWidth="6" fill="none" strokeLinecap="round" />
+        </g>
+      );
+    } else if (outfit.clothes === "overalls") {
+      // denim overalls: panel + two straps + button
+      parts.push(
+        <g key="ov">
+          <path d={`M${cx - 26} ${bodyY + 6} Q${cx} ${bodyY + 16} ${cx + 26} ${bodyY + 6} L${cx + 30} ${bodyY + 36} Q${cx} ${bodyY + 46} ${cx - 30} ${bodyY + 36} Z`} fill="#9fb6d8" opacity="0.96" />
+          <path d={`M${cx - 18} ${bodyY + 4} L${cx - 12} ${neckY + 6}`} stroke="#9fb6d8" strokeWidth="5" strokeLinecap="round" />
+          <path d={`M${cx + 18} ${bodyY + 4} L${cx + 12} ${neckY + 6}`} stroke="#9fb6d8" strokeWidth="5" strokeLinecap="round" />
+          <circle cx={cx - 8} cy={bodyY + 16} r="2.6" fill="#f0d27a" />
+          <circle cx={cx + 8} cy={bodyY + 16} r="2.6" fill="#f0d27a" />
+        </g>
+      );
     }
   }
 
@@ -267,6 +298,16 @@ function OutfitPiece({
           <path d={`M${cx - 26} ${neckY} Q${cx} ${neckY + 14} ${cx + 26} ${neckY} L${cx + 20} ${neckY + 20} Q${cx} ${neckY + 28} ${cx - 20} ${neckY + 20} Z`} fill="#c94b52" />
           <circle cx={cx - 26} cy={neckY + 6} r="4" fill="#a83b42" />
           <path d={`M${cx - 26} ${neckY + 6} l-10 6 l4 -10 z`} fill="#c94b52" />
+        </g>
+      );
+    } else if (outfit.scarf === "plaid") {
+      // cosy plaid scarf with crossing lines
+      parts.push(
+        <g key="pd">
+          <rect x={cx - 30} y={neckY - 3} width="60" height="17" rx="7" fill="#cf8f86" />
+          <path d={`M${cx - 30} ${neckY + 2} h60 M${cx - 30} ${neckY + 9} h60`} stroke="#f0ded8" strokeWidth="1.6" opacity="0.8" />
+          <path d={`M${cx - 16} ${neckY - 3} v17 M${cx} ${neckY - 3} v17 M${cx + 16} ${neckY - 3} v17`} stroke="#f0ded8" strokeWidth="1.6" opacity="0.8" />
+          <rect x={cx + 6} y={neckY + 12} width="12" height="20" rx="4" fill="#cf8f86" />
         </g>
       );
     }
@@ -294,6 +335,15 @@ function OutfitPiece({
           ))}
         </g>
       );
+    } else if (outfit.accessory === "medal") {
+      // wolf-only champion medal on a ribbon
+      parts.push(
+        <g key="md">
+          <path d={`M${cx - 9} ${neckY} L${cx} ${neckY + 16} L${cx + 9} ${neckY}`} stroke="#d6606f" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <circle cx={cx} cy={neckY + 24} r="9" fill="#eec858" stroke="#c99a34" strokeWidth="1.5" />
+          <polygon points={starPoints(cx, neckY + 24, 5, 2.2)} fill="#fff6da" />
+        </g>
+      );
     }
     // hat
     if (outfit.hat === "bow") {
@@ -315,6 +365,21 @@ function OutfitPiece({
           <ellipse cx={cx} cy={hatTopY + 4} rx="24" ry="12" fill="#c76b7e" />
           <ellipse cx={cx} cy={hatTopY + 1} rx="21" ry="10" fill="#d97e91" />
           <circle cx={cx + 2} cy={hatTopY - 7} r="4" fill="#b95a6d" />
+        </g>
+      );
+    } else if (outfit.hat === "star") {
+      parts.push(
+        <polygon key="st" points={starPoints(cx, hatTopY - 1, 13, 5.5)} fill="#f6c85a" stroke="#dba838" strokeWidth="1" />
+      );
+    } else if (outfit.hat === "strawberry") {
+      // rabbit-only strawberry beanie
+      parts.push(
+        <g key="sb">
+          <path d={`M${cx - 18} ${hatTopY + 2} Q${cx} ${hatTopY - 18} ${cx + 18} ${hatTopY + 2} Q${cx} ${hatTopY + 12} ${cx - 18} ${hatTopY + 2} Z`} fill="#e05560" />
+          <path d={`M${cx - 9} ${hatTopY - 10} L${cx} ${hatTopY - 17} L${cx + 9} ${hatTopY - 10} Q${cx} ${hatTopY - 6} ${cx - 9} ${hatTopY - 10} Z`} fill="#6cbf6c" />
+          {[-9, 0, 9, -5, 5].map((dx, i) => (
+            <circle key={i} cx={cx + dx} cy={hatTopY - (i < 3 ? 1 : -5)} r="1.4" fill="#ffe6a0" />
+          ))}
         </g>
       );
     } else if (outfit.hat === "bunnyEars") {
