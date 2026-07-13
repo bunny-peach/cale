@@ -105,15 +105,18 @@ export default function CalendarView() {
   const today = todayKey();
 
   return (
-    <div className="h-full flex flex-col bg-cale-bg">
+    <div className="h-full relative bg-cale-bg">
       <header
-        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center justify-center h-12"
-        style={{ paddingTop: "var(--safe-top)" }}
+        className="absolute top-0 inset-x-0 z-30 bg-cale-card border-b border-cale-divider flex items-center justify-center h-12"
+        style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
       >
         <div className="text-[17px] font-semibold">日历</div>
       </header>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-3 space-y-3">
+      <div
+        className="absolute inset-0 overflow-y-auto no-scrollbar px-3 pb-3 space-y-3"
+        style={{ paddingTop: "calc(var(--safe-top) + 3.75rem)" }}
+      >
         {/* Anniversary banner */}
         {anniversaryDays !== null && anniversaryDays > 0 && (
           <div

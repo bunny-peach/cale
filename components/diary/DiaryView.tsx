@@ -93,10 +93,10 @@ export default function DiaryView() {
   // ---- Detail view ----
   if (selected) {
     return (
-      <div className="h-full flex flex-col bg-cale-bg">
+      <div className="h-full relative bg-cale-bg">
         <header
-          className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
-          style={{ paddingTop: "var(--safe-top)" }}
+          className="absolute top-0 inset-x-0 z-30 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
+          style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
         >
           <button
             onClick={() => setSelected(null)}
@@ -117,7 +117,10 @@ export default function DiaryView() {
             <Trash2 size={19} strokeWidth={1.8} />
           </button>
         </header>
-        <div className="flex-1 overflow-y-auto no-scrollbar px-5 py-5">
+        <div
+          className="absolute inset-0 overflow-y-auto no-scrollbar px-5 pb-5"
+          style={{ paddingTop: "calc(var(--safe-top) + 3.75rem)" }}
+        >
           <div className="text-[12px] text-cale-textLight mb-4">
             {new Date(selected.createdAt).toLocaleString("zh-CN")}
           </div>
@@ -129,10 +132,10 @@ export default function DiaryView() {
 
   // ---- List ----
   return (
-    <div className="h-full flex flex-col bg-cale-bg relative">
+    <div className="h-full relative bg-cale-bg">
       <header
-        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
-        style={{ paddingTop: "var(--safe-top)" }}
+        className="absolute top-0 inset-x-0 z-30 bg-cale-card border-b border-cale-divider flex items-center px-3 h-12"
+        style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
       >
         <div className="w-9" />
         <div className="flex-1 text-center text-[17px] font-semibold">
@@ -155,7 +158,10 @@ export default function DiaryView() {
         />
       </header>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-4">
+      <div
+        className="absolute inset-0 overflow-y-auto no-scrollbar px-4 pb-4 space-y-4"
+        style={{ paddingTop: "calc(var(--safe-top) + 3.75rem)" }}
+      >
         {diary.length === 0 && (
           <div className="flex flex-col items-center text-cale-textLight mt-20 px-8 text-center">
             <Moon size={32} strokeWidth={1.5} className="mb-3 opacity-60" />

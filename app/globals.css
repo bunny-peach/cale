@@ -145,7 +145,7 @@ body {
  * Message bubbles opt out of the frosting via .no-glass so they stay solid.
  */
 :root[data-theme="pink"] body {
-  background-image: linear-gradient(160deg, #fdf6f8 0%, #faf1f4 50%, #fdf5f7 100%);
+  background-image: linear-gradient(160deg, #fef9fc 0%, #fdf4f8 52%, #fef8fb 100%);
   background-attachment: fixed;
 }
 @media (prefers-color-scheme: dark) {
@@ -175,7 +175,7 @@ body {
   background-color: rgb(var(--cale-bg));
 }
 :root[data-theme="pink"] .app-bg {
-  background-image: linear-gradient(160deg, #fdf6f8 0%, #faf1f4 50%, #fdf5f7 100%);
+  background-image: linear-gradient(160deg, #fef9fc 0%, #fdf4f8 52%, #fef8fb 100%);
 }
 :root[data-theme="glass"] .app-bg {
   background-image: var(
