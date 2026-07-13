@@ -93,6 +93,18 @@ export default function ChatView({
   const scrollRef = useRef<HTMLDivElement>(null);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const summarizedLen = useRef<Record<string, number>>({});
+  // The bottom chrome (quote preview + composer) is an overlay so messages
+  // scroll under its frosted glass; track its height to pad the scroll area.
+  const footerRef = useRef<HTMLDivElement>(null);
+  const [footerH, setFooterH] = useState(60);
+  useEffect(() => {
+    const el = footerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setFooterH(el.offsetHeight));
+    ro.observe(el);
+    setFooterH(el.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
 
   const current = useMemo(
     () => conversations.find((c) => c.id === currentId) ?? null,
@@ -750,11 +762,11 @@ export default function ChatView({
   }, [messages, searchQuery]);
 
   return (
-    <div className="h-full flex flex-col relative overflow-hidden">
-      {/* Top bar */}
+    <div className="h-full relative overflow-hidden">
+      {/* Top bar — frosted glass overlay; messages scroll beneath it */}
       <header
-        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center justify-between px-3 h-12 relative"
-        style={{ paddingTop: "var(--safe-top)" }}
+        className="absolute top-0 inset-x-0 z-30 bg-cale-card border-b border-cale-divider flex items-center justify-between px-3 h-12"
+        style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
       >
         {/* Left cluster */}
         <div className="flex items-center">
@@ -853,7 +865,14 @@ export default function ChatView({
       </header>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar">
+      <div
+        ref={scrollRef}
+        className="absolute inset-0 overflow-y-auto no-scrollbar"
+        style={{
+          paddingTop: "calc(var(--safe-top) + 3rem)",
+          paddingBottom: footerH,
+        }}
+      >
         <div
           className={
             claudeTheme
@@ -914,46 +933,52 @@ export default function ChatView({
         </div>
       </div>
 
-      {/* Burst reply button */}
-      {showBurstButton && (
-        <div className="px-3 pb-1">
-          <button
-            onClick={triggerBurstReply}
-            className="w-full py-2.5 rounded-[14px] bg-cale-accent text-white text-[14px] font-medium active:opacity-80"
-          >
-            让 {displayName} 回复
-          </button>
-        </div>
-      )}
-
-      {/* Pending quote preview */}
-      {pendingQuote && (
-        <div className="px-3 pb-1">
-          <div className="flex items-center gap-2 bg-cale-thinking rounded-[12px] px-3 py-2 text-[12px] text-cale-textLight">
-            <Quote size={13} className="text-cale-accent flex-shrink-0" />
-            <span className="flex-1 truncate">
-              {pendingQuote.author}：{pendingQuote.text}
-            </span>
-            <button onClick={() => setPendingQuote(null)}>
-              <X size={14} />
+      {/* Bottom chrome — frosted glass overlay; messages scroll beneath it */}
+      <div
+        ref={footerRef}
+        className="absolute bottom-0 inset-x-0 z-30 bg-cale-card border-t border-cale-divider"
+      >
+        {/* Burst reply button */}
+        {showBurstButton && (
+          <div className="px-3 pt-2">
+            <button
+              onClick={triggerBurstReply}
+              className="w-full py-2.5 rounded-[14px] bg-cale-accent text-white text-[14px] font-medium active:opacity-80"
+            >
+              让 {displayName} 回复
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      <ChatInput
-        onSubmit={handleSubmit}
-        onSendSticker={handleSendSticker}
-        onStop={handleStop}
-        streaming={streaming}
-        burstMode={burstMode}
-        onToggleBurst={() => setBurstMode((b) => !b)}
-        stickers={stickers}
-        onManageStickers={onManageStickers}
-        onTransfer={() => setTransferOpen(true)}
-        onGift={() => setGiftOpen(true)}
-        onTheater={onOpenTheater}
-      />
+        {/* Pending quote preview */}
+        {pendingQuote && (
+          <div className="px-3 pt-2">
+            <div className="flex items-center gap-2 bg-cale-thinking rounded-[12px] px-3 py-2 text-[12px] text-cale-textLight">
+              <Quote size={13} className="text-cale-accent flex-shrink-0" />
+              <span className="flex-1 truncate">
+                {pendingQuote.author}：{pendingQuote.text}
+              </span>
+              <button onClick={() => setPendingQuote(null)}>
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        <ChatInput
+          onSubmit={handleSubmit}
+          onSendSticker={handleSendSticker}
+          onStop={handleStop}
+          streaming={streaming}
+          burstMode={burstMode}
+          onToggleBurst={() => setBurstMode((b) => !b)}
+          stickers={stickers}
+          onManageStickers={onManageStickers}
+          onTransfer={() => setTransferOpen(true)}
+          onGift={() => setGiftOpen(true)}
+          onTheater={onOpenTheater}
+        />
+      </div>
 
       <ConversationSidebar
         open={sidebarOpen}

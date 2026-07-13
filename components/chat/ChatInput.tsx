@@ -138,7 +138,7 @@ export default function ChatInput({
   );
 
   return (
-    <div className="flex-shrink-0 bg-cale-card border-t border-cale-divider px-3 pt-2 pb-2">
+    <div className="px-3 pt-2 pb-2">
       {/* Sticker tray */}
       {trayOpen && (
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-1">

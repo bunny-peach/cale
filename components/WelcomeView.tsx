@@ -7,7 +7,7 @@ const serif = 'ui-serif, Georgia, "Songti SC", "Noto Serif SC", serif';
 export default function WelcomeView({ onEnter }: { onEnter: () => void }) {
   return (
     <div
-      className="h-[100dvh] flex flex-col items-center bg-cale-bg px-8"
+      className="h-[100dvh] flex flex-col items-center welcome-bg px-8"
       style={{
         paddingTop: "var(--safe-top)",
         paddingBottom: "var(--safe-bottom)",

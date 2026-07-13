@@ -145,7 +145,7 @@ body {
  * Message bubbles opt out of the frosting via .no-glass so they stay solid.
  */
 :root[data-theme="pink"] body {
-  background-image: linear-gradient(160deg, #fbeef3 0%, #f6e6ee 48%, #fcecf1 100%);
+  background-image: linear-gradient(160deg, #fdf6f8 0%, #faf1f4 50%, #fdf5f7 100%);
   background-attachment: fixed;
 }
 @media (prefers-color-scheme: dark) {
@@ -161,11 +161,21 @@ body {
  * Opaque full-screen surface for overlays (theater / stickers / search) so they
  * fully cover what's behind even when .bg-cale-bg is made transparent for glass.
  */
+/* Welcome page keeps a warm cream backdrop regardless of theme. */
+.welcome-bg {
+  background-color: #fdfbf8;
+}
+@media (prefers-color-scheme: dark) {
+  .welcome-bg {
+    background-color: rgb(26 24 22);
+  }
+}
+
 .app-bg {
   background-color: rgb(var(--cale-bg));
 }
 :root[data-theme="pink"] .app-bg {
-  background-image: linear-gradient(160deg, #fbeef3 0%, #f6e6ee 48%, #fcecf1 100%);
+  background-image: linear-gradient(160deg, #fdf6f8 0%, #faf1f4 50%, #fdf5f7 100%);
 }
 :root[data-theme="glass"] .app-bg {
   background-image: var(
