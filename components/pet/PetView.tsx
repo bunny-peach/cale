@@ -282,15 +282,19 @@ export default function PetView() {
     );
 
   return (
-    <div className="h-full flex flex-col bg-cale-bg relative overflow-hidden">
+    <div className="h-full bg-cale-bg relative overflow-hidden">
       <header
-        className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center justify-center h-12"
-        style={{ paddingTop: "var(--safe-top)" }}
+        className="absolute top-0 inset-x-0 z-30 bg-cale-card border-b border-cale-divider flex items-center justify-center h-12"
+        style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
       >
         <div className="text-[17px] font-semibold">宠物小窝</div>
       </header>
 
-      <div className="flex-shrink-0 px-4 pt-3">
+      <div
+        className="absolute inset-0 overflow-y-auto no-scrollbar"
+        style={{ paddingTop: "calc(var(--safe-top) + 3rem)" }}
+      >
+      <div className="px-4 pt-3">
         <div className="flex bg-cale-input rounded-full p-0.5 text-[14px]">
           {(["wolf", "rabbit"] as PetKind[]).map((k) => (
             <button
@@ -312,7 +316,7 @@ export default function PetView() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
+      <div className="px-4 py-4">
         {/* Pet stage */}
         <div className="bg-cale-card rounded-[18px] pt-4 pb-5 flex flex-col items-center relative overflow-hidden">
           {/* speech bubble */}
@@ -457,6 +461,7 @@ export default function PetView() {
             ? "狼崽会自己在窝里溜达、发呆，点点它还会跟你说话。常来陪他，他会精神满满。"
             : "这是 Cale 养的兔子。点点它逗它说话，陪它玩，也可以偷偷捣乱……但搞太多它会缩进窝里，Cale 会在聊天里察觉到异常。"}
         </p>
+      </div>
       </div>
 
       {/* Sheets */}

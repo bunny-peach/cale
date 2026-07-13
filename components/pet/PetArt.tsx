@@ -137,8 +137,8 @@ export function RabbitArt({
           {/* welling tears */}
           <path d="M78 138 q-3 6 0 9 q3 -3 0 -9" fill="#bfe0f0" opacity="0.9" />
           <path d="M122 138 q3 6 0 9 q-3 -3 0 -9" fill="#bfe0f0" opacity="0.9" />
-          {/* tiny pink crown mouth, downturned corners */}
-          <path d="M96 145 L98 141 L100 145 L102 141 L104 145 Q104 150 100 151 Q96 150 96 145 Z" fill="#f2a0bb" />
+          {/* tiny symmetric pink crown mouth */}
+          <path d="M95 145 L97.5 141 L100 145 L102.5 141 L105 145 Q105 150 100 151 Q95 150 95 145 Z" fill="#f2a0bb" />
         </g>
       </svg>
     );
@@ -160,46 +160,46 @@ export function RabbitArt({
         <ellipse cx="82" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
         <ellipse cx="118" cy="182" rx="11" ry="7" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
 
-        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={140} bodyY={160} eyeY={108} />
+        <OutfitPiece outfit={outfit} layer="clothes" cx={100} neckY={148} bodyY={160} eyeY={113} />
 
-        {/* flat, short face — much wider than tall (扁扁的短短的脸) */}
-        <ellipse cx="100" cy="110" rx="54" ry="36" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
+        {/* round, soft face (圆脸) */}
+        <ellipse cx="100" cy="108" rx="49" ry="44" fill="#ffffff" stroke="#ece7e4" strokeWidth="2" />
 
         {grumpy ? (
           <>
             {/* cute-mad: puffed rosy cheeks + short soft frowny brows */}
-            <ellipse cx="68" cy="118" rx="13" ry="9" fill="#fbc4d3" />
-            <ellipse cx="132" cy="118" rx="13" ry="9" fill="#fbc4d3" />
-            <path d="M77 99 l13 4" stroke="#c79aa0" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-            <path d="M123 99 l-13 4" stroke="#c79aa0" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-            <circle cx="84" cy="111" r="8" fill="#3a3237" />
-            <circle cx="116" cy="111" r="8" fill="#3a3237" />
-            <circle cx="86.6" cy="108" r="2.4" fill="#fff" />
-            <circle cx="118.6" cy="108" r="2.4" fill="#fff" />
-            {/* small pouty crown mouth */}
-            <path d="M94 124 L96.5 120 L99 124 L101.5 120 L104 124 Q104 129 99 130 Q94 129 94 124 Z" fill="#f2a0bb" />
+            <ellipse cx="67" cy="120" rx="13" ry="9" fill="#fbc4d3" />
+            <ellipse cx="133" cy="120" rx="13" ry="9" fill="#fbc4d3" />
+            <path d="M76 100 l13 4" stroke="#c79aa0" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+            <path d="M124 100 l-13 4" stroke="#c79aa0" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+            <circle cx="83" cy="113" r="8" fill="#3a3237" />
+            <circle cx="117" cy="113" r="8" fill="#3a3237" />
+            <circle cx="85.6" cy="110" r="2.4" fill="#fff" />
+            <circle cx="119.6" cy="110" r="2.4" fill="#fff" />
+            {/* small symmetric pouty crown mouth */}
+            <path d="M94 126 L96.5 122 L100 126 L103.5 122 L106 126 Q106 131 100 132 Q94 131 94 126 Z" fill="#f2a0bb" />
             {/* little anger puff by the ear */}
-            <path d="M142 88 q6 -2 4 5 q6 -1 2 6" stroke="#e6a7b4" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+            <path d="M142 90 q6 -2 4 5 q6 -1 2 6" stroke="#e6a7b4" strokeWidth="2.4" fill="none" strokeLinecap="round" />
           </>
         ) : (
           <>
-            <ellipse cx="68" cy="120" rx="12" ry="8" fill="#fbd0dd" />
-            <ellipse cx="132" cy="120" rx="12" ry="8" fill="#fbd0dd" />
+            <ellipse cx="67" cy="122" rx="12" ry="8" fill="#fbd0dd" />
+            <ellipse cx="133" cy="122" rx="12" ry="8" fill="#fbd0dd" />
             {/* tiny "ii" marks above the nose — the signature blank-cute look */}
-            <path d="M95 92 v7 M105 92 v7" stroke="#c3ada2" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M95 90 v7 M105 90 v7" stroke="#c3ada2" strokeWidth="2.4" strokeLinecap="round" />
             <g className="pet-blink">
-              <circle cx="82" cy="112" r="9" fill="#3a3237" />
-              <circle cx="118" cy="112" r="9" fill="#3a3237" />
-              <circle cx="85" cy="108.5" r="2.8" fill="#fff" />
-              <circle cx="121" cy="108.5" r="2.8" fill="#fff" />
+              <circle cx="81" cy="113" r="9" fill="#3a3237" />
+              <circle cx="119" cy="113" r="9" fill="#3a3237" />
+              <circle cx="84" cy="109.5" r="2.8" fill="#fff" />
+              <circle cx="122" cy="109.5" r="2.8" fill="#fff" />
             </g>
-            {/* little pink crown mouth */}
-            <path d="M92 120 L95.5 115 L99 120 L102.5 115 L106 120 Q106 128 100 130 Q94 128 94 120 Z" fill="#f2a0bb" stroke="#e485a6" strokeWidth="1" />
+            {/* little symmetric pink crown mouth (centred on x=100) */}
+            <path d="M93 123 L96.5 118 L100 123 L103.5 118 L107 123 Q107 131 100 132 Q93 131 93 123 Z" fill="#f2a0bb" stroke="#e485a6" strokeWidth="1" />
           </>
         )}
-        <path d="M52 114 h-13 M54 120 h-13 M148 114 h13 M146 120 h13" stroke="#e2dcd8" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M53 118 h-13 M55 124 h-13 M147 118 h13 M145 124 h13" stroke="#e2dcd8" strokeWidth="1.5" strokeLinecap="round" />
 
-        <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={140} bodyY={160} eyeY={108} hatTopY={66} />
+        <OutfitPiece outfit={outfit} layer="top" cx={100} neckY={148} bodyY={160} eyeY={113} hatTopY={60} />
       </g>
     </svg>
   );
