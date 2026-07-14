@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Menu, Plus, Check, X, Quote, Search, Gift, Asterisk } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid, load, save, KEYS } from "@/lib/storage";
+import { PetNotes, emptyNotes } from "@/lib/petNotes";
 import {
   Conversation,
   Message,
@@ -304,6 +305,20 @@ export default function ChatView({
       );
       parsed.moodNotes.forEach((n) => app.setTodayMoodNote(n));
       parsed.diaryAdds.forEach((d) => app.addDiary(d.title, d.content));
+      // Cale leaves a handwritten sticky note by the pets' nest for Quinn
+      if (parsed.petNotes.length) {
+        const existing = load<PetNotes>(KEYS.petNotes, emptyNotes());
+        const added = parsed.petNotes.map((text) => ({
+          id: uid(),
+          text,
+          at: Date.now(),
+        }));
+        save(KEYS.petNotes, {
+          ...existing,
+          toQuinn: [...added, ...existing.toQuinn].slice(0, 60),
+        });
+        showToast("Cale 在窝边留了一张便签");
+      }
       // Cale tends to his own rabbit / pranks Quinn's wolf
       if (parsed.petActions.length) {
         const clampPet = (n: number) => Math.max(0, Math.min(100, n));

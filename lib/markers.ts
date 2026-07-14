@@ -15,10 +15,11 @@ export interface ParsedMarkers {
   giftSends: string[];
   diaryAdds: DiaryAdd[];
   petActions: PetAction[];
+  petNotes: string[];
 }
 
 const SIMPLE_PATTERNS: Record<
-  "mcpAdds" | "songAdds" | "bookAdds" | "moodNotes" | "giftSends",
+  "mcpAdds" | "songAdds" | "bookAdds" | "moodNotes" | "giftSends" | "petNotes",
   RegExp
 > = {
   mcpAdds: /\[MCP_ADD:\s*([^\]]+)\]/g,
@@ -26,6 +27,7 @@ const SIMPLE_PATTERNS: Record<
   bookAdds: /\[BOOK_ADD:\s*([^\]]+)\]/g,
   moodNotes: /\[MOOD_NOTE:\s*([^\]]+)\]/g,
   giftSends: /\[GIFT_SEND:\s*([^\]]+)\]/g,
+  petNotes: /\[PET_NOTE:\s*([^\]]+)\]/g,
 };
 
 // [DIARY_ADD: 标题|||正文]  (content may span multiple lines)
@@ -48,6 +50,7 @@ export function parseMarkers(text: string): ParsedMarkers {
     giftSends: [],
     diaryAdds: [],
     petActions: [],
+    petNotes: [],
   };
 
   (Object.keys(SIMPLE_PATTERNS) as (keyof typeof SIMPLE_PATTERNS)[]).forEach(

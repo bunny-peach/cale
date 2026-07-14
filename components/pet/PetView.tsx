@@ -17,10 +17,12 @@ import {
   Music,
   Ticket,
   NotebookPen,
+  StickyNote,
+  Send,
   ChevronLeft,
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
-import { load, save, KEYS, todayKey } from "@/lib/storage";
+import { load, save, KEYS, todayKey, uid } from "@/lib/storage";
 import {
   PetKind,
   Pet,
@@ -66,6 +68,7 @@ import {
   emptyTally,
   genDiaryEntry,
 } from "@/lib/petDiary";
+import { PetNotes, emptyNotes, noteColor } from "@/lib/petNotes";
 import { WolfArt, RabbitArt } from "./PetArt";
 
 interface TallyState {
@@ -116,6 +119,30 @@ export default function PetView() {
   }));
   const [diaries, setDiaries] = useState<PetDiaries>({ wolf: [], rabbit: [] });
   const [journalOpen, setJournalOpen] = useState(false);
+  const [notes, setNotes] = useState<PetNotes>(emptyNotes());
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
+
+  useEffect(() => {
+    setNotes(load<PetNotes>(KEYS.petNotes, emptyNotes()));
+  }, []);
+
+  // Quinn leaves a note for Cale (written on the rabbit / Cale side).
+  const addNote = () => {
+    const text = noteDraft.trim();
+    if (!text) return;
+    setNotes((prev) => {
+      const next = {
+        ...prev,
+        toCale: [{ id: uid(), text, at: Date.now() }, ...prev.toCale].slice(0, 60),
+      };
+      save(KEYS.petNotes, next);
+      return next;
+    });
+    setNoteDraft("");
+  };
+  // Notes shown on the current side: wolf side = Cale's notes to Quinn.
+  const sideNotes = view === "wolf" ? notes.toQuinn : notes.toCale;
 
   // Load diary + daily tally; roll over any finished day into a diary entry.
   useEffect(() => {
@@ -467,6 +494,14 @@ export default function PetView() {
         style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
       >
         <div className="text-[17px] font-semibold">宠物小窝</div>
+        <button
+          onClick={() => setNotesOpen(true)}
+          className="absolute right-11 w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
+          style={{ top: "calc(var(--safe-top) + 0.35rem)" }}
+          aria-label="留言条"
+        >
+          <StickyNote size={20} strokeWidth={1.9} />
+        </button>
         <button
           onClick={() => setJournalOpen(true)}
           className="absolute right-2 w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
@@ -869,6 +904,100 @@ export default function PetView() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Sticky notes overlay */}
+      {notesOpen && (
+        <div className="absolute inset-0 z-40 flex flex-col app-bg">
+          <header
+            className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-2 h-12"
+            style={{ paddingTop: "var(--safe-top)" }}
+          >
+            <button
+              onClick={() => setNotesOpen(false)}
+              className="w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
+              aria-label="返回"
+            >
+              <ChevronLeft size={22} />
+            </button>
+            <div className="flex-1 text-center text-[16px] font-semibold pr-9">
+              留言条
+            </div>
+          </header>
+          <div className="flex-shrink-0 px-4 pt-3">
+            <div className="flex bg-cale-input rounded-full p-0.5 text-[14px]">
+              {(["wolf", "rabbit"] as PetKind[]).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setView(k)}
+                  className={`flex-1 py-1.5 rounded-full transition-colors ${
+                    view === k
+                      ? "bg-cale-card text-cale-accent font-medium shadow-sm"
+                      : "text-cale-textLight"
+                  }`}
+                >
+                  {k === "wolf" ? "Cale 给你的" : "你写给 Cale 的"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
+            <p className="text-[12px] text-cale-textLight mb-3 px-1">
+              {view === "wolf"
+                ? "Cale 悄悄贴在窝旁的纸条，聊天时也可能留下新的。"
+                : "写一张便签贴在窝边，Cale 会看到。"}
+            </p>
+            {sideNotes.length === 0 && (
+              <div className="text-center text-cale-textLight text-[13px] mt-12">
+                {view === "wolf" ? "还没有 Cale 的便签～" : "还没有便签，写一张贴上吧～"}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              {sideNotes.map((n, i) => (
+                <div
+                  key={n.id}
+                  className="rounded-[10px] p-3 shadow-sm"
+                  style={{
+                    background: noteColor(n.id),
+                    transform: `rotate(${(i % 2 ? 1 : -1) * (1 + (i % 3))}deg)`,
+                  }}
+                >
+                  <p
+                    className="text-[14px] text-[#5a4a42] leading-relaxed break-words"
+                    style={{ fontFamily: '"Xingkai SC", "Kaiti SC", "STKaiti", cursive' }}
+                  >
+                    {n.text}
+                  </p>
+                  <div className="text-[10px] text-[#5a4a42]/50 mt-2 text-right">
+                    {new Date(n.at).toLocaleDateString("zh-CN")}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {view === "rabbit" && (
+            <div
+              className="flex-shrink-0 bg-cale-card border-t border-cale-divider px-3 pt-2 flex items-end gap-2"
+              style={{ paddingBottom: "calc(0.5rem + var(--safe-bottom))" }}
+            >
+              <textarea
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                rows={1}
+                placeholder="写点什么贴给 Cale…"
+                className="flex-1 bg-cale-input rounded-[18px] px-4 py-2 text-[16px] outline-none resize-none max-h-24 no-scrollbar placeholder:text-cale-textLight"
+              />
+              <button
+                onClick={addNote}
+                disabled={!noteDraft.trim()}
+                className="flex-shrink-0 w-9 h-9 mb-0.5 rounded-full bg-cale-accent text-white flex items-center justify-center disabled:opacity-40"
+                aria-label="贴上"
+              >
+                <Send size={17} strokeWidth={2} />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
