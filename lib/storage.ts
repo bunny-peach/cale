@@ -28,6 +28,7 @@ export const KEYS = {
   petCoupons: "cale_pet_coupons",
   petTally: "cale_pet_tally",
   petDiary: "cale_pet_diary",
+  petNotes: "cale_pet_notes",
 } as const;
 
 export function load<T>(key: string, fallback: T): T {
