@@ -20,6 +20,7 @@ import {
   StickyNote,
   Send,
   ChevronLeft,
+  Trophy,
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { load, save, KEYS, todayKey, uid } from "@/lib/storage";
@@ -69,6 +70,12 @@ import {
   genDiaryEntry,
 } from "@/lib/petDiary";
 import { PetNotes, emptyNotes, noteColor } from "@/lib/petNotes";
+import {
+  AchProgress,
+  ACHIEVEMENTS,
+  freshProgress,
+  newlyUnlocked,
+} from "@/lib/petAchievements";
 import { WolfArt, RabbitArt } from "./PetArt";
 
 interface TallyState {
@@ -122,9 +129,51 @@ export default function PetView() {
   const [notes, setNotes] = useState<PetNotes>(emptyNotes());
   const [notesOpen, setNotesOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
+  const [ach, setAch] = useState<AchProgress>(freshProgress);
+  const [achOpen, setAchOpen] = useState(false);
 
   useEffect(() => {
     setNotes(load<PetNotes>(KEYS.petNotes, emptyNotes()));
+  }, []);
+
+  // Apply a patch to achievement progress, unlock anything newly satisfied,
+  // and toast the first new badge.
+  const recordAch = (patch: (p: AchProgress) => AchProgress) => {
+    setAch((prev) => {
+      const next = patch({ ...prev });
+      const fresh = newlyUnlocked(next);
+      if (fresh.length) {
+        const now = Date.now();
+        fresh.forEach((id) => (next.unlocked[id] = now));
+        const first = ACHIEVEMENTS.find((a) => a.id === fresh[0]);
+        if (first) setTimeout(() => showToast(`解锁成就：${first.name} ${first.emoji}`), 300);
+      }
+      save(KEYS.petAch, next);
+      return next;
+    });
+  };
+
+  // Mount: count the daily visit streak, birthday, and sync note total.
+  useEffect(() => {
+    const today = todayKey();
+    const savedNotes = load<PetNotes>(KEYS.petNotes, emptyNotes());
+    const noteTotal = savedNotes.toCale.length + savedNotes.toQuinn.length;
+    recordAch((p) => {
+      const loaded = load<AchProgress>(KEYS.petAch, freshProgress());
+      const n = { ...loaded };
+      if (n.visitLast !== today) {
+        const y = new Date();
+        y.setDate(y.getDate() - 1);
+        const yk = todayKey(y);
+        n.visitDays = n.visitLast === yk ? n.visitDays + 1 : 1;
+        n.visitLast = today;
+      }
+      n.notes = Math.max(n.notes, noteTotal);
+      const now = new Date();
+      if (now.getMonth() === 3 && now.getDate() === 20) n.birthday = true;
+      return n;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Quinn leaves a note for Cale (written on the rabbit / Cale side).
@@ -137,6 +186,10 @@ export default function PetView() {
         toCale: [{ id: uid(), text, at: Date.now() }, ...prev.toCale].slice(0, 60),
       };
       save(KEYS.petNotes, next);
+      recordAch((p) => ({
+        ...p,
+        notes: next.toCale.length + next.toQuinn.length,
+      }));
       return next;
     });
     setNoteDraft("");
@@ -261,6 +314,17 @@ export default function PetView() {
   const cappuccino = useMemo(() => Math.random() < 0.12, []);
   const visit = useMemo<Visit>(() => rollVisit(petState), []);
 
+  // Count a 串门 event (and the both-disappear egg) toward achievements.
+  useEffect(() => {
+    if (visit)
+      recordAch((p) => ({
+        ...p,
+        visits: p.visits + 1,
+        bothEgg: p.bothEgg + (visit === "both" ? 1 : 0),
+      }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 串门 state for the current view
   const awayHere =
     (view === "wolf" && visit === "wolf2rabbit") ||
@@ -371,6 +435,7 @@ export default function PetView() {
     const special = foods(view).special[food];
     if (special) {
       bump("special");
+      if (food === "巧克力") recordAch((p) => ({ ...p, choco: p.choco + 1 }));
       setSheet(null);
       const fx = specialFoodFx(food);
       react2(fx === "moon" ? "pet-nod" : "pet-shake", special, fx ?? undefined);
@@ -389,6 +454,21 @@ export default function PetView() {
     bump("fed");
     if (tier === "like") bump("fedLike");
     if (tier === "dislike") bump("fedDislike");
+    const uniq = (arr: string[]) => (arr.includes(food) ? arr : [...arr, food]);
+    if (tier === "like" || tier === "dislike")
+      recordAch((p) =>
+        view === "wolf"
+          ? {
+              ...p,
+              likedW: tier === "like" ? uniq(p.likedW) : p.likedW,
+              dislikedW: tier === "dislike" ? uniq(p.dislikedW) : p.dislikedW,
+            }
+          : {
+              ...p,
+              likedR: tier === "like" ? uniq(p.likedR) : p.likedR,
+              dislikedR: tier === "dislike" ? uniq(p.dislikedR) : p.dislikedR,
+            }
+      );
     setSheet(null);
     if (tier === "like")
       react2("pet-jump", pick(["好好吃！", "还要还要～", "（大口吃光）"]), "heart");
@@ -417,6 +497,11 @@ export default function PetView() {
       updatedAt: Date.now(),
     }));
     bump("badItem");
+    if (view === "rabbit")
+      recordAch((p) => ({
+        ...p,
+        badR: p.badR.includes(item.name) ? p.badR : [...p.badR, item.name],
+      }));
     setSheet(null);
     react2("pet-shake", pick([`${item.name}？讨厌啦！`, "快拿走——", "（缩成一团）"]));
   };
@@ -429,6 +514,7 @@ export default function PetView() {
       updatedAt: Date.now(),
     }));
     bump("mischief");
+    recordAch((p) => ({ ...p, mischief: p.mischief + 1 }));
     setSheet(null);
     react2("pet-shake", pick(["喂——住手！", "（炸毛）", "哼，不理你了！"]));
   };
@@ -503,7 +589,10 @@ export default function PetView() {
           <StickyNote size={20} strokeWidth={1.9} />
         </button>
         <button
-          onClick={() => setJournalOpen(true)}
+          onClick={() => {
+            setJournalOpen(true);
+            recordAch((p) => ({ ...p, peeked: true }));
+          }}
           className="absolute right-2 w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
           style={{ top: "calc(var(--safe-top) + 0.35rem)" }}
           aria-label="宠物日记"
@@ -690,6 +779,31 @@ export default function PetView() {
             </button>
           )}
         </div>
+
+        {/* Badge shelf by the nest */}
+        <button
+          onClick={() => setAchOpen(true)}
+          className="w-full bg-cale-card rounded-[16px] px-4 py-3 mt-3 flex items-center gap-2 active:opacity-80"
+        >
+          <Trophy size={16} className="text-cale-accent flex-shrink-0" />
+          <span className="text-[13px] text-cale-textDark flex-shrink-0">成就徽章</span>
+          <div className="flex-1 flex gap-1 justify-end items-center overflow-hidden">
+            {ACHIEVEMENTS.filter((a) => ach.unlocked[a.id]).length === 0 ? (
+              <span className="text-[12px] text-cale-textLight">还没有徽章～</span>
+            ) : (
+              ACHIEVEMENTS.filter((a) => ach.unlocked[a.id])
+                .slice(0, 7)
+                .map((a) => (
+                  <span key={a.id} className="text-[17px] leading-none">
+                    {a.emoji}
+                  </span>
+                ))
+            )}
+          </div>
+          <span className="text-[12px] text-cale-textLight flex-shrink-0">
+            {ACHIEVEMENTS.filter((a) => ach.unlocked[a.id]).length}/{ACHIEVEMENTS.length}
+          </span>
+        </button>
 
         {/* Stats */}
         <div className="bg-cale-card rounded-[16px] p-4 mt-3 space-y-3">
@@ -998,6 +1112,60 @@ export default function PetView() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Achievements overlay */}
+      {achOpen && (
+        <div className="absolute inset-0 z-40 flex flex-col app-bg">
+          <header
+            className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-2 h-12"
+            style={{ paddingTop: "var(--safe-top)" }}
+          >
+            <button
+              onClick={() => setAchOpen(false)}
+              className="w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
+              aria-label="返回"
+            >
+              <ChevronLeft size={22} />
+            </button>
+            <div className="flex-1 text-center text-[16px] font-semibold pr-9">
+              成就徽章 {ACHIEVEMENTS.filter((a) => ach.unlocked[a.id]).length}/
+              {ACHIEVEMENTS.length}
+            </div>
+          </header>
+          <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-2.5">
+            {ACHIEVEMENTS.map((a) => {
+              const on = !!ach.unlocked[a.id];
+              return (
+                <div
+                  key={a.id}
+                  className={`bg-cale-card rounded-[14px] p-3.5 flex items-center gap-3 ${on ? "" : "opacity-55"}`}
+                >
+                  <div
+                    className={`w-11 h-11 rounded-full flex items-center justify-center text-[22px] flex-shrink-0 ${on ? "bg-cale-accent/12" : "bg-cale-input"}`}
+                    style={{ filter: on ? "none" : "grayscale(1)" }}
+                  >
+                    {a.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[14px] font-medium text-cale-textDark">
+                      {a.name}
+                      {!on && (
+                        <span className="text-[11px] text-cale-textLight ml-1.5">未解锁</span>
+                      )}
+                    </div>
+                    <div className="text-[12px] text-cale-textLight mt-0.5">{a.desc}</div>
+                  </div>
+                  {on && (
+                    <div className="text-[10px] text-cale-textLight flex-shrink-0">
+                      {new Date(ach.unlocked[a.id]).toLocaleDateString("zh-CN")}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
