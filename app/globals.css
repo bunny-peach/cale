@@ -620,6 +620,23 @@ mark {
   will-change: transform;
 }
 
+/* Cups mini-game shuffle */
+@keyframes cup-shuffle {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-14px) translateY(-6px);
+  }
+  75% {
+    transform: translateX(14px) translateY(-6px);
+  }
+}
+.cup-shuffle {
+  animation: cup-shuffle 0.45s ease-in-out 2;
+}
+
 /* Flash a message when jumped to from search */
 @keyframes cale-flash {
   0%,

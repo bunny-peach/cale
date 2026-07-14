@@ -21,6 +21,7 @@ import {
   Send,
   ChevronLeft,
   Trophy,
+  Gamepad2,
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { load, save, KEYS, todayKey, uid } from "@/lib/storage";
@@ -77,6 +78,7 @@ import {
   newlyUnlocked,
 } from "@/lib/petAchievements";
 import { WolfArt, RabbitArt } from "./PetArt";
+import PetGames from "./PetGames";
 
 interface TallyState {
   date: string;
@@ -131,6 +133,18 @@ export default function PetView() {
   const [noteDraft, setNoteDraft] = useState("");
   const [ach, setAch] = useState<AchProgress>(freshProgress);
   const [achOpen, setAchOpen] = useState(false);
+  const [gamesOpen, setGamesOpen] = useState(false);
+
+  const bumpPetMood = (kind: PetKind, delta: number) =>
+    setPetState((prev) => ({
+      ...prev,
+      [kind]: {
+        ...prev[kind],
+        mood: Math.max(0, Math.min(100, prev[kind].mood + delta)),
+        intimacy: prev[kind].intimacy + 1,
+        updatedAt: Date.now(),
+      },
+    }));
 
   useEffect(() => {
     setNotes(load<PetNotes>(KEYS.petNotes, emptyNotes()));
@@ -580,6 +594,14 @@ export default function PetView() {
         style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
       >
         <div className="text-[17px] font-semibold">宠物小窝</div>
+        <button
+          onClick={() => setGamesOpen(true)}
+          className="absolute left-2 w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
+          style={{ top: "calc(var(--safe-top) + 0.35rem)" }}
+          aria-label="小游戏"
+        >
+          <Gamepad2 size={20} strokeWidth={1.9} />
+        </button>
         <button
           onClick={() => setNotesOpen(true)}
           className="absolute right-11 w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
@@ -1167,6 +1189,10 @@ export default function PetView() {
             })}
           </div>
         </div>
+      )}
+
+      {gamesOpen && (
+        <PetGames onClose={() => setGamesOpen(false)} bumpMood={bumpPetMood} />
       )}
 
       {toast && (
