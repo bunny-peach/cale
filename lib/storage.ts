@@ -26,6 +26,8 @@ export const KEYS = {
   msgCount: "cale_msg_count",
   pets: "cale_pet_state",
   petCoupons: "cale_pet_coupons",
+  petTally: "cale_pet_tally",
+  petDiary: "cale_pet_diary",
 } as const;
 
 export function load<T>(key: string, fallback: T): T {

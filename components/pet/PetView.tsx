@@ -16,6 +16,8 @@ import {
   Star,
   Music,
   Ticket,
+  NotebookPen,
+  ChevronLeft,
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { load, save, KEYS, todayKey } from "@/lib/storage";
@@ -57,7 +59,20 @@ import {
   seasonParticle,
   ambientCaption,
 } from "@/lib/petAmbient";
+import {
+  DayTally,
+  DiaryEntry,
+  PetDiaries,
+  emptyTally,
+  genDiaryEntry,
+} from "@/lib/petDiary";
 import { WolfArt, RabbitArt } from "./PetArt";
+
+interface TallyState {
+  date: string;
+  wolf: DayTally;
+  rabbit: DayTally;
+}
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
 
@@ -94,6 +109,65 @@ export default function PetView() {
   const [coupons, setCoupons] = useState<CouponState>(() =>
     freshCoupons(todayKey())
   );
+  const [tally, setTally] = useState<TallyState>(() => ({
+    date: todayKey(),
+    wolf: emptyTally(),
+    rabbit: emptyTally(),
+  }));
+  const [diaries, setDiaries] = useState<PetDiaries>({ wolf: [], rabbit: [] });
+  const [journalOpen, setJournalOpen] = useState(false);
+
+  // Load diary + daily tally; roll over any finished day into a diary entry.
+  useEffect(() => {
+    const today = todayKey();
+    const savedDiary = load<PetDiaries>(KEYS.petDiary, { wolf: [], rabbit: [] });
+    const savedTally = load<TallyState>(KEYS.petTally, {
+      date: today,
+      wolf: emptyTally(),
+      rabbit: emptyTally(),
+    });
+    if (savedTally.date !== today) {
+      // finalise the previous day into a diary entry for each pet
+      (["wolf", "rabbit"] as PetKind[]).forEach((k) => {
+        const has = savedDiary[k].some((e) => e.date === savedTally.date);
+        if (!has) {
+          savedDiary[k] = [
+            { date: savedTally.date, text: genDiaryEntry(k, savedTally[k]) },
+            ...savedDiary[k],
+          ].slice(0, 120);
+        }
+      });
+      save(KEYS.petDiary, savedDiary);
+      const fresh: TallyState = { date: today, wolf: emptyTally(), rabbit: emptyTally() };
+      save(KEYS.petTally, fresh);
+      setTally(fresh);
+    } else {
+      setTally(savedTally);
+    }
+    setDiaries(savedDiary);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Record an interaction into today's tally for the current pet.
+  const bump = (field: keyof DayTally, amount = 1) => {
+    setTally((prev) => {
+      const cur = prev.date === todayKey() ? prev : { date: todayKey(), wolf: emptyTally(), rabbit: emptyTally() };
+      const petT = { ...cur[view], came: true, [field]: (cur[view][field] as number) + amount };
+      const next = { ...cur, [view]: petT };
+      save(KEYS.petTally, next);
+      return next;
+    });
+  };
+
+  // Today's live entry (past days are already finalised in `diaries`).
+  const journalEntries = (k: PetKind): DiaryEntry[] => {
+    const t = tally[k];
+    const live =
+      t.came || t.mischief || t.badItem
+        ? [{ date: todayKey(), text: genDiaryEntry(k, t) }]
+        : [];
+    return [...live, ...diaries[k]];
+  };
 
   useEffect(() => {
     setPetState((prev) => ({
@@ -269,6 +343,7 @@ export default function PetView() {
     if (!spendCoupons(FEED_COST)) return;
     const special = foods(view).special[food];
     if (special) {
+      bump("special");
       setSheet(null);
       const fx = specialFoodFx(food);
       react2(fx === "moon" ? "pet-nod" : "pet-shake", special, fx ?? undefined);
@@ -284,6 +359,9 @@ export default function PetView() {
       intimacy: Math.max(0, p.intimacy + (penalty ? -2 : 2)),
       updatedAt: Date.now(),
     }));
+    bump("fed");
+    if (tier === "like") bump("fedLike");
+    if (tier === "dislike") bump("fedDislike");
     setSheet(null);
     if (tier === "like")
       react2("pet-jump", pick(["好好吃！", "还要还要～", "（大口吃光）"]), "heart");
@@ -299,6 +377,7 @@ export default function PetView() {
       intimacy: p.intimacy + 2,
       updatedAt: Date.now(),
     }));
+    bump("play");
     setSheet(null);
     react2("pet-jump", `${item}！我最喜欢啦`, "heart");
   };
@@ -310,6 +389,7 @@ export default function PetView() {
       intimacy: item.dropIntimacy ? Math.max(0, p.intimacy - 3) : p.intimacy,
       updatedAt: Date.now(),
     }));
+    bump("badItem");
     setSheet(null);
     react2("pet-shake", pick([`${item.name}？讨厌啦！`, "快拿走——", "（缩成一团）"]));
   };
@@ -321,6 +401,7 @@ export default function PetView() {
       mischief: clamp(p.mischief + 12),
       updatedAt: Date.now(),
     }));
+    bump("mischief");
     setSheet(null);
     react2("pet-shake", pick(["喂——住手！", "（炸毛）", "哼，不理你了！"]));
   };
@@ -333,6 +414,7 @@ export default function PetView() {
       updatedAt: Date.now(),
     }));
     earnCoupon();
+    bump("pat");
     react2("pet-nod", pick(["（眯眼蹭你）好舒服～", "再摸摸嘛", "唔…喜欢"]), "heart");
   };
   const tease = () => {
@@ -343,6 +425,7 @@ export default function PetView() {
       updatedAt: Date.now(),
     }));
     earnCoupon();
+    bump("tease");
     react2("pet-wiggle", pick(["再来再来！", "嘿嘿，抓不到我～", "（原地转圈）"]), "star");
   };
 
@@ -353,6 +436,7 @@ export default function PetView() {
       else delete outfit[slot];
       return { ...p, outfit };
     });
+    if (id) bump("dressed");
   };
 
   const PetSprite = ({ size }: { size?: number }) =>
@@ -383,6 +467,14 @@ export default function PetView() {
         style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
       >
         <div className="text-[17px] font-semibold">宠物小窝</div>
+        <button
+          onClick={() => setJournalOpen(true)}
+          className="absolute right-2 w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
+          style={{ top: "calc(var(--safe-top) + 0.35rem)" }}
+          aria-label="宠物日记"
+        >
+          <NotebookPen size={20} strokeWidth={1.9} />
+        </button>
       </header>
 
       <div
@@ -715,6 +807,67 @@ export default function PetView() {
                 })}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Pet diary overlay */}
+      {journalOpen && (
+        <div className="absolute inset-0 z-40 flex flex-col app-bg">
+          <header
+            className="flex-shrink-0 bg-cale-card border-b border-cale-divider flex items-center px-2 h-12"
+            style={{ paddingTop: "var(--safe-top)" }}
+          >
+            <button
+              onClick={() => setJournalOpen(false)}
+              className="w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
+              aria-label="返回"
+            >
+              <ChevronLeft size={22} />
+            </button>
+            <div className="flex-1 text-center text-[16px] font-semibold pr-9">
+              {view === "wolf" ? "狼崽的日记" : "兔子的日记"}
+            </div>
+          </header>
+          <div className="flex-shrink-0 px-4 pt-3">
+            <div className="flex bg-cale-input rounded-full p-0.5 text-[14px]">
+              {(["wolf", "rabbit"] as PetKind[]).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setView(k)}
+                  className={`flex-1 py-1.5 rounded-full transition-colors ${
+                    view === k
+                      ? "bg-cale-card text-cale-accent font-medium shadow-sm"
+                      : "text-cale-textLight"
+                  }`}
+                >
+                  {k === "wolf" ? "狼崽" : "兔子"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-3">
+            {journalEntries(view).length === 0 && (
+              <div className="text-center text-cale-textLight text-[13px] mt-16">
+                还没有日记～ 陪它相处几天就有啦
+              </div>
+            )}
+            {journalEntries(view).map((e, i) => (
+              <div key={e.date + i} className="bg-cale-card rounded-[14px] p-4">
+                <div className="text-[11px] text-cale-textLight mb-1.5">
+                  {e.date}
+                  {i === 0 && journalEntries(view)[0].date === todayKey() && (
+                    <span className="ml-1.5 text-cale-accent">· 今天</span>
+                  )}
+                </div>
+                <p
+                  className="text-[14px] text-cale-textDark leading-relaxed"
+                  style={{ fontFamily: 'ui-serif, "Songti SC", "Noto Serif SC", serif' }}
+                >
+                  {e.text}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       )}
