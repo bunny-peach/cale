@@ -38,6 +38,7 @@ import {
   mischiefItems,
   foodTier,
   applyDecay,
+  applyCare,
   petName,
   wolfPresence,
   FOOD_INTIMACY_PENALTY,
@@ -266,7 +267,7 @@ export default function PetView() {
   useEffect(() => {
     setPetState((prev) => ({
       wolf: applyDecay(prev.wolf),
-      rabbit: applyDecay(prev.rabbit),
+      rabbit: applyCare(prev.rabbit),
     }));
     // Load + daily-refill the snack coupons.
     const today = todayKey();
@@ -869,7 +870,7 @@ export default function PetView() {
         <p className="text-[12px] text-cale-textLight mt-3 px-1 leading-relaxed">
           {isOwn
             ? "狼崽会自己在窝里溜达、发呆，点点它还会跟你说话。常来陪他，他会精神满满。"
-            : "这是 Cale 养的兔子。点点它逗它说话，陪它玩，也可以偷偷捣乱……但搞太多它会缩进窝里，Cale 会在聊天里察觉到异常。"}
+            : "这是 Cale 养的兔子。Cale 会在后台照顾她——每隔几小时自动喂食安抚，饱腹和心情会慢慢回到舒适值。你也可以点它逗它、陪它玩或偷偷捣乱……但搞太多它会缩进窝里，Cale 会在聊天里察觉到异常。"}
         </p>
       </div>
       </div>
