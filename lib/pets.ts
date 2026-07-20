@@ -158,6 +158,27 @@ export function applyDecay(pet: Pet, now = Date.now()): Pet {
   };
 }
 
+// Auto-care for Cale's rabbit: he tends to her in the background, topping up
+// her fullness/mood every few hours and gradually calming her down. Modelled
+// as a smooth approach toward a comfortable baseline (~5h time constant) plus
+// mischief cooling, so she stays looked-after even while the app is closed.
+// (Intimacy still only ever comes from real interaction, so it's untouched.)
+export const CARE_FULLNESS = 70;
+export const CARE_MOOD = 72;
+export function applyCare(pet: Pet, now = Date.now()): Pet {
+  const hours = (now - pet.updatedAt) / (60 * 60 * 1000);
+  if (hours <= 0) return pet;
+  const t = 1 - Math.exp(-hours / 5);
+  const toward = (v: number, target: number) => v + (target - v) * t;
+  return {
+    ...pet,
+    fullness: clamp(toward(pet.fullness, CARE_FULLNESS)),
+    mood: clamp(toward(pet.mood, CARE_MOOD)),
+    mischief: clamp(pet.mischief * Math.exp(-hours / 8)),
+    updatedAt: now,
+  };
+}
+
 export const petName = (k: PetKind) => (k === "wolf" ? "狼崽" : "兔子");
 
 // Wolf mood/pose derived from how long since Quinn last chatted.

@@ -11,7 +11,7 @@ import React, {
 import { KEYS, load, save, uid, todayKey } from "@/lib/storage";
 import { QuotaEvent, pruneEvents } from "@/lib/quota";
 import { WeatherData, fetchWeather } from "@/lib/weather";
-import { PetState, DEFAULT_PET_STATE } from "@/lib/pets";
+import { PetState, DEFAULT_PET_STATE, applyDecay, applyCare } from "@/lib/pets";
 import {
   ApiConfig,
   Conversation,
@@ -182,7 +182,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWalletState(load<Wallet>(KEYS.wallet, DEFAULT_WALLET));
     setTransactions(load<Transaction[]>(KEYS.transactions, []));
     setWeather(load<WeatherData | null>(KEYS.weather, null));
-    setPetState(load<PetState>(KEYS.pets, DEFAULT_PET_STATE));
+    // Account for elapsed time on load: Quinn's wolf decays, while Cale keeps
+    // his rabbit maintained in the background (auto-care).
+    const rawPets = load<PetState>(KEYS.pets, DEFAULT_PET_STATE);
+    setPetState({
+      wolf: applyDecay(rawPets.wolf),
+      rabbit: applyCare(rawPets.rabbit),
+    });
     setDiary(load(KEYS.diary, []));
     // Migrate older memory records that lack the new fields
     const rawMemories = load<Memory[]>(KEYS.memories, []);
