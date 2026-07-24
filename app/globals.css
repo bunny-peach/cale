@@ -620,6 +620,21 @@ mark {
   will-change: transform;
 }
 
+/* Slide in from the right (entering a chat from the list) */
+@keyframes cale-slidein {
+  0% {
+    transform: translateX(14%);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.cale-slidein {
+  animation: cale-slidein 0.25s ease-out;
+}
+
 /* Heart like button pop */
 @keyframes heart-pop {
   0% {
