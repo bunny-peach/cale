@@ -620,6 +620,23 @@ mark {
   will-change: transform;
 }
 
+/* Tab bar icon bounce when a tab is selected */
+@keyframes tab-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px) scale(1.08);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.tab-bounce {
+  display: inline-block;
+  animation: tab-bounce 0.3s ease-out;
+}
+
 /* Slide in from the right (entering a chat from the list) */
 @keyframes cale-slidein {
   0% {
