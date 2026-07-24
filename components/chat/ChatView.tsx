@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Menu,
   Plus,
   Check,
   X,
@@ -12,8 +11,8 @@ import {
   Asterisk,
   MoreHorizontal,
   Heart,
-  MessageSquareText,
   AlignLeft,
+  ChevronLeft,
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid, load, save, KEYS } from "@/lib/storage";
@@ -38,7 +37,7 @@ import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 import TransferSheet from "./TransferSheet";
 import GiftShop from "./GiftShop";
-import ConversationSidebar from "./ConversationSidebar";
+import ChatList from "./ChatList";
 import QuotaIndicator from "@/components/QuotaIndicator";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -91,7 +90,7 @@ export default function ChatView({
     stickers,
   } = app;
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [listMode, setListMode] = useState(true);
   const [streaming, setStreaming] = useState(false);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -795,9 +794,31 @@ export default function ChatView({
       });
   }, [messages, searchQuery]);
 
+  // Conversation list is the Chat landing; tapping a card opens the thread.
+  if (listMode) {
+    return (
+      <ChatList
+        conversations={conversations}
+        displayName={displayName}
+        onOpen={(id) => {
+          setCurrentId(id);
+          setListMode(false);
+        }}
+        onNew={() => {
+          newConversation();
+          setListMode(false);
+        }}
+        onDelete={(id) => {
+          setConversations((prev) => prev.filter((c) => c.id !== id));
+          if (currentId === id) setCurrentId(null);
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="h-full relative overflow-hidden">
-      {/* Top bar — three regions: menu · avatar+name+status · more */}
+    <div className="h-full relative overflow-hidden cale-slidein">
+      {/* Top bar — three regions: back · avatar+name+status · more */}
       <header
         className="absolute top-0 inset-x-0 z-30 bg-cale-card flex items-center justify-between px-2"
         style={{
@@ -806,13 +827,13 @@ export default function ChatView({
           boxShadow: "0 1px 0 rgba(0,0,0,0.04)",
         }}
       >
-        {/* Left: conversations */}
+        {/* Left: back to the conversation list */}
         <button
-          onClick={() => setSidebarOpen(true)}
+          onClick={() => setListMode(true)}
           className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
-          aria-label="对话列表"
+          aria-label="返回对话列表"
         >
-          <Menu size={21} strokeWidth={1.6} />
+          <ChevronLeft size={24} strokeWidth={1.8} />
         </button>
 
         {/* Middle: avatar + name + status */}
@@ -1042,25 +1063,6 @@ export default function ChatView({
           onTheater={onOpenTheater}
         />
       </div>
-
-      <ConversationSidebar
-        open={sidebarOpen}
-        conversations={conversations}
-        currentId={currentId}
-        onSelect={(id) => {
-          setCurrentId(id);
-          setSidebarOpen(false);
-        }}
-        onNew={() => {
-          newConversation();
-          setSidebarOpen(false);
-        }}
-        onDelete={(id) => {
-          setConversations((prev) => prev.filter((c) => c.id !== id));
-          if (currentId === id) setCurrentId(null);
-        }}
-        onClose={() => setSidebarOpen(false)}
-      />
 
       {/* Action sheet */}
       {actionMsg && (
