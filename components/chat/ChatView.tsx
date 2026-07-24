@@ -1,7 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Menu, Plus, Check, X, Quote, Search, Gift, Asterisk } from "lucide-react";
+import {
+  Menu,
+  Plus,
+  Check,
+  X,
+  Quote,
+  Search,
+  Gift,
+  Asterisk,
+  MoreHorizontal,
+  Heart,
+  MessageSquareText,
+  AlignLeft,
+} from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid, load, save, KEYS } from "@/lib/storage";
 import { PetNotes, emptyNotes } from "@/lib/petNotes";
@@ -82,6 +95,7 @@ export default function ChatView({
   const [burstMode, setBurstMode] = useState(false);
   const [pendingQuote, setPendingQuote] = useState<MessageQuote | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [flashId, setFlashId] = useState<string | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -778,104 +792,133 @@ export default function ChatView({
 
   return (
     <div className="h-full relative overflow-hidden">
-      {/* Top bar — frosted glass overlay; messages scroll beneath it */}
+      {/* Top bar — three regions: menu · avatar+name+status · more */}
       <header
-        className="absolute top-0 inset-x-0 z-30 bg-cale-card border-b border-cale-divider flex items-center justify-between px-3 h-12"
-        style={{ paddingTop: "var(--safe-top)", height: "calc(var(--safe-top) + 3rem)" }}
+        className="absolute top-0 inset-x-0 z-30 bg-cale-card flex items-center justify-between px-2"
+        style={{
+          paddingTop: "var(--safe-top)",
+          height: "calc(var(--safe-top) + 3.5rem)",
+          boxShadow: "0 1px 0 rgba(0,0,0,0.04)",
+        }}
       >
-        {/* Left cluster */}
-        <div className="flex items-center">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
-            aria-label="对话列表"
-          >
-            <Menu size={22} strokeWidth={1.8} />
-          </button>
-          <QuotaIndicator />
-        </div>
-
-        {/* Centered title (absolute so it stays centered regardless of clusters) */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center"
-          style={{ top: "calc(var(--safe-top) + 0px)", height: "3rem", justifyContent: "center" }}
+        {/* Left: conversations */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
+          aria-label="对话列表"
         >
-          {editingName ? (
-            <div className="flex items-center gap-1">
-              <input
-                autoFocus
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && saveName()}
-                className="w-28 text-center text-[17px] font-semibold bg-cale-input rounded-lg px-2 py-0.5 outline-none"
-              />
-              <button onClick={saveName} className="text-cale-accent p-1">
-                <Check size={18} />
-              </button>
-              <button
-                onClick={() => {
-                  setEditingName(false);
-                  setNameDraft(displayName);
-                }}
-                className="text-cale-textLight p-1"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          ) : (
+          <Menu size={21} strokeWidth={1.6} />
+        </button>
+
+        {/* Middle: avatar + name + status */}
+        {editingName ? (
+          <div className="flex items-center gap-1">
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveName()}
+              className="w-28 text-center text-[15px] font-semibold bg-cale-input rounded-lg px-2 py-0.5 outline-none"
+            />
+            <button onClick={saveName} className="text-cale-accent p-1">
+              <Check size={18} />
+            </button>
             <button
               onClick={() => {
+                setEditingName(false);
                 setNameDraft(displayName);
-                setEditingName(true);
               }}
-              className="flex flex-col items-center active:opacity-60"
+              className="text-cale-textLight p-1"
             >
-              <span className="text-[17px] font-semibold leading-tight">
+              <X size={18} />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setNameDraft(displayName);
+              setEditingName(true);
+            }}
+            className="flex items-center gap-2 active:opacity-60"
+          >
+            <span
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgb(var(--cale-accent) / 0.14)" }}
+            >
+              <Heart size={16} fill="rgb(var(--cale-accent))" className="text-cale-accent" />
+            </span>
+            <span className="flex flex-col items-start leading-none">
+              <span className="text-[15px] font-semibold text-cale-textDark">
                 {displayName}
               </span>
-              {streaming && (
-                <span className="text-[11px] text-cale-textLight leading-tight mt-0.5">
-                  thinking quietly…
+              <span className="flex items-center gap-1 mt-0.5">
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: streaming ? "rgb(var(--cale-accent))" : "#8fcf9a" }}
+                />
+                <span className="text-[10px] text-cale-textLight">
+                  {streaming ? "正在想你…" : "在线"}
                 </span>
-              )}
-            </button>
-          )}
-        </div>
+              </span>
+            </span>
+          </button>
+        )}
 
-        {/* Right cluster */}
-        <div className="flex items-center">
+        {/* Right: more menu */}
+        <div className="relative">
           <button
-            onClick={() => {
-              setSearchQuery("");
-              setSearchOpen(true);
-            }}
+            onClick={() => setMoreOpen((o) => !o)}
             className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
-            aria-label="搜索聊天记录"
+            aria-label="更多"
           >
-            <Search size={19} strokeWidth={1.8} />
+            <MoreHorizontal size={22} strokeWidth={1.8} />
           </button>
-          <button
-            onClick={() =>
-              setSettings({
-                ...settings,
-                replyMode: settings.replyMode === "chat" ? "full" : "chat",
-              })
-            }
-            className="h-7 px-2 mx-1 rounded-full text-[11px] bg-cale-input text-cale-textLight active:opacity-70"
-            title="切换回复模式"
-          >
-            {settings.replyMode === "chat" ? "聊天" : "整段"}
-          </button>
-          <button
-            onClick={() => {
-              newConversation();
-              showToast("新对话已开始");
-            }}
-            className="w-9 h-9 flex items-center justify-center text-cale-accent active:opacity-60"
-            aria-label="新建对话"
-          >
-            <Plus size={22} strokeWidth={2} />
-          </button>
+          {moreOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
+              <div className="absolute right-0 top-10 z-50 w-44 bg-cale-card no-glass rounded-[14px] shadow-lg border border-cale-divider py-1.5">
+                <button
+                  onClick={() => {
+                    setMoreOpen(false);
+                    setSearchQuery("");
+                    setSearchOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[14px] text-cale-textDark active:bg-cale-input"
+                >
+                  <Search size={17} className="text-cale-textLight" /> 搜索聊天记录
+                </button>
+                <button
+                  onClick={() =>
+                    setSettings({
+                      ...settings,
+                      replyMode: settings.replyMode === "chat" ? "full" : "chat",
+                    })
+                  }
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[14px] text-cale-textDark active:bg-cale-input"
+                >
+                  <AlignLeft size={17} className="text-cale-textLight" /> 整段模式
+                  <span
+                    className={`ml-auto text-[11px] px-1.5 py-0.5 rounded-full ${settings.replyMode === "full" ? "bg-cale-accent text-white" : "bg-cale-input text-cale-textLight"}`}
+                  >
+                    {settings.replyMode === "full" ? "开" : "关"}
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMoreOpen(false);
+                    newConversation();
+                    showToast("新对话已开始");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[14px] text-cale-textDark active:bg-cale-input"
+                >
+                  <Plus size={17} className="text-cale-textLight" /> 新建对话
+                </button>
+                <div className="px-3.5 py-2 border-t border-cale-divider mt-1">
+                  <QuotaIndicator inline />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </header>
 
@@ -884,7 +927,7 @@ export default function ChatView({
         ref={scrollRef}
         className="absolute inset-0 overflow-y-auto no-scrollbar"
         style={{
-          paddingTop: "calc(var(--safe-top) + 3rem)",
+          paddingTop: "calc(var(--safe-top) + 3.5rem)",
           paddingBottom: footerH,
         }}
       >
