@@ -11,6 +11,7 @@ import {
   Wallet,
   Gift,
   Drama,
+  Layers,
 } from "lucide-react";
 import { ChatImage, Sticker } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
@@ -49,6 +50,7 @@ export default function ChatInput({
   const [images, setImages] = useState<ChatImage[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -104,24 +106,11 @@ export default function ChatInput({
     </button>
   );
 
-  const burstBtn = (
-    <button
-      onClick={onToggleBurst}
-      className={`flex-shrink-0 h-9 px-2.5 rounded-full text-[12px] active:opacity-70 ${
-        burstMode
-          ? "bg-cale-accent text-white"
-          : "bg-cale-input text-cale-textLight"
-      }`}
-      title="连发模式：连续发多条后再让 Cale 回复"
-    >
-      {burstMode ? "连发" : "单条"}
-    </button>
-  );
-
+  const hasContent = !!text.trim() || images.length > 0;
   const sendBtn = streaming ? (
     <button
       onClick={onStop}
-      className="flex-shrink-0 w-9 h-9 rounded-full bg-cale-accent text-white flex items-center justify-center active:opacity-80"
+      className="flex-shrink-0 w-10 h-10 rounded-full bg-cale-accent text-white flex items-center justify-center active:scale-90 transition-transform"
       aria-label="停止"
     >
       <Square size={14} fill="currentColor" />
@@ -129,8 +118,14 @@ export default function ChatInput({
   ) : (
     <button
       onClick={submit}
-      disabled={!text.trim() && images.length === 0}
-      className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 bg-cale-accent text-white"
+      disabled={!hasContent}
+      className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90"
+      style={{
+        background: hasContent
+          ? "linear-gradient(135deg, #e8887a, #d4736a)"
+          : "rgb(var(--cale-input))",
+        color: hasContent ? "#fff" : "rgb(var(--cale-textLight))",
+      }}
       aria-label="发送"
     >
       <Send size={17} strokeWidth={2} />
@@ -174,9 +169,9 @@ export default function ChatInput({
         </div>
       )}
 
-      {/* "+" action menu */}
+      {/* "+" action menu (layer 2) */}
       {menuOpen && (
-        <div className="mb-2 px-1">
+        <div className="mb-2 px-1 cale-slideup">
           <div className="flex items-center justify-center gap-3 mb-2 text-[12px] text-cale-textLight">
             <span>
               你 <span className="text-cale-accent font-medium">¥{wallet.quinn}</span>
@@ -187,7 +182,7 @@ export default function ChatInput({
               <span className="text-cale-accent font-medium">¥{wallet.cale}</span>
             </span>
           </div>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-5 gap-y-3">
             <MenuItem
               icon={<ImageIcon size={22} strokeWidth={1.8} />}
               label="照片"
@@ -224,6 +219,12 @@ export default function ChatInput({
                 setMenuOpen(false);
                 onTheater();
               }}
+            />
+            <MenuItem
+              icon={<Layers size={22} strokeWidth={1.8} />}
+              label={burstMode ? "连发中" : "连发"}
+              active={burstMode}
+              onClick={onToggleBurst}
             />
           </div>
         </div>
@@ -282,21 +283,45 @@ export default function ChatInput({
           />
           <div className="flex items-center gap-2">
             {plusBtn}
-            {burstBtn}
             <div className="flex-1" />
             {sendBtn}
           </div>
         </div>
       ) : (
         <div className="flex items-end gap-2">
-          {plusBtn}
-          {burstBtn}
-          <div className="flex-1 bg-cale-input rounded-[22px] px-4 py-2">
+          <div
+            className="flex-1 flex items-center gap-1 rounded-[24px] pl-2 pr-3 transition-colors duration-200"
+            style={{
+              minHeight: 44,
+              background: focused ? "rgb(var(--cale-card))" : "rgb(var(--cale-input))",
+              border: focused
+                ? "1px solid rgb(var(--cale-accent) / 0.4)"
+                : "1px solid transparent",
+            }}
+          >
+            <button
+              onClick={() => {
+                setMenuOpen((m) => !m);
+                setTrayOpen(false);
+              }}
+              className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-cale-textLight active:opacity-60"
+              aria-label="更多"
+            >
+              <Plus
+                size={20}
+                style={{
+                  transform: menuOpen ? "rotate(45deg)" : "none",
+                  transition: "transform 0.15s",
+                }}
+              />
+            </button>
             <textarea
               ref={taRef}
               value={text}
               rows={1}
-              placeholder="和 Cale 说点什么…"
+              placeholder="说点什么…"
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
               onChange={(e) => {
                 setText(e.target.value);
                 resize();
@@ -311,7 +336,7 @@ export default function ChatInput({
                   submit();
                 }
               }}
-              className="w-full bg-transparent outline-none resize-none text-[16px] leading-[22px] max-h-[108px] no-scrollbar placeholder:text-cale-textLight"
+              className="flex-1 bg-transparent outline-none resize-none text-[16px] leading-[22px] py-[11px] max-h-[108px] no-scrollbar placeholder:text-cale-textLight"
             />
           </div>
           {sendBtn}
@@ -325,17 +350,21 @@ function MenuItem({
   icon,
   label,
   onClick,
+  active,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
+  active?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       className="flex flex-col items-center gap-1 active:opacity-70"
     >
-      <span className="w-12 h-12 rounded-[14px] bg-cale-input flex items-center justify-center text-cale-accent">
+      <span
+        className={`w-12 h-12 rounded-[14px] flex items-center justify-center ${active ? "bg-cale-accent text-white" : "bg-cale-input text-cale-accent"}`}
+      >
         {icon}
       </span>
       <span className="text-[11px] text-cale-textLight">{label}</span>

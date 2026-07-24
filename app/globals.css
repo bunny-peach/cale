@@ -620,6 +620,21 @@ mark {
   will-change: transform;
 }
 
+/* Input expand sheet slide-up */
+@keyframes cale-slideup {
+  0% {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.cale-slideup {
+  animation: cale-slideup 0.2s ease-out;
+}
+
 /* Cups mini-game shuffle */
 @keyframes cup-shuffle {
   0%,

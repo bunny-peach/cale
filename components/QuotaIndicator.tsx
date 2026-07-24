@@ -37,10 +37,27 @@ function Bar({ label, w }: { label: string; w: QuotaWindow }) {
   );
 }
 
-export default function QuotaIndicator() {
+export default function QuotaIndicator({ inline = false }: { inline?: boolean }) {
   const { quotaEvents } = useApp();
   const [open, setOpen] = useState(false);
   const summary = useMemo(() => summarizeQuota(quotaEvents), [quotaEvents]);
+
+  // Inline mode: a compact always-visible summary (used inside the more-menu).
+  if (inline) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-[12px] text-cale-textLight">
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ background: DOT[summary.status] }}
+          />
+          订阅额度（估算）
+        </div>
+        <Bar label="5 小时窗口" w={summary.fiveHour} />
+        <Bar label="本周" w={summary.weekly} />
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
