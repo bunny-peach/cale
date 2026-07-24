@@ -46,25 +46,30 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // WeChat-style time separators: show one only after a gap since the last message.
 const STAMP_GAP = 5 * 60 * 1000;
 const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+function periodLabel(h: number): string {
+  if (h < 6) return "凌晨";
+  if (h < 12) return "上午";
+  if (h < 13) return "中午";
+  if (h < 18) return "下午";
+  return "晚上";
+}
 function formatStamp(ts: number): string {
   const d = new Date(ts);
   const now = new Date();
-  const hm = d.toLocaleTimeString("zh-CN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  if (d.toDateString() === now.toDateString()) return hm;
+  const h = d.getHours();
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  // Today → "下午 3:42" (12-hour with a Chinese period label).
+  if (d.toDateString() === now.toDateString()) {
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${periodLabel(h)} ${h12}:${mm}`;
+  }
+  const hm24 = `${String(h).padStart(2, "0")}:${mm}`;
   const yst = new Date(now);
   yst.setDate(now.getDate() - 1);
-  if (d.toDateString() === yst.toDateString()) return `昨天 ${hm}`;
+  if (d.toDateString() === yst.toDateString()) return `昨天 ${hm24}`;
   if ((now.getTime() - d.getTime()) / 86400000 < 7)
-    return `${WEEKDAYS[d.getDay()]} ${hm}`;
-  return (
-    d.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" }) +
-    " " +
-    hm
-  );
+    return `${WEEKDAYS[d.getDay()]} ${hm24}`;
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${hm24}`;
 }
 
 export default function ChatView({
@@ -935,7 +940,7 @@ export default function ChatView({
           className={
             claudeTheme
               ? "max-w-[720px] mx-auto px-4 py-6 space-y-6"
-              : "px-3 py-3 space-y-3"
+              : "px-4 py-3 space-y-4"
           }
         >
           {messages.length === 0 && (
@@ -950,7 +955,7 @@ export default function ChatView({
             return (
               <div key={m.id}>
                 {showStamp && (
-                  <div className="text-center text-[11px] text-cale-textLight my-2 select-none">
+                  <div className="text-center text-[12px] text-cale-textLight my-5 select-none">
                     {formatStamp(m.createdAt)}
                   </div>
                 )}
