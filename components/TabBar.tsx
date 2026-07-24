@@ -25,8 +25,11 @@ export default function TabBar({
 }) {
   return (
     <nav
-      className="flex-shrink-0 bg-cale-card border-t border-cale-divider"
-      style={{ paddingBottom: "var(--safe-bottom)" }}
+      className="flex-shrink-0 bg-cale-card"
+      style={{
+        paddingBottom: "var(--safe-bottom)",
+        boxShadow: "0 -1px 0 rgba(0,0,0,0.04)",
+      }}
     >
       <div className="flex">
         {TABS.map(({ key, label, Icon }) => {
@@ -35,17 +38,24 @@ export default function TabBar({
             <button
               key={key}
               onClick={() => onChange(key)}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 active:opacity-60 transition-opacity ${
+              className={`flex-1 flex flex-col items-center justify-center gap-1 pt-2 pb-1.5 active:opacity-60 transition-colors ${
                 on ? "text-cale-accent" : "text-cale-textLight"
               }`}
             >
-              <Icon size={22} strokeWidth={on ? 2.2 : 1.8} />
+              <span key={on ? "on" : "off"} className={on ? "tab-bounce" : undefined}>
+                <Icon size={22} strokeWidth={on ? 2 : 1.7} />
+              </span>
               <span
-                className="text-[15px] leading-none"
+                className="text-[13px] leading-none"
                 style={{ fontFamily: SCRIPT_FONT }}
               >
                 {label}
               </span>
+              {/* small dot indicator for the active tab */}
+              <span
+                className="w-1 h-1 rounded-full transition-colors"
+                style={{ background: on ? "rgb(var(--cale-accent))" : "transparent" }}
+              />
             </button>
           );
         })}
