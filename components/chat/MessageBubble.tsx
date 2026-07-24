@@ -25,7 +25,6 @@ export default function MessageBubble({
 }) {
   const { settings } = useApp();
   const claude = settings.theme === "claude";
-  const glass = settings.theme === "glass";
   const isUser = message.role === "user";
   const isPayload = !!message.payload;
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -103,7 +102,7 @@ export default function MessageBubble({
       ? isUser
         ? "bg-cale-userBubble rounded-[18px] px-4 py-2.5 text-[15px]"
         : "px-0.5 py-0.5 text-[16px] leading-[1.8]"
-      : `${isUser ? "bg-cale-userBubble" : "bg-cale-card no-glass"} px-3 py-1.5 text-[14.5px]`;
+      : `${isUser ? "bg-cale-userBubble" : "bg-cale-card no-glass"} px-[15px] py-[10px] text-[15px]`;
 
   return (
     <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
@@ -114,10 +113,10 @@ export default function MessageBubble({
       )}
 
       <div
-        className={`flex items-center gap-1.5 ${
+        className={`flex items-center gap-2.5 ${
           isUser ? "flex-row-reverse" : ""
         } ${
-          claude ? (isUser ? "max-w-[85%]" : "w-full") : "max-w-[70%]"
+          claude ? (isUser ? "max-w-[85%]" : "w-full") : "max-w-[75%]"
         }`}
       >
         <div
@@ -157,33 +156,19 @@ export default function MessageBubble({
               claude || isPayload
                 ? undefined
                 : {
-                    borderRadius: 16,
-                    borderBottomRightRadius: isUser ? 5 : 16,
-                    borderBottomLeftRadius: isUser ? 16 : 5,
-                    boxShadow: isUser
-                      ? "none"
-                      : "0 1px 2px rgb(var(--cale-textDark) / 0.06)",
+                    borderRadius: 18,
+                    borderBottomRightRadius: isUser ? 4 : 18,
+                    borderBottomLeftRadius: isUser ? 18 : 4,
+                    boxShadow: "none",
+                    border: isUser
+                      ? "1px solid rgb(var(--cale-userBubble))"
+                      : "1px solid rgb(var(--cale-divider))",
                   }
             }
           >
           {/* Transfer / gift card */}
           {message.payload && (
             <PayloadCard payload={message.payload} isUser={isUser} />
-          )}
-          {/* Tail — pink theme only. Glass keeps the squared corner, no tail. */}
-          {!claude && !glass && !isPayload && (
-            <span
-              className={`absolute bottom-0 w-3 h-3 ${
-                isUser ? "bg-cale-userBubble" : "bg-cale-card no-glass"
-              }`}
-              style={{
-                right: isUser ? -5 : undefined,
-                left: isUser ? undefined : -5,
-                clipPath: isUser
-                  ? "polygon(0 0, 0 100%, 100% 100%)"
-                  : "polygon(100% 0, 100% 100%, 0 100%)",
-              }}
-            />
           )}
           {!isPayload && message.images && message.images.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-1.5">
@@ -225,14 +210,17 @@ export default function MessageBubble({
             className="flex-shrink-0 p-1 active:opacity-60"
             aria-label="点赞"
           >
-            <Heart
-              size={15}
-              strokeWidth={1.8}
-              className={
-                message.liked ? "text-cale-accent" : "text-cale-textLight"
-              }
-              fill={message.liked ? "rgb(var(--cale-accent))" : "none"}
-            />
+            <span
+              key={message.liked ? "on" : "off"}
+              className={`inline-flex ${message.liked ? "heart-pop" : ""}`}
+            >
+              <Heart
+                size={16}
+                strokeWidth={1.8}
+                style={{ color: message.liked ? "#e88b7a" : "#d4b5ab" }}
+                fill={message.liked ? "#e88b7a" : "none"}
+              />
+            </span>
           </button>
         )}
       </div>
