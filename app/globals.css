@@ -13,13 +13,13 @@
 
 :root,
 :root[data-theme="pink"] {
-  /* Cool-toned rose (blue undertone), not warm coral/salmon. */
-  --cale-bg: 250 240 246;
+  /* Cool-toned rose (blue undertone), not warm coral/salmon. Kept light. */
+  --cale-bg: 251 242 247;
   --cale-card: 255 255 255;
-  --cale-primary: 203 116 150;
-  --cale-accent: 203 116 150;
-  --cale-input: 242 236 241;
-  --cale-userBubble: 245 217 230;
+  --cale-primary: 218 150 180;
+  --cale-accent: 218 150 180;
+  --cale-input: 244 238 242;
+  --cale-userBubble: 249 227 238;
   --cale-thinking: 249 238 244;
   --cale-divider: 235 226 233;
   --cale-textDark: 56 50 55;
@@ -58,8 +58,8 @@
     /* Cool rose on a slightly plum-tinted dark, not warm brown. */
     --cale-bg: 23 21 25;
     --cale-card: 40 36 41;
-    --cale-primary: 210 136 166;
-    --cale-accent: 210 136 166;
+    --cale-primary: 216 152 180;
+    --cale-accent: 216 152 180;
     --cale-input: 32 30 35;
     --cale-userBubble: 52 42 51;
     --cale-thinking: 43 37 44;

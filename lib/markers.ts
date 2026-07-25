@@ -106,3 +106,54 @@ export function splitMessageBreaks(text: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean);
 }
+
+/**
+ * Segment a reply for 聊天模式 (send-as-several-bubbles). We prefer the
+ * model's own [MSG_BREAK] markers, but models often forget them — so when
+ * there's only one segment we fall back to natural boundaries (blank lines,
+ * then sentence enders) so the toggle actually does something. Content that
+ * looks like code / an HTML artifact is never auto-split.
+ */
+export function chatSegments(text: string): string[] {
+  const byMarker = splitMessageBreaks(text);
+  if (byMarker.length > 1) return byMarker;
+
+  const body = byMarker[0] ?? "";
+  if (!body) return [];
+  // Leave structured content (code fences / raw HTML) as a single bubble.
+  if (/```|<\/?[a-z][\s\S]*>/i.test(body)) return [body];
+
+  // Prefer blank-line paragraphs when the model wrote them.
+  const paras = body
+    .split(/\n{2,}/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (paras.length > 1) return capSegments(paras);
+
+  // Otherwise break on sentence enders, grouping ~1 sentence per bubble but
+  // gluing very short fragments onto the previous one so bubbles aren't tiny.
+  const pieces = body
+    .replace(/\n+/g, " ")
+    .split(/(?<=[。！？!?…]["'”’)]?)\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (pieces.length <= 1) return [body];
+
+  const merged: string[] = [];
+  for (const p of pieces) {
+    if (merged.length && (merged[merged.length - 1].length < 6 || p.length < 6)) {
+      merged[merged.length - 1] += p;
+    } else {
+      merged.push(p);
+    }
+  }
+  return capSegments(merged);
+}
+
+// Keep the bubble count sane: once we hit the cap, the remainder is one bubble.
+function capSegments(segs: string[], max = 6): string[] {
+  if (segs.length <= max) return segs;
+  const head = segs.slice(0, max - 1);
+  head.push(segs.slice(max - 1).join(" "));
+  return head;
+}

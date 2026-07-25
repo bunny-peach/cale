@@ -66,9 +66,12 @@ function fmtDateTime(d: Date, withWeekday: boolean): string {
   return withWeekday ? `${base} ${WEEKDAY[d.getDay()]}` : base;
 }
 
-export const THEATER_INSTRUCTION =
-  "【小剧场模式】当前为小剧场模式，请以小说质感写作，字数不少于 4000 字，" +
-  "文笔细腻，感官描写丰富，节奏舒缓，注重场景、动作与心理刻画，不受输出长度限制。";
+export function theaterInstruction(minWords = 2000): string {
+  return (
+    `【小剧场模式】当前为小剧场模式，请以小说质感写作，字数不少于 ${minWords} 字，` +
+    "文笔细腻，感官描写丰富，节奏舒缓，注重场景、动作与心理刻画，不受输出长度限制。"
+  );
+}
 
 export function buildSystemPrompt(ctx: PromptContext): string {
   const parts: string[] = [];
@@ -149,7 +152,7 @@ export function buildSystemPrompt(ctx: PromptContext): string {
 
   // 小剧场模式
   if (ctx.theater) {
-    parts.push(THEATER_INSTRUCTION);
+    parts.push(theaterInstruction(ctx.settings.theaterMinWords || 2000));
   }
 
   // 自主标记说明
