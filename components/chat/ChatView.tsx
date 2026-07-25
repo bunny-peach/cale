@@ -30,7 +30,7 @@ import {
   buildMemoryContext,
   MEMORY_SUMMARY_PROMPT,
 } from "@/lib/prompt";
-import { parseMarkers, splitMessageBreaks } from "@/lib/markers";
+import { parseMarkers, chatSegments } from "@/lib/markers";
 import { findGift, Gift as GiftType } from "@/lib/gifts";
 import { petPromptSummary } from "@/lib/pets";
 import MessageBubble from "./MessageBubble";
@@ -417,8 +417,10 @@ export default function ChatView({
       else if (parsed.mcpAdds.length || parsed.songAdds.length || parsed.bookAdds.length)
         showToast("Cale 悄悄记下了一些东西");
 
-      const segments = splitMessageBreaks(parsed.cleanText);
       const chatMode = app.settings.replyMode === "chat";
+      const segments = chatMode
+        ? chatSegments(parsed.cleanText)
+        : [parsed.cleanText];
 
       if (chatMode && segments.length > 1) {
         // First segment replaces the placeholder

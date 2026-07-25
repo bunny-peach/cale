@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { List, Plus, Square, Send, Trash2, X, ChevronLeft } from "lucide-react";
+import { List, Plus, Square, Send, Trash2, X, ChevronLeft, SlidersHorizontal } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { uid, load, save, KEYS } from "@/lib/storage";
 import { Conversation, Message } from "@/lib/types";
@@ -24,11 +24,14 @@ export default function TheaterView({ onClose }: { onClose?: () => void }) {
     theaterCurrentId: currentId,
     setTheaterCurrentId: setCurrentId,
     settings,
+    setSettings,
   } = app;
 
   const [listOpen, setListOpen] = useState(false);
+  const [setOpen, setSetOpen] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [text, setText] = useState("");
+  const minWords = settings.theaterMinWords || 2000;
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -248,6 +251,59 @@ export default function TheaterView({ onClose }: { onClose?: () => void }) {
           <div className="text-[11px] text-cale-textLight leading-tight">
             小说质感 · 长篇沉浸
           </div>
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setSetOpen((o) => !o)}
+            className="w-9 h-9 flex items-center justify-center text-cale-textLight active:opacity-60"
+            aria-label="剧场设定"
+          >
+            <SlidersHorizontal size={19} strokeWidth={1.8} />
+          </button>
+          {setOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setSetOpen(false)} />
+              <div className="absolute right-0 top-11 z-50 w-56 bg-cale-card no-glass rounded-[14px] shadow-lg border border-cale-divider p-3.5">
+                <div className="text-[13px] font-medium text-cale-textDark mb-1">
+                  最少输出字数
+                </div>
+                <div className="text-[11px] text-cale-textLight mb-2.5">
+                  每次小剧场至少写这么多字
+                </div>
+                <div className="grid grid-cols-4 gap-1.5 mb-2.5">
+                  {[500, 1000, 2000, 4000].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() =>
+                        setSettings({ ...settings, theaterMinWords: n })
+                      }
+                      className={`py-1.5 rounded-[9px] text-[12px] transition-colors ${
+                        minWords === n
+                          ? "bg-cale-accent text-white"
+                          : "bg-cale-input text-cale-textDark"
+                      }`}
+                    >
+                      {n >= 1000 ? `${n / 1000}k` : n}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={100}
+                    step={100}
+                    value={minWords}
+                    onChange={(e) => {
+                      const v = Math.max(100, Math.round(Number(e.target.value) || 0));
+                      setSettings({ ...settings, theaterMinWords: v });
+                    }}
+                    className="flex-1 w-0 bg-cale-input rounded-[9px] px-2.5 py-1.5 text-[13px] outline-none text-cale-textDark"
+                  />
+                  <span className="text-[12px] text-cale-textLight">字</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
         <button
           onClick={newPiece}
