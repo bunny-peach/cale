@@ -641,11 +641,50 @@ mark {
 :root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"]) .app-bg {
   background-image: linear-gradient(160deg, #ece3db 0%, #e4dbd2 52%, #ece4dc 100%);
 }
+/*
+ * In light OS mode the night ambience also mutes every surface: pure-white
+ * cards/bubbles would glare against the warm backdrop, so we retint the theme
+ * variables toward a soft cream and warm the frosted (header/tab) glass too.
+ * Scoped to light only — dark mode is already soft and just needs the backdrop.
+ */
+@media (prefers-color-scheme: light) {
+  :root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"]) {
+    --cale-bg: 236 227 219;
+    --cale-card: 242 235 228;
+    --cale-userBubble: 236 213 205;
+    --cale-input: 233 225 217;
+    --cale-thinking: 240 231 225;
+    --cale-divider: 227 217 209;
+    --cale-textDark: 72 64 58;
+    --cale-textLight: 158 146 138;
+  }
+  :root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"])
+    .bg-cale-card:not(.no-glass) {
+    background-color: rgb(242 235 228 / 0.74);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+  }
+}
 @media (prefers-color-scheme: dark) {
   :root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"]) body,
   :root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"]) .app-bg {
     background-image: linear-gradient(160deg, #211d1a 0%, #1a1613 50%, #221d19 100%);
   }
+}
+
+/* Soft pulse for the "thinking" status dot in the chat header */
+@keyframes cale-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+.cale-pulse {
+  animation: cale-pulse 1.1s ease-in-out infinite;
 }
 
 /* Tab bar icon bounce when a tab is selected */
