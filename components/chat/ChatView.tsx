@@ -137,18 +137,26 @@ export default function ChatView({
   };
 
   const scrollToBottom = (smooth = true) => {
+    // Two frames: the first lets the newly-mounted message list lay out, the
+    // second scrolls once its real height is known (jumping straight to the
+    // latest message instead of resting at the top).
     requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: smooth ? "smooth" : "auto",
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: smooth ? "smooth" : "auto",
+        });
       });
     });
   };
 
+  // Jump to the newest message whenever a conversation opens — both when the
+  // active id changes and when we leave the list to enter the thread (the id
+  // may be unchanged, so listMode must be a dependency too).
   useEffect(() => {
-    scrollToBottom(false);
+    if (!listMode) scrollToBottom(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentId]);
+  }, [currentId, listMode]);
 
   const updateConversation = (
     id: string,
@@ -766,9 +774,12 @@ export default function ChatView({
   };
 
   const saveName = () => {
-    app.updateCaleName(nameDraft);
+    // The header name belongs to *this* conversation: renaming it retitles the
+    // open thread (empty falls back to Cale's name), rather than the global one.
+    if (currentId)
+      updateConversation(currentId, (c) => ({ ...c, title: nameDraft.trim() }));
     setEditingName(false);
-    showToast("备注名已更新");
+    showToast("对话名已更新");
   };
 
   const messages = current?.messages ?? [];
@@ -778,6 +789,9 @@ export default function ChatView({
     messages.length > 0 &&
     messages[messages.length - 1].role === "user";
   const displayName = settings.caleName || "Cale";
+  // Title shown in the thread header: the conversation's own name, or Cale's
+  // name as a default when it hasn't been renamed.
+  const convTitle = current?.title?.trim() || displayName;
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -842,9 +856,10 @@ export default function ChatView({
             <input
               autoFocus
               value={nameDraft}
+              placeholder={displayName}
               onChange={(e) => setNameDraft(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && saveName()}
-              className="w-28 text-center text-[15px] font-semibold bg-cale-input rounded-lg px-2 py-0.5 outline-none"
+              className="w-32 text-center text-[15px] font-semibold bg-cale-input rounded-lg px-2 py-0.5 outline-none placeholder:text-cale-textLight placeholder:font-normal"
             />
             <button onClick={saveName} className="text-cale-accent p-1">
               <Check size={18} />
@@ -862,7 +877,7 @@ export default function ChatView({
         ) : (
           <button
             onClick={() => {
-              setNameDraft(displayName);
+              setNameDraft(current?.title?.trim() || "");
               setEditingName(true);
             }}
             className="flex items-center gap-2 active:opacity-60"
@@ -874,13 +889,13 @@ export default function ChatView({
               <Heart size={16} fill="rgb(var(--cale-accent))" className="text-cale-accent" />
             </span>
             <span className="flex flex-col items-start leading-none">
-              <span className="text-[15px] font-semibold text-cale-textDark">
-                {displayName}
+              <span className="text-[15px] font-semibold text-cale-textDark max-w-[42vw] truncate">
+                {convTitle}
               </span>
               <span className="flex items-center gap-1 mt-0.5">
                 <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ background: streaming ? "rgb(var(--cale-accent))" : "#8fcf9a" }}
+                  className={`w-1.5 h-1.5 rounded-full ${streaming ? "cale-pulse" : ""}`}
+                  style={{ background: "rgb(var(--cale-accent))" }}
                 />
                 <span className="text-[10px] text-cale-textLight">
                   {streaming ? "正在想你…" : "在线"}
