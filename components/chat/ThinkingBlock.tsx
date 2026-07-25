@@ -38,7 +38,10 @@ export default function ThinkingBlock({
       {open && (
         <div
           className="mt-1.5 rounded-[12px] px-3 py-2.5 text-[13px] leading-relaxed"
-          style={{ border: "1px dashed #e8d5cf", color: "#8b7d77" }}
+          style={{
+            border: "1px dashed rgb(var(--cale-divider))",
+            color: "rgb(var(--cale-textLight))",
+          }}
         >
           <Markdown>{thinking}</Markdown>
           {streaming && <span className="cale-cursor" />}

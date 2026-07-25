@@ -620,6 +620,34 @@ mark {
   will-change: transform;
 }
 
+/* Loading splash quote — hold, then fade out */
+@keyframes cale-splash {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.cale-splash {
+  animation: cale-splash 2.4s ease forwards;
+}
+
+/* Late-night ambience: warm milk-tea backdrop for the light pink theme */
+:root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"]) body {
+  background-image: linear-gradient(160deg, #ece3db 0%, #e4dbd2 52%, #ece4dc 100%);
+}
+:root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"]) .app-bg {
+  background-image: linear-gradient(160deg, #ece3db 0%, #e4dbd2 52%, #ece4dc 100%);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"]) body,
+  :root[data-night="1"]:not([data-theme="glass"]):not([data-theme="claude"]) .app-bg {
+    background-image: linear-gradient(160deg, #211d1a 0%, #1a1613 50%, #221d19 100%);
+  }
+}
+
 /* Tab bar icon bounce when a tab is selected */
 @keyframes tab-bounce {
   0% {

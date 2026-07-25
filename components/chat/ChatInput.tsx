@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Plus,
   Send,
@@ -51,8 +51,34 @@ export default function ChatInput({
   const [menuOpen, setMenuOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [idle, setIdle] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // After 30s of total inactivity the placeholder quietly changes, as if Cale
+  // is wondering whether you're still there.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const arm = () => {
+      setIdle(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setIdle(true), 30000);
+    };
+    const events = ["pointerdown", "keydown", "touchstart"] as const;
+    events.forEach((e) => window.addEventListener(e, arm, { passive: true }));
+    arm();
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, arm));
+    };
+  }, []);
+
+  const placeholder =
+    idle && !text
+      ? "……你还在吗"
+      : claude
+        ? "和 Cale 说点什么…"
+        : "说点什么…";
 
   const resize = () => {
     const ta = taRef.current;
@@ -122,7 +148,7 @@ export default function ChatInput({
       className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90"
       style={{
         background: hasContent
-          ? "linear-gradient(135deg, #e8887a, #d4736a)"
+          ? "linear-gradient(135deg, rgb(var(--cale-accent)), rgb(var(--cale-primary)))"
           : "rgb(var(--cale-input))",
         color: hasContent ? "#fff" : "rgb(var(--cale-textLight))",
       }}
@@ -268,7 +294,7 @@ export default function ChatInput({
             ref={taRef}
             value={text}
             rows={1}
-            placeholder="和 Cale 说点什么…"
+            placeholder={placeholder}
             onChange={(e) => {
               setText(e.target.value);
               resize();
@@ -319,7 +345,7 @@ export default function ChatInput({
               ref={taRef}
               value={text}
               rows={1}
-              placeholder="说点什么…"
+              placeholder={placeholder}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onChange={(e) => {

@@ -217,8 +217,12 @@ export default function MessageBubble({
               <Heart
                 size={16}
                 strokeWidth={1.8}
-                style={{ color: message.liked ? "#e88b7a" : "#d4b5ab" }}
-                fill={message.liked ? "#e88b7a" : "none"}
+                style={{
+                  color: message.liked
+                    ? "rgb(var(--cale-accent))"
+                    : "rgb(var(--cale-textLight))",
+                }}
+                fill={message.liked ? "rgb(var(--cale-accent))" : "none"}
               />
             </span>
           </button>
