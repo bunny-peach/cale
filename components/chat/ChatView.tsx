@@ -340,7 +340,7 @@ export default function ChatView({
       );
       parsed.moodNotes.forEach((n) => app.setTodayMoodNote(n));
       parsed.diaryAdds.forEach((d) => app.addDiary(d.title, d.content));
-      // Cale leaves a handwritten sticky note by the pets' nest for Quinn
+      // Soren leaves a handwritten sticky note by the pets' nest for Quinn
       if (parsed.petNotes.length) {
         const existing = load<PetNotes>(KEYS.petNotes, emptyNotes());
         const added = parsed.petNotes.map((text) => ({
@@ -352,9 +352,9 @@ export default function ChatView({
           ...existing,
           toQuinn: [...added, ...existing.toQuinn].slice(0, 60),
         });
-        showToast("Cale 在窝边留了一张便签");
+        showToast("Soren 在窝边留了一张便签");
       }
-      // Cale tends to his own rabbit / pranks Quinn's wolf
+      // Soren tends to his own rabbit / pranks Quinn's wolf
       if (parsed.petActions.length) {
         const clampPet = (n: number) => Math.max(0, Math.min(100, n));
         const wolfPranks = [
@@ -394,7 +394,7 @@ export default function ChatView({
           return { wolf, rabbit };
         });
       }
-      // Cale sends Quinn a gift
+      // Soren sends Quinn a gift
       parsed.giftSends.forEach((name) => {
         const gift = findGift(name);
         app.applyGift("cale", gift?.name ?? name, gift?.price ?? 0);
@@ -420,11 +420,11 @@ export default function ChatView({
       });
       if (parsed.giftSends.length) {
         celebrateFor({ type: "gift", giftName: parsed.giftSends[0] });
-        showToast("Cale 送了你一个礼物");
+        showToast("Soren 送了你一个礼物");
       }
-      if (parsed.diaryAdds.length) showToast("Cale 写了一篇日记");
+      if (parsed.diaryAdds.length) showToast("Soren 写了一篇日记");
       else if (parsed.mcpAdds.length || parsed.songAdds.length || parsed.bookAdds.length)
-        showToast("Cale 悄悄记下了一些东西");
+        showToast("Soren 悄悄记下了一些东西");
 
       // 网页模式：pull the HTML document out and render it as an artifact card
       // instead of a wall of code (and never chat-split it).
@@ -563,7 +563,7 @@ export default function ChatView({
       text || "图片"
     );
     scrollToBottom();
-    if (burstMode) return; // wait for "让 Cale 回复"
+    if (burstMode) return; // wait for "让 Soren 回复"
 
     const assistantMsg: Message = {
       id: uid(),
@@ -748,7 +748,7 @@ export default function ChatView({
 
   const handleQuote = (m: Message) => {
     setPendingQuote({
-      author: settings.caleName || "Cale",
+      author: settings.caleName || "Soren",
       text: m.content,
     });
     showToast("已引用，输入你的回复");
@@ -807,10 +807,10 @@ export default function ChatView({
   };
 
   const saveName = () => {
-    // The header shows Cale's own name (备注名) and is stable across
+    // The header shows Soren's own name (备注名) and is stable across
     // conversations — renaming here updates that global note, not the thread's
     // auto-title. (Per-conversation names are renamed from the list.)
-    app.updateCaleName(nameDraft.trim() || "Cale");
+    app.updateCaleName(nameDraft.trim() || "Soren");
     setEditingName(false);
     showToast("备注名已更新");
   };
@@ -821,7 +821,7 @@ export default function ChatView({
     !streaming &&
     messages.length > 0 &&
     messages[messages.length - 1].role === "user";
-  const displayName = settings.caleName || "Cale";
+  const displayName = settings.caleName || "Soren";
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -1049,7 +1049,7 @@ export default function ChatView({
             );
           })}
 
-          {/* Claude-style footer: Cale mark + disclaimer */}
+          {/* Claude-style footer: Soren mark + disclaimer */}
           {claudeTheme && messages.length > 0 && !streaming && (
             <div className="flex items-start gap-2 pt-1 text-cale-textLight">
               <Asterisk
@@ -1136,7 +1136,7 @@ export default function ChatView({
                 onClick={() => handleUndo(actionMsg)}
                 className="w-full py-3.5 text-center text-[16px] text-cale-textDark active:bg-cale-input rounded-xl"
               >
-                撤回（连同 Cale 的回复）
+                撤回（连同 Soren 的回复）
               </button>
             )}
             {actionMsg.role === "assistant" && actionMsg.content && (

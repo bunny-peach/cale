@@ -170,7 +170,7 @@ export default function SettingsView({
       >
         {app.apiConfig.provider === "proxy" && !app.apiConfig.baseURL && (
           <div className="bg-cale-userBubble/60 rounded-[14px] px-4 py-3 text-[13px] text-cale-accent">
-            请先配置 API，就能开始和 Cale 聊天啦。
+            请先配置 API，就能开始和 Soren 聊天啦。
           </div>
         )}
 
@@ -195,7 +195,7 @@ export default function SettingsView({
           />
         </Group>
 
-        <Group title="Cale 的小世界">
+        <Group title="Soren 的小世界">
           <Row
             label="记忆库"
             Icon={Brain}
@@ -209,7 +209,7 @@ export default function SettingsView({
             onClick={() => setPage("wishlist")}
           />
           <Row
-            label="Cale 的推荐"
+            label="Soren 的推荐"
             Icon={Gift}
             value={`${app.playlist.length + app.bookshelf.length} 条`}
             onClick={() => setPage("recommend")}
@@ -346,7 +346,7 @@ export default function SettingsView({
               </button>
             </div>
             <p className="text-[12px] text-cale-textLight mt-2">
-              让 Cale 感知当前时间，以及你上次找他的时间。
+              让 Soren 感知当前时间，以及你上次找他的时间。
             </p>
           </div>
           <div className="px-4 py-3.5">
@@ -394,7 +394,7 @@ export default function SettingsView({
               </div>
             )}
             <p className="text-[12px] text-cale-textLight mt-2">
-              开启后会请求定位，获取当地天气附加到 prompt，Cale 会自然地关心你。
+              开启后会请求定位，获取当地天气附加到 prompt，Soren 会自然地关心你。
             </p>
           </div>
         </Group>
@@ -457,7 +457,7 @@ export default function SettingsView({
               />
             </div>
             <p className="text-[12px] text-cale-textLight">
-              Cale 的备注名可在聊天页顶部点击名字直接修改。
+              Soren 的备注名可在聊天页顶部点击名字直接修改。
             </p>
           </div>
         </Group>
@@ -485,7 +485,7 @@ export default function SettingsView({
         </Group>
 
         <div className="text-center text-[12px] text-cale-textLight pt-2 pb-4">
-          Cale · 只属于你的 AI 伙伴
+          Soren · 只属于你的 AI 伙伴
         </div>
       </div>
 

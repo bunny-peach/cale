@@ -63,7 +63,7 @@ export default function ApiSettings({ onBack }: { onBack: () => void }) {
     setApiConfig(draft);
     try {
       const reply = await testConnection(draft);
-      setResult({ ok: true, msg: `连接成功！Cale 回复：${reply.slice(0, 60)}` });
+      setResult({ ok: true, msg: `连接成功！Soren 回复：${reply.slice(0, 60)}` });
     } catch (e) {
       setResult({ ok: false, msg: (e as Error).message });
     } finally {

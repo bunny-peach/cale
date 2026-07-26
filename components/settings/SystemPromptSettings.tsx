@@ -37,7 +37,7 @@ export default function SystemPromptSettings({
       <div className="flex-1 flex flex-col px-4 py-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[13px] text-cale-textLight">
-            Cale 的人设手册
+            Soren 的人设手册
           </span>
           <span className="text-[12px] text-cale-textLight">
             {draft.length} 字
@@ -49,7 +49,7 @@ export default function SystemPromptSettings({
             setDraft(e.target.value);
             setSaved(false);
           }}
-          placeholder="在这里粘贴 Cale 的手册内容…"
+          placeholder="在这里粘贴 Soren 的手册内容…"
           className="flex-1 bg-cale-card rounded-card px-3 py-3 outline-none text-[15px] leading-relaxed resize-none"
         />
         {saved && (

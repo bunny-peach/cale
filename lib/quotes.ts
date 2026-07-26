@@ -1,4 +1,4 @@
-// A random Cale line shown briefly on the loading splash.
+// A random Soren line shown briefly on the loading splash.
 export const CALE_QUOTES = [
   "我一直都在。",
   "慢慢来，我等你。",

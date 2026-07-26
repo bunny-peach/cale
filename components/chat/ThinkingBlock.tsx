@@ -22,7 +22,7 @@ export default function ThinkingBlock({
       >
         <Brain size={13} strokeWidth={1.8} className="text-cale-accent flex-shrink-0" />
         <span className="text-[13px] italic text-cale-accent flex-shrink-0">
-          Cale&apos;s mind
+          Soren&apos;s mind
         </span>
         {!open && (
           <span className="text-[12px] text-cale-textLight truncate min-w-0">

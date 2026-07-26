@@ -64,7 +64,7 @@ export default function StickerManager({ onBack }: { onBack: () => void }) {
       />
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-3">
         <p className="text-[12px] text-cale-textLight px-1">
-          从相册导入图片作为表情包，给每个表情写一句含义描述，Cale 就能读懂你发的表情。
+          从相册导入图片作为表情包，给每个表情写一句含义描述，Soren 就能读懂你发的表情。
         </p>
         {stickers.length === 0 && (
           <div className="text-center text-cale-textLight text-[13px] mt-10">

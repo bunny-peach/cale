@@ -49,7 +49,7 @@ export default function PayloadCard({
               ¥{payload.amount}
             </div>
             <div className="text-[12px] opacity-90 leading-tight mt-0.5">
-              转账{isUser ? "给 Cale" : "给你"}
+              转账{isUser ? "给 Soren" : "给你"}
             </div>
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function PayloadCard({
             {payload.giftName}
           </div>
           <div className="text-[12px] opacity-90 leading-tight mt-0.5">
-            {isUser ? "送给 Cale" : "送给你"}
+            {isUser ? "送给 Soren" : "送给你"}
           </div>
         </div>
       </div>

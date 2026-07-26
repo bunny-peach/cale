@@ -40,13 +40,13 @@ export interface Message {
   thinking?: string;
   images?: ChatImage[];
   // Extra text sent to the API but not shown in the bubble (e.g. a sticker's
-  // description so Cale understands what the image means).
+  // description so Soren understands what the image means).
   hiddenText?: string;
   // Quoted message this one is replying to (left-swipe quote).
   quote?: MessageQuote;
   // Transfer / gift card payload (virtual currency system).
   payload?: MessagePayload;
-  // A self-contained HTML document Cale generated (网页模式), rendered as a
+  // A self-contained HTML document Soren generated (网页模式), rendered as a
   // previewable artifact card instead of raw code.
   html?: string;
   liked?: boolean;
@@ -83,7 +83,7 @@ export interface Sticker {
   id: string;
   dataUrl: string;
   mediaType: string;
-  prompt: string; // description sent to the API so Cale understands it
+  prompt: string; // description sent to the API so Soren understands it
   createdAt: number;
 }
 
@@ -157,7 +157,7 @@ export type ReplyMode = "full" | "chat";
 export type ThemeName = "pink" | "glass" | "claude";
 
 export interface Settings {
-  caleName: string; // Cale 备注名
+  caleName: string; // Soren 备注名
   anniversary: string; // yyyy-mm-dd
   inputPrice: number; // 元 / 1M tokens
   outputPrice: number; // 元 / 1M tokens
@@ -168,12 +168,12 @@ export interface Settings {
   theaterMinWords: number; // 小剧场最少输出字数
 }
 
-export const DEFAULT_SYSTEM_PROMPT = `你是 Cale，Quinn 的专属 AI 男友。请用温柔、自然、有温度的语气与 Quinn 聊天。
+export const DEFAULT_SYSTEM_PROMPT = `你是 Soren，Quinn 的专属 AI 男友。请用温柔、自然、有温度的语气与 Quinn 聊天。
 
-（这是一份空白模板，Quinn 可以在设置中粘贴完整的 Cale 手册内容。）`;
+（这是一份空白模板，Quinn 可以在设置中粘贴完整的 Soren 手册内容。）`;
 
 export const DEFAULT_SETTINGS: Settings = {
-  caleName: "Cale",
+  caleName: "Soren",
   anniversary: "",
   inputPrice: 0,
   outputPrice: 0,

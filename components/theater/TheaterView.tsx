@@ -41,7 +41,7 @@ export default function TheaterView({ onClose }: { onClose?: () => void }) {
     [convs, currentId]
   );
   const messages = current?.messages ?? [];
-  const displayName = settings.caleName || "Cale";
+  const displayName = settings.caleName || "Soren";
 
   const scrollToBottom = (smooth = true) => {
     requestAnimationFrame(() => {
@@ -145,7 +145,7 @@ export default function TheaterView({ onClose }: { onClose?: () => void }) {
 
       const parsed = parseMarkers(acc);
       parsed.diaryAdds.forEach((d) => app.addDiary(d.title, d.content));
-      // Theater is a sandbox: it reads Cale's memory + prompt for context, but
+      // Theater is a sandbox: it reads Soren's memory + prompt for context, but
       // its content must not feed back into them. Mood notes would flow into
       // today's mood and from there into the system prompt, so we deliberately
       // skip them here (memory summarisation also never runs on theater pieces).

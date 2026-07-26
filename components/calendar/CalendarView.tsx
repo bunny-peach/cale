@@ -131,7 +131,7 @@ export default function CalendarView() {
               style={{ color: "#C67E90" }}
             />
             <div className="text-[16px] mt-2 text-cale-textDark">
-              和 {settings.caleName || "Cale"} 在一起的第{" "}
+              和 {settings.caleName || "Soren"} 在一起的第{" "}
               <span className="font-bold text-cale-accent text-[20px]">
                 {anniversaryDays}
               </span>{" "}

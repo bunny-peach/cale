@@ -79,7 +79,7 @@ export default function WishlistManager({ onBack }: { onBack: () => void }) {
 
         {wishlist.length === 0 && (
           <div className="text-center text-cale-textLight text-[13px] mt-6">
-            清单会自动同步给 Cale，他能主动提及进度
+            清单会自动同步给 Soren，他能主动提及进度
           </div>
         )}
 
@@ -142,7 +142,7 @@ export default function WishlistManager({ onBack }: { onBack: () => void }) {
                     color: w.source === "cale" ? "#D4849F" : "#5C9E7A",
                   }}
                 >
-                  {w.source === "cale" ? "Cale 添加" : "Quinn 添加"}
+                  {w.source === "cale" ? "Soren 添加" : "Quinn 添加"}
                 </span>
               </div>
               <button

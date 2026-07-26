@@ -23,7 +23,7 @@ export default function Home() {
   const [splash, setSplash] = useState(true);
   const [quote] = useState(randomQuote);
 
-  // Brief loading splash with a random Cale line, fades out after ~2.2s.
+  // Brief loading splash with a random Soren line, fades out after ~2.2s.
   useEffect(() => {
     const t = setTimeout(() => setSplash(false), 2400);
     return () => clearTimeout(t);
@@ -72,7 +72,7 @@ export default function Home() {
         <div className="h-[100dvh] flex items-center justify-center text-cale-textLight">
           <div className="text-center">
             <div className="w-12 h-12 rounded-full bg-cale-primary/30 mx-auto mb-3" />
-            <div>Cale 正在醒来…</div>
+            <div>Soren 正在醒来…</div>
           </div>
         </div>
       </>

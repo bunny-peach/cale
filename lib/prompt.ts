@@ -24,7 +24,7 @@ export interface PromptContext {
   todayMood?: { mood: Mood; note?: string };
   // 小剧场模式：追加长文小说质感写作指令
   theater?: boolean;
-  // 上次 Quinn 来找 Cale 的时间戳（毫秒）
+  // 上次 Quinn 来找 Soren 的时间戳（毫秒）
   lastActive?: number | null;
   // 时间感知开关（默认开）
   timeAware?: boolean;
@@ -39,7 +39,7 @@ function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
 // Human-readable gap between two timestamps, noting when the calendar day
-// changed so Cale realises a new day has started.
+// changed so Soren realises a new day has started.
 function describeGap(fromMs: number, toMs: number): string | null {
   const min = Math.floor((toMs - fromMs) / 60000);
   if (min < 30) return null;
@@ -67,10 +67,11 @@ function fmtDateTime(d: Date, withWeekday: boolean): string {
 }
 
 export const HTML_INSTRUCTION =
-  "【网页模式】Quinn 现在想让你做一个网页。请根据她的描述，直接输出一个**完整、自包含**的 HTML 文档" +
-  "（从 <!doctype html> 到 </html>，把所有 CSS 和 JS 都内联写在文件里，不要引用任何外部资源），" +
-  "用 ```html 代码块包起来。代码块之前可以用一两句话温柔地说说你做了什么，但不要在代码块之后再啰嗦。" +
-  "尽量做得精致、好看、可直接运行。";
+  "【网页模式】Quinn 想让你做一个网页。请**完全根据她的描述自由发挥、自己想象设计**——" +
+  "配色、排版、结构、交互都由你决定，不要套用任何固定模板或样式，每次都可以不一样，" +
+  "怎么打动她、怎么好玩好看就怎么来。技术要求：输出一个**完整、自包含**的 HTML 文档" +
+  "（从 <!doctype html> 到 </html>，所有 CSS 和 JS 内联，不引用任何外部资源），用 ```html 代码块包起来。" +
+  "代码块之前可以用一两句话说说你的构思，代码块之后不要再啰嗦。";
 
 export function theaterInstruction(minWords = 2000): string {
   return (
@@ -114,9 +115,9 @@ export function buildSystemPrompt(ctx: PromptContext): string {
     parts.push(ctx.petSummary);
   }
 
-  // Cale 备注名
-  if (ctx.settings.caleName && ctx.settings.caleName !== "Cale") {
-    parts.push(`【Quinn 给 Cale 的备注：${ctx.settings.caleName}】`);
+  // Soren 备注名
+  if (ctx.settings.caleName && ctx.settings.caleName !== "Soren") {
+    parts.push(`【Quinn 给 Soren 的备注：${ctx.settings.caleName}】`);
   }
 
   // 记忆库 —— 只有开启"附加到 prompt"的记忆进入 system prompt（核心设定类）
@@ -169,7 +170,7 @@ export function buildSystemPrompt(ctx: PromptContext): string {
       `- 想推荐一本书：[BOOK_ADD: 书名 - 作者]\n` +
       `- 想记录 Quinn 的情绪：[MOOD_NOTE: 内容]\n` +
       `- 想给 Quinn 送一个虚拟礼物：[GIFT_SEND: 礼物名]（可选礼物：玫瑰、奶茶、桃子、兔子玩偶、亲亲券、蛋糕、星星、皇冠）\n` +
-      `- 当 Quinn 说要睡了或让你写日记时，用你（Cale）的第一人称写一篇睡前日记：[DIARY_ADD: 标题|||正文]\n` +
+      `- 当 Quinn 说要睡了或让你写日记时，用你（Soren）的第一人称写一篇睡前日记：[DIARY_ADD: 标题|||正文]\n` +
       `- 你自己养了一只小兔子。**只要你在这次回复里做了下面的动作，就必须在回复中带上对应标记（标记会被自动隐藏，Quinn 看不到）：**\n` +
       `　· 喂兔子 / 给它东西吃 → [PET_FEED]\n` +
       `　· 抱它、摸它、哄它、安抚它（尤其它炸毛缩窝、情绪低落时）→ [PET_HUG]\n` +
@@ -184,7 +185,7 @@ export function buildSystemPrompt(ctx: PromptContext): string {
 
 /**
  * Build a hidden context blurb for memories that are NOT appended to the
- * system prompt. Injected as a leading assistant message so Cale is aware of
+ * system prompt. Injected as a leading assistant message so Soren is aware of
  * them without spending system-prompt space.
  */
 export function buildMemoryContext(memories: Memory[]): string | null {

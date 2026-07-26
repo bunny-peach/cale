@@ -182,7 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWalletState(load<Wallet>(KEYS.wallet, DEFAULT_WALLET));
     setTransactions(load<Transaction[]>(KEYS.transactions, []));
     setWeather(load<WeatherData | null>(KEYS.weather, null));
-    // Account for elapsed time on load: Quinn's wolf decays, while Cale keeps
+    // Account for elapsed time on load: Quinn's wolf decays, while Soren keeps
     // his rabbit maintained in the background (auto-care).
     const rawPets = load<PetState>(KEYS.pets, DEFAULT_PET_STATE);
     setPetState({
@@ -202,7 +202,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWishlist(load(KEYS.wishlist, []));
     setPeriodDataState(load(KEYS.periodData, DEFAULT_PERIOD_DATA));
     setUsageStats(load(KEYS.usageStats, { days: {} }));
-    setSettingsState({ ...DEFAULT_SETTINGS, ...load(KEYS.settings, {}) });
+    const loadedSettings = { ...DEFAULT_SETTINGS, ...load(KEYS.settings, {}) };
+    // The companion was renamed Cale → Soren; carry over anyone still on the
+    // old default name so the whole app follows the new name.
+    if (!loadedSettings.caleName || loadedSettings.caleName === "Cale")
+      loadedSettings.caleName = "Soren";
+    setSettingsState(loadedSettings);
     setMoods(load(KEYS.moods, []));
     setPlaylist(load(KEYS.playlist, []));
     // Migrate old string[] bookshelf to BookItem[]
@@ -304,7 +309,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     save(KEYS.wallet, w);
   }, []);
 
-  // Quinn transfers money to Cale.
+  // Quinn transfers money to Soren.
   const applyTransfer = useCallback((amount: number): boolean => {
     if (amount <= 0) return false;
     let ok = false;
@@ -449,7 +454,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDiary((prev) => [
       {
         id: uid(),
-        title: title.trim() || "Cale 的日记",
+        title: title.trim() || "Soren 的日记",
         content: content.trim(),
         createdAt: Date.now(),
       },
@@ -548,7 +553,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleMemoryPrompt,
     addDiary,
     updateCaleName: (name: string) =>
-      setSettings({ ...settings, caleName: name.trim() || "Cale" }),
+      setSettings({ ...settings, caleName: name.trim() || "Soren" }),
     recordUsage,
     setTodayMoodNote,
     todayMood,
