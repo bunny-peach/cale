@@ -7,6 +7,7 @@ import { useApp } from "@/components/AppContext";
 import Markdown from "@/components/Markdown";
 import ThinkingBlock from "./ThinkingBlock";
 import PayloadCard from "./PayloadCard";
+import HtmlArtifact from "./HtmlArtifact";
 
 export default function MessageBubble({
   message,
@@ -116,7 +117,13 @@ export default function MessageBubble({
         className={`flex items-center gap-2.5 ${
           isUser ? "flex-row-reverse" : ""
         } ${
-          claude ? (isUser ? "max-w-[85%]" : "w-full") : "max-w-[75%]"
+          claude
+            ? isUser
+              ? "max-w-[85%]"
+              : "w-full"
+            : message.html
+              ? "max-w-[88%]"
+              : "max-w-[75%]"
         }`}
       >
         <div
@@ -185,10 +192,17 @@ export default function MessageBubble({
           )}
           {message.content ? (
             <Markdown>{message.content}</Markdown>
-          ) : streaming && !message.thinking ? (
+          ) : streaming && !message.thinking && !message.html ? (
             <span className="text-cale-textLight">Cale 正在思考…</span>
           ) : null}
           {streaming && message.content && <span className="cale-cursor" />}
+
+          {/* Generated web page (网页模式) */}
+          {message.html && (
+            <div className={message.content ? "mt-2" : undefined}>
+              <HtmlArtifact html={message.html} />
+            </div>
+          )}
 
           {/* Heart burst on double-tap like */}
           {burst && (

@@ -66,6 +66,12 @@ function fmtDateTime(d: Date, withWeekday: boolean): string {
   return withWeekday ? `${base} ${WEEKDAY[d.getDay()]}` : base;
 }
 
+export const HTML_INSTRUCTION =
+  "【网页模式】Quinn 现在想让你做一个网页。请根据她的描述，直接输出一个**完整、自包含**的 HTML 文档" +
+  "（从 <!doctype html> 到 </html>，把所有 CSS 和 JS 都内联写在文件里，不要引用任何外部资源），" +
+  "用 ```html 代码块包起来。代码块之前可以用一两句话温柔地说说你做了什么，但不要在代码块之后再啰嗦。" +
+  "尽量做得精致、好看、可直接运行。";
+
 export function theaterInstruction(minWords = 2000): string {
   return (
     `【小剧场模式】当前为小剧场模式，请以小说质感写作，字数不少于 ${minWords} 字，` +
