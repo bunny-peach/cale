@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Heart, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Plus, Heart, Trash2, Pencil, Check } from "lucide-react";
 import { Conversation } from "@/lib/types";
 
 function preview(c: Conversation): string {
@@ -32,14 +33,23 @@ export default function ChatList({
   onOpen,
   onNew,
   onDelete,
+  onRename,
 }: {
   conversations: Conversation[];
   displayName: string;
   onOpen: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, title: string) => void;
 }) {
   const sorted = [...conversations].sort((a, b) => b.updatedAt - a.updatedAt);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+
+  const commit = (id: string) => {
+    onRename(id, draft.trim());
+    setEditingId(null);
+  };
   return (
     <div className="h-full relative overflow-hidden bg-cale-bg">
       <header
@@ -91,9 +101,25 @@ export default function ChatList({
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[16px] text-cale-textDark truncate flex-1">
-                    {c.title || displayName}
-                  </span>
+                  {editingId === c.id ? (
+                    <input
+                      autoFocus
+                      value={draft}
+                      placeholder={c.title || displayName}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commit(c.id);
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                      onBlur={() => commit(c.id)}
+                      className="font-semibold text-[16px] text-cale-textDark bg-cale-input rounded-lg px-2 py-0.5 outline-none flex-1 w-0"
+                    />
+                  ) : (
+                    <span className="font-semibold text-[16px] text-cale-textDark truncate flex-1">
+                      {c.title || displayName}
+                    </span>
+                  )}
                   <span className="text-[11px] text-cale-textLight flex-shrink-0">
                     {stamp(c.updatedAt)}
                   </span>
@@ -102,6 +128,30 @@ export default function ChatList({
                   {preview(c)}
                 </div>
               </div>
+              {editingId === c.id ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    commit(c.id);
+                  }}
+                  className="flex-shrink-0 p-1 text-cale-accent active:opacity-60"
+                  aria-label="保存名称"
+                >
+                  <Check size={17} strokeWidth={2} />
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDraft(c.title || "");
+                    setEditingId(c.id);
+                  }}
+                  className="flex-shrink-0 p-1 text-cale-textLight/60 active:opacity-60"
+                  aria-label="重命名对话"
+                >
+                  <Pencil size={15} strokeWidth={1.7} />
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();

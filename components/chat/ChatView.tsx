@@ -807,12 +807,12 @@ export default function ChatView({
   };
 
   const saveName = () => {
-    // The header name belongs to *this* conversation: renaming it retitles the
-    // open thread (empty falls back to Cale's name), rather than the global one.
-    if (currentId)
-      updateConversation(currentId, (c) => ({ ...c, title: nameDraft.trim() }));
+    // The header shows Cale's own name (备注名) and is stable across
+    // conversations — renaming here updates that global note, not the thread's
+    // auto-title. (Per-conversation names are renamed from the list.)
+    app.updateCaleName(nameDraft.trim() || "Cale");
     setEditingName(false);
-    showToast("对话名已更新");
+    showToast("备注名已更新");
   };
 
   const messages = current?.messages ?? [];
@@ -822,9 +822,6 @@ export default function ChatView({
     messages.length > 0 &&
     messages[messages.length - 1].role === "user";
   const displayName = settings.caleName || "Cale";
-  // Title shown in the thread header: the conversation's own name, or Cale's
-  // name as a default when it hasn't been renamed.
-  const convTitle = current?.title?.trim() || displayName;
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -859,6 +856,9 @@ export default function ChatView({
           setConversations((prev) => prev.filter((c) => c.id !== id));
           if (currentId === id) setCurrentId(null);
         }}
+        onRename={(id, title) =>
+          updateConversation(id, (c) => ({ ...c, title }))
+        }
       />
     );
   }
@@ -910,7 +910,7 @@ export default function ChatView({
         ) : (
           <button
             onClick={() => {
-              setNameDraft(current?.title?.trim() || "");
+              setNameDraft(displayName);
               setEditingName(true);
             }}
             className="flex items-center gap-2 active:opacity-60"
@@ -923,7 +923,7 @@ export default function ChatView({
             </span>
             <span className="flex flex-col items-start leading-none">
               <span className="text-[15px] font-semibold text-cale-textDark max-w-[42vw] truncate">
-                {convTitle}
+                {displayName}
               </span>
               <span className="flex items-center gap-1 mt-0.5">
                 <span
