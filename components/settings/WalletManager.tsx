@@ -19,7 +19,7 @@ export default function WalletManager({ onBack }: { onBack: () => void }) {
             onChange={(v) => setWallet({ ...wallet, quinn: v })}
           />
           <BalanceCard
-            label="Cale 的钱包"
+            label="Soren 的钱包"
             value={wallet.cale}
             onChange={(v) => setWallet({ ...wallet, cale: v })}
           />
@@ -52,9 +52,9 @@ export default function WalletManager({ onBack }: { onBack: () => void }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[14px] text-cale-textDark flex items-center gap-1">
-                      {mine ? "你" : "Cale"}
+                      {mine ? "你" : "Soren"}
                       <ArrowRight size={12} className="text-cale-textLight" />
-                      {t.to === "quinn" ? "你" : "Cale"}
+                      {t.to === "quinn" ? "你" : "Soren"}
                       <span className="text-cale-textLight">
                         {t.kind === "transfer"
                           ? "转账"

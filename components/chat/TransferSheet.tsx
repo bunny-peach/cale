@@ -28,7 +28,7 @@ export default function TransferSheet({
       >
         <div className="flex items-center justify-between mb-4">
           <span className="text-[17px] font-semibold text-cale-textDark">
-            转账给 Cale
+            转账给 Soren
           </span>
           <button onClick={onClose} className="text-cale-textLight">
             <X size={20} />

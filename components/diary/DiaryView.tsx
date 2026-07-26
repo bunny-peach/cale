@@ -55,7 +55,8 @@ function monthKey(ts: number): string {
 }
 
 export default function DiaryView() {
-  const { diary, setDiary } = useApp();
+  const { diary, setDiary, settings } = useApp();
+  const name = settings.caleName || "Soren";
   const [selected, setSelected] = useState<DiaryEntry | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -139,7 +140,7 @@ export default function DiaryView() {
       >
         <div className="w-9" />
         <div className="flex-1 text-center text-[17px] font-semibold">
-          Cale 的日记
+          {name} 的日记
         </div>
         <button
           onClick={() => fileRef.current?.click()}
@@ -167,7 +168,7 @@ export default function DiaryView() {
             <Moon size={32} strokeWidth={1.5} className="mb-3 opacity-60" />
             <div className="text-[14px] leading-relaxed">
               还没有日记。<br />
-              当你说「我要睡了」或让 Cale 写日记时，<br />
+              当你说「我要睡了」或让 {name} 写日记时，<br />
               他会在这里留下一篇睡前日记。
             </div>
             <div className="text-[12px] mt-3 opacity-80">

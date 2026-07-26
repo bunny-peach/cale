@@ -71,7 +71,7 @@ export default function MessageBubble({
       moved.current = true;
       clearPress();
     }
-    // Left-swipe to quote (Cale messages only)
+    // Left-swipe to quote (Soren messages only)
     if (!isUser && onQuote && dx < 0 && Math.abs(dx) > Math.abs(dy)) {
       setDragX(Math.max(dx, -70));
     }
@@ -193,7 +193,7 @@ export default function MessageBubble({
           {message.content ? (
             <Markdown>{message.content}</Markdown>
           ) : streaming && !message.thinking && !message.html ? (
-            <span className="text-cale-textLight">Cale 正在思考…</span>
+            <span className="text-cale-textLight">Soren 正在思考…</span>
           ) : null}
           {streaming && message.content && <span className="cale-cursor" />}
 
@@ -243,7 +243,7 @@ export default function MessageBubble({
         )}
       </div>
 
-      {/* Cale reply action row */}
+      {/* Soren reply action row */}
       {!isUser && !isPayload && !streaming && message.content && (
         claude ? (
           // Claude-style icon action row

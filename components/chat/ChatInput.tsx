@@ -60,7 +60,7 @@ export default function ChatInput({
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // After 30s of total inactivity the placeholder quietly changes, as if Cale
+  // After 30s of total inactivity the placeholder quietly changes, as if Soren
   // is wondering whether you're still there.
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -83,7 +83,7 @@ export default function ChatInput({
     : idle && !text
       ? "……你还在吗"
       : claude
-        ? "和 Cale 说点什么…"
+        ? "和 Soren 说点什么…"
         : "说点什么…";
 
   const resize = () => {
@@ -210,7 +210,7 @@ export default function ChatInput({
             </span>
             <span className="opacity-50">·</span>
             <span>
-              Cale{" "}
+              Soren{" "}
               <span className="text-cale-accent font-medium">¥{wallet.cale}</span>
             </span>
           </div>
@@ -314,7 +314,7 @@ export default function ChatInput({
               <X size={12} />
             </button>
           </span>
-          <span className="text-[11px] text-cale-textLight">描述想要的网页，Cale 帮你做</span>
+          <span className="text-[11px] text-cale-textLight">描述想要的网页，Soren 帮你做</span>
         </div>
       )}
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Code2, Maximize2, X, Download, Copy, Check } from "lucide-react";
 
-// A card for an HTML document Cale generated (网页模式). Shows a live, isolated
+// A card for an HTML document Soren generated (网页模式). Shows a live, isolated
 // preview and opens a full-screen viewer on tap — similar to chat artifacts.
 export default function HtmlArtifact({ html }: { html: string }) {
   const [full, setFull] = useState(false);

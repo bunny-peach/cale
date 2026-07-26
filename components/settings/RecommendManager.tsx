@@ -27,7 +27,7 @@ export default function RecommendManager({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="h-full flex flex-col bg-cale-bg">
-      <SubPageHeader title="Cale 的推荐" onBack={onBack} />
+      <SubPageHeader title="Soren 的推荐" onBack={onBack} />
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-4">
         {/* Songs */}
         <div className="bg-cale-card rounded-[14px] p-3">
@@ -52,7 +52,7 @@ export default function RecommendManager({ onBack }: { onBack: () => void }) {
           </div>
           {playlist.length === 0 ? (
             <div className="text-[13px] text-cale-textLight py-1">
-              Cale 推荐的歌会出现在这里
+              Soren 推荐的歌会出现在这里
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -101,7 +101,7 @@ export default function RecommendManager({ onBack }: { onBack: () => void }) {
           </div>
           {bookshelf.length === 0 ? (
             <div className="text-[13px] text-cale-textLight py-1">
-              Cale 推荐的书会出现在这里
+              Soren 推荐的书会出现在这里
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -142,7 +142,7 @@ export default function RecommendManager({ onBack }: { onBack: () => void }) {
         </div>
 
         <p className="text-[12px] text-cale-textLight px-1">
-          聊天时 Cale 用 [SONG_ADD: …] / [BOOK_ADD: …] 标记也能自动添加。
+          聊天时 Soren 用 [SONG_ADD: …] / [BOOK_ADD: …] 标记也能自动添加。
         </p>
       </div>
     </div>

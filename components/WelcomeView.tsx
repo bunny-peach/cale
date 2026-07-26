@@ -24,7 +24,7 @@ export default function WelcomeView({ onEnter }: { onEnter: () => void }) {
             className="text-[34px] text-cale-textDark tracking-wide"
             style={{ fontFamily: serif }}
           >
-            Cale &amp; Quinn
+            Soren &amp; Quinn
           </h1>
           <p
             className="mt-3 text-[13px] text-cale-accent tracking-[0.22em]"

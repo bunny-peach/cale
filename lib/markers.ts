@@ -3,7 +3,7 @@ export interface DiaryAdd {
   content: string;
 }
 
-// Pet-care actions Cale can take on his rabbit / Quinn's wolf.
+// Pet-care actions Soren can take on his rabbit / Quinn's wolf.
 export type PetAction = "feed" | "hug" | "prank";
 
 export interface ParsedMarkers {
@@ -37,7 +37,7 @@ const DIARY_PATTERN = /\[DIARY_ADD:\s*([\s\S]*?)\]/g;
 const PET_PATTERN = /\[PET_(FEED|HUG|PRANK)\]/g;
 
 /**
- * Extract Cale's self-action markers from a reply and strip them from the
+ * Extract Soren's self-action markers from a reply and strip them from the
  * text that gets displayed to the user.
  */
 export function parseMarkers(text: string): ParsedMarkers {
@@ -77,7 +77,7 @@ export function parseMarkers(text: string): ParsedMarkers {
         content: body.slice(sep + 3).trim(),
       });
     } else {
-      result.diaryAdds.push({ title: "Cale 的日记", content: body.trim() });
+      result.diaryAdds.push({ title: "Soren 的日记", content: body.trim() });
     }
   }
   result.cleanText = result.cleanText.replace(DIARY_PATTERN, "");

@@ -1,4 +1,4 @@
-// Pet-raising system. Quinn raises a black wolf pup; Cale raises a white lop
+// Pet-raising system. Quinn raises a black wolf pup; Soren raises a white lop
 // rabbit (pink ear-tips + nose). Shared data, switchable viewpoint.
 
 export type PetKind = "wolf" | "rabbit";
@@ -158,7 +158,7 @@ export function applyDecay(pet: Pet, now = Date.now()): Pet {
   };
 }
 
-// Auto-care for Cale's rabbit: he tends to her in the background, topping up
+// Auto-care for Soren's rabbit: he tends to her in the background, topping up
 // her fullness/mood every few hours and gradually calming her down. Modelled
 // as a smooth approach toward a comfortable baseline (~5h time constant) plus
 // mischief cooling, so she stays looked-after even while the app is closed.
@@ -440,7 +440,7 @@ export function rollVisit(state: PetState): Visit {
   return null;
 }
 
-// A short status line for the system prompt so Cale can mention it occasionally.
+// A short status line for the system prompt so Soren can mention it occasionally.
 export function petPromptSummary(state: PetState): string {
   const w = state.wolf;
   const r = state.rabbit;

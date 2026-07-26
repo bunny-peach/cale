@@ -71,8 +71,8 @@ export default function MemoryManager({ onBack }: { onBack: () => void }) {
       <SubPageHeader title="记忆库" onBack={onBack} />
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-3">
         <p className="text-[12px] text-cale-textLight px-1 leading-relaxed">
-          对话结束后 Cale 会自动总结关键信息存为记忆。你也可以手动补充。
-          开启「附加到 prompt」的记忆作为核心设定；关闭的记忆会作为对话背景注入，Cale 依然能感知。
+          对话结束后 Soren 会自动总结关键信息存为记忆。你也可以手动补充。
+          开启「附加到 prompt」的记忆作为核心设定；关闭的记忆会作为对话背景注入，Soren 依然能感知。
         </p>
 
         {/* Add form */}

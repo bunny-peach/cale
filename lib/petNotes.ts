@@ -1,6 +1,6 @@
 // Handwritten sticky notes stuck by the pets' nest. Two directions:
-//   toCale  — notes Quinn leaves for Cale (written on the rabbit / Cale side)
-//   toQuinn — notes Cale leaves for Quinn (appear on the wolf side)
+//   toCale  — notes Quinn leaves for Soren (written on the rabbit / Soren side)
+//   toQuinn — notes Soren leaves for Quinn (appear on the wolf side)
 
 export interface PetNote {
   id: string;

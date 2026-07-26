@@ -3,13 +3,13 @@ import "./globals.css";
 import { AppProvider } from "@/components/AppContext";
 
 export const metadata: Metadata = {
-  title: "Cale",
-  description: "Cale · Quinn 的专属 AI 伙伴",
+  title: "Soren",
+  description: "Soren · Quinn 的专属 AI 伙伴",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Cale",
+    title: "Soren",
   },
   icons: {
     apple: "/icons/icon-192.png",

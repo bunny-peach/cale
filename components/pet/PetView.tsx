@@ -191,7 +191,7 @@ export default function PetView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Quinn leaves a note for Cale (written on the rabbit / Cale side).
+  // Quinn leaves a note for Soren (written on the rabbit / Soren side).
   const addNote = () => {
     const text = noteDraft.trim();
     if (!text) return;
@@ -209,7 +209,7 @@ export default function PetView() {
     });
     setNoteDraft("");
   };
-  // Notes shown on the current side: wolf side = Cale's notes to Quinn.
+  // Notes shown on the current side: wolf side = Soren's notes to Quinn.
   const sideNotes = view === "wolf" ? notes.toQuinn : notes.toCale;
 
   // Load diary + daily tally; roll over any finished day into a diary entry.
@@ -644,7 +644,7 @@ export default function PetView() {
                   : "text-cale-textLight"
               }`}
             >
-              {k === "wolf" ? "狼崽（你的）" : "兔子（Cale 的）"}
+              {k === "wolf" ? "狼崽（你的）" : "兔子（Soren 的）"}
             </button>
           ))}
         </div>
@@ -798,7 +798,7 @@ export default function PetView() {
               }
               className="mt-2 text-[12px] text-cale-accent text-center px-6 active:opacity-60"
             >
-              咦？狼崽{pet.surprise}——好像是 Cale 干的好事，点一下帮它弄好
+              咦？狼崽{pet.surprise}——好像是 Soren 干的好事，点一下帮它弄好
             </button>
           )}
         </div>
@@ -870,7 +870,7 @@ export default function PetView() {
         <p className="text-[12px] text-cale-textLight mt-3 px-1 leading-relaxed">
           {isOwn
             ? "狼崽会自己在窝里溜达、发呆，点点它还会跟你说话。常来陪他，他会精神满满。"
-            : "这是 Cale 养的兔子。Cale 会在后台照顾她——每隔几小时自动喂食安抚，饱腹和心情会慢慢回到舒适值。你也可以点它逗它、陪它玩或偷偷捣乱……但搞太多它会缩进窝里，Cale 会在聊天里察觉到异常。"}
+            : "这是 Soren 养的兔子。Soren 会在后台照顾她——每隔几小时自动喂食安抚，饱腹和心情会慢慢回到舒适值。你也可以点它逗它、陪它玩或偷偷捣乱……但搞太多它会缩进窝里，Soren 会在聊天里察觉到异常。"}
         </p>
       </div>
       </div>
@@ -1074,7 +1074,7 @@ export default function PetView() {
                       : "text-cale-textLight"
                   }`}
                 >
-                  {k === "wolf" ? "Cale 给你的" : "你写给 Cale 的"}
+                  {k === "wolf" ? "Soren 给你的" : "你写给 Soren 的"}
                 </button>
               ))}
             </div>
@@ -1082,12 +1082,12 @@ export default function PetView() {
           <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4">
             <p className="text-[12px] text-cale-textLight mb-3 px-1">
               {view === "wolf"
-                ? "Cale 悄悄贴在窝旁的纸条，聊天时也可能留下新的。"
-                : "写一张便签贴在窝边，Cale 会看到。"}
+                ? "Soren 悄悄贴在窝旁的纸条，聊天时也可能留下新的。"
+                : "写一张便签贴在窝边，Soren 会看到。"}
             </p>
             {sideNotes.length === 0 && (
               <div className="text-center text-cale-textLight text-[13px] mt-12">
-                {view === "wolf" ? "还没有 Cale 的便签～" : "还没有便签，写一张贴上吧～"}
+                {view === "wolf" ? "还没有 Soren 的便签～" : "还没有便签，写一张贴上吧～"}
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
@@ -1122,7 +1122,7 @@ export default function PetView() {
                 value={noteDraft}
                 onChange={(e) => setNoteDraft(e.target.value)}
                 rows={1}
-                placeholder="写点什么贴给 Cale…"
+                placeholder="写点什么贴给 Soren…"
                 className="flex-1 bg-cale-input rounded-[18px] px-4 py-2 text-[16px] outline-none resize-none max-h-24 no-scrollbar placeholder:text-cale-textLight"
               />
               <button
