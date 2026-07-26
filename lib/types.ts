@@ -46,6 +46,9 @@ export interface Message {
   quote?: MessageQuote;
   // Transfer / gift card payload (virtual currency system).
   payload?: MessagePayload;
+  // A self-contained HTML document Cale generated (网页模式), rendered as a
+  // previewable artifact card instead of raw code.
+  html?: string;
   liked?: boolean;
   createdAt: number;
 }

@@ -157,3 +157,27 @@ function capSegments(segs: string[], max = 6): string[] {
   head.push(segs.slice(max - 1).join(" "));
   return head;
 }
+
+/**
+ * Pull a self-contained HTML document out of a reply (网页模式). Handles a
+ * ```html fenced block, a generic ``` block that looks like HTML, or raw
+ * `<!doctype html>` / `<html>` markup. Returns the html plus whatever prose
+ * surrounded it (a short caption to show above the artifact card).
+ */
+export function extractHtml(text: string): { html: string | null; rest: string } {
+  // Fenced ```html … ``` (or ```htm) block.
+  const fenced = text.match(/```(?:html?|HTML)?\s*\n([\s\S]*?)```/);
+  if (fenced && /<[a-z!][\s\S]*>/i.test(fenced[1])) {
+    const html = fenced[1].trim();
+    const rest = text.replace(fenced[0], "").trim();
+    return { html, rest };
+  }
+  // Raw document without a fence.
+  const raw = text.match(/(<!doctype html[\s\S]*<\/html>|<html[\s\S]*<\/html>)/i);
+  if (raw) {
+    const html = raw[1].trim();
+    const rest = text.replace(raw[1], "").trim();
+    return { html, rest };
+  }
+  return { html: null, rest: text };
+}

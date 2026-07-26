@@ -29,8 +29,9 @@ import {
   buildSystemPrompt,
   buildMemoryContext,
   MEMORY_SUMMARY_PROMPT,
+  HTML_INSTRUCTION,
 } from "@/lib/prompt";
-import { parseMarkers, chatSegments } from "@/lib/markers";
+import { parseMarkers, chatSegments, extractHtml } from "@/lib/markers";
 import { findGift, Gift as GiftType } from "@/lib/gifts";
 import { petPromptSummary } from "@/lib/pets";
 import MessageBubble from "./MessageBubble";
@@ -97,6 +98,7 @@ export default function ChatView({
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(settings.caleName);
   const [burstMode, setBurstMode] = useState(false);
+  const [htmlMode, setHtmlMode] = useState(false);
   const [pendingQuote, setPendingQuote] = useState<MessageQuote | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -240,7 +242,8 @@ export default function ChatView({
     cid: string,
     apiHistory: Message[],
     assistantMsgId: string,
-    newTurn = true
+    newTurn = true,
+    htmlMode = false
   ) => {
     // Read Quinn's previous visit time for the prompt, then (for a genuinely
     // new user turn) bump it to now so the next reply sees this gap.
@@ -264,6 +267,7 @@ export default function ChatView({
           : null,
       petSummary: petPromptSummary(app.petState),
     });
+    const systemFinal = htmlMode ? `${system}\n\n${HTML_INSTRUCTION}` : system;
 
     // Inject OFF memories as hidden context on the first user message
     let finalHistory = apiHistory;
@@ -289,8 +293,9 @@ export default function ChatView({
     let acc = "";
     let think = "";
     try {
-      await streamChat(apiConfig, system, finalHistory, {
+      await streamChat(apiConfig, systemFinal, finalHistory, {
         signal: controller.signal,
+        ...(htmlMode ? { maxTokens: 32000 } : {}),
         onThinking: (d) => {
           think += d;
           updateConversation(cid, (c) => ({
@@ -303,7 +308,11 @@ export default function ChatView({
         },
         onText: (d) => {
           acc += d;
-          const preview = acc.replace(/\[MSG_BREAK\]/g, " ");
+          // In 网页模式 the raw HTML is noisy while streaming, so show a compact
+          // progress line instead and let the artifact card appear on finish.
+          const preview = htmlMode
+            ? `正在生成网页…（${acc.length} 字）`
+            : acc.replace(/\[MSG_BREAK\]/g, " ");
           updateConversation(cid, (c) => ({
             ...c,
             messages: c.messages.map((m) =>
@@ -416,6 +425,28 @@ export default function ChatView({
       if (parsed.diaryAdds.length) showToast("Cale 写了一篇日记");
       else if (parsed.mcpAdds.length || parsed.songAdds.length || parsed.bookAdds.length)
         showToast("Cale 悄悄记下了一些东西");
+
+      // 网页模式：pull the HTML document out and render it as an artifact card
+      // instead of a wall of code (and never chat-split it).
+      const artifact = htmlMode ? extractHtml(parsed.cleanText) : { html: null, rest: "" };
+      if (artifact.html) {
+        updateConversation(cid, (c) => ({
+          ...c,
+          messages: c.messages.map((m) =>
+            m.id === assistantMsgId
+              ? {
+                  ...m,
+                  content: artifact.rest,
+                  html: artifact.html!,
+                  thinking: think || undefined,
+                }
+              : m
+          ),
+          updatedAt: Date.now(),
+        }));
+        scrollToBottom();
+        return;
+      }
 
       const chatMode = app.settings.replyMode === "chat";
       const segments = chatMode
@@ -545,7 +576,7 @@ export default function ChatView({
       ...c,
       messages: [...c.messages, assistantMsg],
     }));
-    runAssistant(cid, [...prior, userMsg], assistantMsg.id);
+    runAssistant(cid, [...prior, userMsg], assistantMsg.id, true, htmlMode);
   };
 
   const handleSendSticker = (s: Sticker) => {
@@ -1073,6 +1104,8 @@ export default function ChatView({
           streaming={streaming}
           burstMode={burstMode}
           onToggleBurst={() => setBurstMode((b) => !b)}
+          htmlMode={htmlMode}
+          onToggleHtml={() => setHtmlMode((h) => !h)}
           stickers={stickers}
           onManageStickers={onManageStickers}
           onTransfer={() => setTransferOpen(true)}

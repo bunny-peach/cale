@@ -12,6 +12,7 @@ import {
   Gift,
   Drama,
   Layers,
+  Code2,
 } from "lucide-react";
 import { ChatImage, Sticker } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
@@ -26,6 +27,8 @@ export default function ChatInput({
   streaming,
   burstMode,
   onToggleBurst,
+  htmlMode,
+  onToggleHtml,
   stickers,
   onManageStickers,
   onTransfer,
@@ -38,6 +41,8 @@ export default function ChatInput({
   streaming: boolean;
   burstMode: boolean;
   onToggleBurst: () => void;
+  htmlMode: boolean;
+  onToggleHtml: () => void;
   stickers: Sticker[];
   onManageStickers: () => void;
   onTransfer: () => void;
@@ -73,8 +78,9 @@ export default function ChatInput({
     };
   }, []);
 
-  const placeholder =
-    idle && !text
+  const placeholder = htmlMode
+    ? "描述你想要的网页…"
+    : idle && !text
       ? "……你还在吗"
       : claude
         ? "和 Cale 说点什么…"
@@ -252,6 +258,15 @@ export default function ChatInput({
               active={burstMode}
               onClick={onToggleBurst}
             />
+            <MenuItem
+              icon={<Code2 size={22} strokeWidth={1.8} />}
+              label={htmlMode ? "网页中" : "网页"}
+              active={htmlMode}
+              onClick={() => {
+                onToggleHtml();
+                setMenuOpen(false);
+              }}
+            />
           </div>
         </div>
       )}
@@ -286,6 +301,22 @@ export default function ChatInput({
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
+
+      {htmlMode && (
+        <div className="flex items-center gap-1.5 mb-2 px-1">
+          <span className="inline-flex items-center gap-1 text-[12px] text-cale-accent bg-cale-accent/10 rounded-full pl-2 pr-1 py-0.5">
+            <Code2 size={13} strokeWidth={2} /> 网页模式
+            <button
+              onClick={onToggleHtml}
+              className="w-4 h-4 flex items-center justify-center rounded-full active:opacity-60"
+              aria-label="退出网页模式"
+            >
+              <X size={12} />
+            </button>
+          </span>
+          <span className="text-[11px] text-cale-textLight">描述想要的网页，Cale 帮你做</span>
+        </div>
+      )}
 
       {claude ? (
         /* Claude-style composer: a tall rounded box with the controls inside */
